@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASME Material Receiving</title>
+
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ASME App">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIj4KICA8cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgZmlsbD0iIzM0OThlNCIgcng9IjIwIi8+CiAgPHRleHQgeD0iOTAiIHk9IjEwNSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iNzAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiPkE8L3RleHQ+Cjwvc3ZnPg==">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Landing Page */
+        .landing {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
+
+        .landing h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .landing p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .landing-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .landing-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        /* Main App */
+        .app {
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 20px;
+        }
+
+        .content-area {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Job Management */
+        .job-header {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .job-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .jobs-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .job-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .job-item:hover {
+            background: #f0f8ff;
+            border-color: #3498db;
+        }
+
+        .job-item.active {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-success { background: #27ae60; }
+        .btn-success:hover { background: #219a52; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-secondary { background: #95a5a6; }
+        .btn-secondary:hover { background: #7f8c8d; }
+
+        /* Item Cards */
+        .items-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .item-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .item-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .item-meta {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        /* Specifications */
+        .spec-row {
+            display: grid;
+            grid-template-columns: auto 1fr auto 1fr;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .material-info {
+            background: #e8f5e8;
+            border: 1px solid #c3e6c3;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .dimensions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        /* Camera and Photos */
+        .camera-section {
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .photo-item {
+            position: relative;
+            aspect-ratio: 1;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .photo-delete {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* OCR Section */
+        .ocr-controls {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .ocr-controls textarea {
+            flex: 1;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid #dee2e6;
+            }
+            
+            .spec-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .dimensions-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .landing h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Landing Page -->
+    <div id="landing" class="landing">
+        <h1>📋 ASME Material Receiving</h1>
+        <p>Professional field inspection and documentation</p>
+        <button class="landing-btn" onclick="enterApp()">Enter Application</button>
+        <div id="install-instructions" style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; max-width: 400px;">
+            <h3>📱 Install as App</h3>
+            <div id="android-instructions">
+                <p><strong>Android (Chrome):</strong></p>
+                <p>1. Tap menu (⋮) → "Add to Home screen"</p>
+                <p>2. Or look for install icon in address bar</p>
+            </div>
+            <div id="ios-instructions" style="margin-top: 15px;">
+                <p><strong>iPhone (Safari):</strong></p>
+                <p>1. Tap share button (□↗)</p>
+                <p>2. Scroll down → "Add to Home Screen"</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="app">
+        <div class="app-header">
+            <button class="back-btn" onclick="showLanding()">&larr;</button>
+            <h1>ASME Material Receiving</h1>
+        </div>
+
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div id="job-info" class="hidden">
+                    <div class="job-header">
+                        <h3 id="current-job-title">No Job Selected</h3>
+                        <div id="current-job-details"></div>
+                        <div class="job-actions">
+                            <button class="btn btn-success" onclick="showAddItem()">+ Add Item</button>
+                            <button class="btn btn-secondary" onclick="exportJob()">📄 Export</button>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Jobs</h3>
+                <button class="btn" onclick="showCreateJob()" style="width: 100%; margin: 10px 0;">+ New Job</button>
+                <div id="jobs-list" class="jobs-list"></div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <div id="welcome-content">
+                    <h2>Welcome to ASME Material Receiving</h2>
+                    <p>Select a job from the sidebar or create a new one to get started.</p>
+                </div>
+
+                <div id="job-content" class="hidden">
+                    <div id="items-list" class="items-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Job Modal -->
+    <div id="create-job-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Job</h2>
+                <button class="modal-close" onclick="closeModal('create-job-modal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Job Number *</label>
+                <input type="text" id="new-job-number" placeholder="Enter job number">
+            </div>
+            <div class="form-group">
+                <label>Plant Name</label>
+                <input type="text" id="new-plant-name" placeholder="Enter plant name (optional)">
+            </div>
+            <button class="btn btn-success" onclick="createJob()">Create Job</button>
+        </div>
+    </div>
+
+    <!-- Add/Edit Item Modal -->
+    <div id="item-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="item-modal-title">Add New Item</h2>
+                <button class="modal-close" onclick="closeItemModal()">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label>Name of Item *</label>
+                <input type="text" id="item-name" placeholder="e.g., Superheater downcomer tubes">
+            </div>
+            
+            <div class="form-group">
+                <label>Product Type *</label>
+                <select id="product-type">
+                    <option value="">Select type...</option>
+                    <option value="Plate">Plate</option>
+                    <option value="Pipe">Pipe</option>
+                    <option value="Tube">Tube</option>
+                    <option value="Bar">Bar</option>
+                    <option value="Shape">Shape</option>
+                    <option value="Forging">Forging</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" id="item-date">
+                </div>
+                <div class="form-group">
+                    <label>PO Number</label>
+                    <input type="text" id="po-number" placeholder="Optional">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Quantity *</label>
+                <input type="number" id="quantity" placeholder="Enter quantity">
+            </div>
+            
+            <div class="form-group">
+                <label>Specification</label>
+                <div class="spec-row">
+                    <select id="spec-prefix">
+                        <option value="SA">SA</option>
+                        <option value="A">A</option>
+                    </select>
+                    <input type="text" id="spec-number" placeholder="e.g., 516">
+                    <label style="margin-bottom: 0;">Grade:</label>
+                    <input type="text" id="spec-grade" placeholder="e.g., 70">
+                </div>
+                <div id="material-info" class="material-info hidden"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>B16 Standard</label>
+                <div class="spec-row">
+                    <span>B</span>
+                    <select id="b16-standard">
+                        <option value="">Select...</option>
+                        <option value="16.5">16.5</option>
+                        <option value="16.9">16.9</option>
+                        <option value="16.11">16.11</option>
+                        <option value="16.34">16.34</option>
+                    </select>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label style="display: flex; align-items: center; gap: 10px; font-weight: normal;">
+                        <input type="checkbox" id="b16-compliant" style="width: auto;">
+                        Meets all ASME B16 dimensions and markings
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Dimensions</label>
+                <div class="dimensions-grid">
+                    <input type="text" id="dim-length" placeholder="Length">
+                    <input type="text" id="dim-width" placeholder="Width">
+                    <input type="text" id="dim-thickness" placeholder="Thickness">
+                    <input type="text" id="dim-id" placeholder="ID">
+                    <input type="text" id="dim-od" placeholder="OD">
+                    <input type="text" id="dim-other" placeholder="Other">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Material Markings</label>
+                <div class="ocr-controls">
+                    <textarea id="material-markings" placeholder="Enter material markings..." rows="4"></textarea>
+                    <button class="btn btn-secondary" onclick="tryOCR()">📷 OCR</button>
+                </div>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <label style="display: flex; align-items: center; gap: 10px; font-weight: normal;">
+                    <input type="checkbox" id="certs-compliant" style="width: auto;">
+                    Material certs are correct and meet all ASME requirements
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label>Photos</label>
+                <div class="camera-section">
+                    <button class="btn" onclick="takePhoto()">📷 Take Photo</button>
+                    <input type="file" id="photo-input" accept="image/*" capture="environment" style="display: none;">
+                    <div id="photos-grid" class="photos-grid"></div>
+                    <p style="margin-top: 10px; font-size: 14px; color: #666;">Max 10 photos</p>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 30px;">
+                <button class="btn btn-success" onclick="saveItem()">💾 Save Item</button>
+                <button class="btn btn-secondary" onclick="closeItemModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OCR Camera Modal -->
+    <div id="ocr-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Scan Material Markings</h2>
+                <button class="modal-close" onclick="closeOCRModal()">&times;</button>
+            </div>
+            <div style="text-align: center;">
+                <video id="ocr-video" autoplay playsinline style="width: 100%; max-width: 400px; border-radius: 8px;"></video>
+                <canvas id="ocr-canvas" style="display: none;"></canvas>
+                <div style="margin-top: 15px;">
+                    <button class="btn" onclick="captureOCR()">📷 Capture Text</button>
+                    <button class="btn btn-secondary" onclick="closeOCRModal()">Cancel</button>
+                </div>
+                <div id="ocr-loading" class="hidden" style="margin-top: 15px;">
+                    <div class="loading"></div>
+                    <p>Processing text...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let jobs = JSON.parse(localStorage.getItem('asme-jobs') || '[]');
+        let currentJobId = localStorage.getItem('asme-current-job');
+        let currentPhotos = [];
+        let editingItemIndex = -1;
+        let ocrStream = null;
+
+        // ASME Material specifications
+        const materialSpecs = {
+            'SA516': { pNumber: 'P-1', group: 'Group 1', description: 'Carbon Steel Plate for Pressure Vessels' },
+            'SA106': { pNumber: 'P-1', group: 'Group 1', description: 'Carbon Steel Pipe for High-Temperature Service' },
+            'SA105': { pNumber: 'P-1', group: 'Group 1', description: 'Carbon Steel Forgings for Piping Applications' },
+            'SA182': { pNumber: 'P-4', group: 'Group 1', description: 'Forged or Rolled Alloy and Stainless Steel Pipe Flanges' },
+            'SA335': { pNumber: 'P-5A', group: 'Group 1', description: 'Alloy Steel Pipe for High-Temperature Service' },
+            'A516': { pNumber: 'P-1', group: 'Group 1', description: 'Carbon Steel Plate for Pressure Vessels' },
+            'A106': { pNumber: 'P-1', group: 'Group 1', description: 'Carbon Steel Pipe for High-Temperature Service' },
+            'A105': { pNumber: 'P-1', group: 'Group 1', description: 'Carbon Steel Forgings for Piping Applications' }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create manifest for PWA
+            createManifest();
+            
+            // Set today's date
+            document.getElementById('item-date').value = new Date().toISOString().split('T')[0];
+            
+            // Load data
+            loadJobs();
+            if (currentJobId) {
+                selectJob(currentJobId);
+            }
+            
+            // Event listeners
+            document.getElementById('spec-number').addEventListener('input', updateMaterialInfo);
+            document.getElementById('photo-input').addEventListener('change', handlePhotoUpload);
+        });
+
+        function createManifest() {
+            const manifest = {
+                name: "ASME Material Receiving",
+                short_name: "ASME App",
+                description: "Field inspection and documentation app for ASME materials",
+                start_url: window.location.href,
+                display: "standalone",
+                orientation: "portrait",
+                background_color: "#2c3e50",
+                theme_color: "#3498db",
+                scope: "/",
+                icons: [
+                    {
+                        src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAJYSURBVHic7ZtNaxNBGMd/k5iYmKQx1dK2WKu01tpSL6KgFz14ELz4gl/Ag+hBD4qeBD+BH8CDBy9evHjx4sWLFy9evHjx4sWLFy9evHjx4sWLFy9evHjx4sWLFy9evHjx4sWLFy/+Q5RSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkop9Z+RUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKfUfkVJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRS6j8ipZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUkoppZRSSimllFJKKaWUUur/4hcH2E0yXq8ksQAAAABJRU5ErkJggg==",
+                        sizes: "64x64",
+                        type: "image/png"
+                    },
+                    {
+                        src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJAAAACQCAYAAADnRuK4AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAOASURBVHic7d1NaBNRFAbht2kTa21t/Gu1VrG2Wqt/eCMiLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOFC/wCVFCU+pWJ/qAAAAABJRU5ErkJggg==",
+                        sizes: "144x144",
+                        type: "image/png"
+                    },
+                    {
+                        src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJAAAACQCAYAAADnRuK4AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAOASURBVHic7d1NaBNRFAbht2kTa21t/Gu1VrG2Wqt/eCMiLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOFC/wCVFCU+pWJ/qAAAAABJRU5ErkJggg==",
+                        sizes: "192x192",
+                        type: "image/png",
+                        purpose: "any maskable"
+                    },
+                    {
+                        src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJAAAACQCAYAAADnRuK4AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAOASURBVHic7d1NaBNRFAbht2kTa21t/Gu1VrG2Wqt/eCMiLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOHChQsXLly4cOFC/wCVFCU+pWJ/qAAAAABJRU5ErkJggg==",
+                        sizes: "512x512",
+                        type: "image/png"
+                    }
+                ]
+            };
+            
+            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            
+            let link = document.querySelector('link[rel="manifest"]');
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'manifest';
+                document.head.appendChild(link);
+            }
+            link.href = manifestURL;
+        }
+
+        // Navigation
+        function showLanding() {
+            document.getElementById('app').style.display = 'none';
+            document.getElementById('landing').style.display = 'flex';
+        }
+
+        function enterApp() {
+            document.getElementById('landing').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+        }
+
+        // Jobs Management
+        function showCreateJob() {
+            document.getElementById('create-job-modal').style.display = 'block';
+        }
+
+        function createJob() {
+            const jobNumber = document.getElementById('new-job-number').value.trim();
+            const plantName = document.getElementById('new-plant-name').value.trim();
+            
+            if (!jobNumber) {
+                alert('Please enter a job number');
+                return;
+            }
+            
+            const job = {
+                id: Date.now().toString(),
+                jobNumber: jobNumber,
+                plantName: plantName,
+                items: [],
+                created: new Date().toISOString()
+            };
+            
+            jobs.push(job);
+            saveJobs();
+            loadJobs();
+            selectJob(job.id);
+            closeModal('create-job-modal');
+            
+            // Clear form
+            document.getElementById('new-job-number').value = '';
+            document.getElementById('new-plant-name').value = '';
+        }
+
+        function loadJobs() {
+            const jobsList = document.getElementById('jobs-list');
+            
+            if (jobs.length === 0) {
+                jobsList.innerHTML = '<p style="color: #666; font-style: italic; text-align: center; padding: 20px;">No jobs yet</p>';
+                return;
+            }
+            
+            jobsList.innerHTML = jobs.map(job => `
+                <div class="job-item ${job.id === currentJobId ? 'active' : ''}" onclick="selectJob('${job.id}')">
+                    <div style="font-weight: 600; margin-bottom: 5px;">${job.jobNumber}</div>
+                    ${job.plantName ? `<div style="margin-bottom: 5px;">${job.plantName}</div>` : ''}
+                    <div style="font-size: 0.85rem; color: #666;">
+                        ${job.items.length} items • ${new Date(job.created).toLocaleDateString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectJob(jobId) {
+            currentJobId = jobId;
+            localStorage.setItem('asme-current-job', jobId);
+            
+            const job = jobs.find(j => j.id === jobId);
+            if (!job) return;
+            
+            // Update UI
+            document.getElementById('job-info').classList.remove('hidden');
+            document.getElementById('current-job-title').textContent = job.jobNumber;
+            document.getElementById('current-job-details').innerHTML = 
+                (job.plantName ? `<div>${job.plantName}</div>` : '') +
+                `<div style="font-size: 0.9rem; color: #666;">${job.items.length} items</div>`;
+            
+            document.getElementById('welcome-content').classList.add('hidden');
+            document.getElementById('job-content').classList.remove('hidden');
+            
+            loadJobs(); // Refresh to show active state
+            loadJobItems();
+        }
+
+        function loadJobItems() {
+            const job = jobs.find(j => j.id === currentJobId);
+            const container = document.getElementById('items-list');
+            
+            if (!job || job.items.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <h3>No items yet</h3>
+                        <p>Click "Add Item" to start documenting received materials</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = job.items.map((item, index) => `
+                <div class="item-card">
+                    <div class="item-header">
+                        <div>
+                            <div class="item-title">${item.itemName}</div>
+                            <div class="item-meta">
+                                ${item.productType} • Qty: ${item.quantity} • ${new Date(item.itemDate).toLocaleDateString()}
+                            </div>
+                            <div class="item-meta">
+                                Spec: ${item.specPrefix || ''}${item.specNumber || ''} ${item.specGrade ? 'Gr' + item.specGrade : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${item.materialMarkings ? `
+                        <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin: 10px 0; font-size: 0.9rem;">
+                            <strong>Material Markings:</strong><br>
+                            ${item.materialMarkings.replace(/\n/g, '<br>')}
+                
