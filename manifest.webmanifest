@@ -1,6 +1,6 @@
 {
-  "name": "ASME Receiving",
-  "short_name": "ASME",
+  "name": "Welders Helper",
+  "short_name": "Welders",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
