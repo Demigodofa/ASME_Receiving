@@ -1,85 +1,44 @@
+<!-- /ASME_Receiving/index.html  -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
-  />
-  <title>My App — Phase 1</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ASME Receiving — Phase 1</title>
   <meta name="theme-color" content="#101828" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
   <style>
-    :root { --bg:#0b1120; --fg:#e5e7eb; --muted:#94a3b8; --accent:#22c55e; }
-    * { box-sizing:border-box; }
-    html,body { height:100%; margin:0; }
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      background: radial-gradient(1200px 800px at 50% -200px, #1f2937, var(--bg));
-      color: var(--fg);
-      display:flex; align-items:center; justify-content:center; padding:24px;
-    }
-    .card {
-      width:min(520px, 100%);
-      background: rgba(255,255,255,0.04);
-      border:1px solid rgba(255,255,255,0.08);
-      border-radius:24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-      padding:28px;
-      backdrop-filter: blur(6px);
-    }
-    .logo {
-      width:64px; height:64px; border-radius:16px;
-      background: linear-gradient(135deg, #16a34a, #22c55e);
-      display:grid; place-items:center; font-weight:800; color:#052e16;
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.3);
-      margin-bottom:16px;
-    }
-    h1 { margin:0 0 8px; font-size:28px; line-height:1.2; }
-    p { margin:8px 0 0; color: var(--muted); }
-    .row { display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; }
-    .btn {
-      appearance:none; border:0; border-radius:14px; padding:12px 16px;
-      font-weight:600; background:#111827; color:var(--fg); cursor:pointer;
-    }
-    .btn.primary { background: var(--accent); color:#052e16; }
-    .badge { font-size:12px; opacity:0.85; }
-    .ok { color: #34d399; }
-    .fail { color: #ef4444; }
-    footer { margin-top:16px; font-size:12px; color:var(--muted); }
-    code { background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:6px; }
+    html,body{height:100%;margin:0}
+    body{display:grid;place-items:center;background:#0b1120;color:#e5e7eb;
+         font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:24px}
+    .card{width:min(520px,100%);background:#111827;border:1px solid #1f2937;
+          border-radius:20px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    .row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+    .btn{appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:600;
+         background:#1f2937;color:#e5e7eb;cursor:pointer}
+    .btn.primary{background:#22c55e;color:#052e16}
+    .badge{font-size:12px;margin-top:8px;color:#94a3b8}
   </style>
 </head>
 <body>
   <main class="card" role="main" aria-label="App landing">
-    <div class="logo" aria-hidden="true">P1</div>
-    <h1>Phase 1: It opens. Offline.</h1>
-    <p>This is a minimal, installable, offline landing page.</p>
+    <h1>ASME Receiving</h1>
+    <p>Minimal, installable, offline landing.</p>
     <div class="row">
-      <button id="installBtn" class="btn primary" hidden>Install App</button>
-      <button id="checkOfflineBtn" class="btn">Check Offline Cache</button>
+      <button id="installBtn" class="btn primary" hidden>Install</button>
+      <button id="checkBtn" class="btn">Check Offline</button>
     </div>
-    <p id="status" class="badge" aria-live="polite"></p>
-    <footer>
-      Tip: On iOS Safari use <strong>Share ▸ Add to Home Screen</strong>. On Android Chrome look for <strong>Install</strong> or <strong>Add to Home screen</strong>.
-    </footer>
+    <div id="status" class="badge"></div>
   </main>
 
   <script>
-    // Register the service worker to enable offline. Required before "Add to Home Screen".
-    (async function registerSW() {
-      if (!('serviceWorker' in navigator)) {
-        document.getElementById('status').textContent = 'Service workers not supported on this device.';
-        return;
-      }
+    // Register SW — filename must match your repo (underscore)
+    (async () => {
+      if (!('serviceWorker' in navigator)) return;
       try {
-        const reg = await navigator.serviceWorker.register('service-worker.js');
-        // Why: Ensures new SW takes control promptly during development.
+        const reg = await navigator.serviceWorker.register('service_worker.js');
         if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          document.getElementById('status').textContent = 'Updated. Reloaded with latest cache.';
-        });
         document.getElementById('status').textContent = 'Offline ready.';
       } catch (e) {
         document.getElementById('status').textContent = 'Failed to register service worker.';
@@ -87,35 +46,38 @@
       }
     })();
 
-    // Handle PWA install prompt on Android/Chrome.
-    let deferredPrompt = null;
-    const installBtn = document.getElementById('installBtn');
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      installBtn.hidden = false;
+    // Install prompt (Android)
+    let deferredPrompt=null;
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault(); deferredPrompt=e;
+      document.getElementById('installBtn').hidden=false;
     });
-
-    installBtn?.addEventListener('click', async () => {
-      installBtn.hidden = true;
+    document.getElementById('installBtn').onclick = async () => {
+      document.getElementById('installBtn').hidden=true;
       if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
-      deferredPrompt = null;
-    });
+      deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null;
+    };
 
-    // Manual offline check: opens from cache if offline works.
-    document.getElementById('checkOfflineBtn')?.addEventListener('click', async () => {
-      const status = document.getElementById('status');
-      try {
-        const res = await caches.match(new Request('./index.html', { cache: 'reload' }));
-        status.innerHTML = res ? '✅ Cached. You can load offline.' : '⚠️ Not cached yet. Reload once online.';
-        status.className = res ? 'badge ok' : 'badge fail';
-      } catch {
-        status.textContent = 'Cache API unavailable.';
-      }
-    });
+    // Offline check
+    document.getElementById('checkBtn').onclick = async () => {
+      const res = await caches.match(new Request('index.html', { cache: 'reload' }));
+      document.getElementById('status').textContent = res ? '✅ Cached. Offline OK.' : '⚠️ Not cached yet.';
+    };
   </script>
 </body>
 </html>
+
+<!-- /ASME_Receiving/manifest.webmanifest -->
+{
+  "name": "ASME Receiving",
+  "short_name": "ASME",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1120",
+  "theme_color": "#101828",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
