@@ -7,6 +7,7 @@ const CORE_ASSETS = [
   './index.html',
   './app.html',
   './manifest.webmanifest'
+  './receiving.html',
 ];
 
 const OPTIONAL_ASSETS = [
