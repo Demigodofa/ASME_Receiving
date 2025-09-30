@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Welders Helper — App</title>
+  <meta name="theme-color" content="#101828" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    :root{--bg:#0b1120;--card:#111827;--border:#1f2937;--fg:#e5e7eb;--accent:#22c55e}
+    *{box-sizing:border-box} html,body{height:100%;margin:0}
+    body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    header{background:#111827;border-bottom:1px solid var(--border)}
+    .nav{display:flex;gap:10px;align-items:center;padding:10px 16px;max-width:980px;margin:0 auto}
+    .brand{font-weight:800} main{max-width:980px;margin:24px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+    .tile{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;text-decoration:none;color:var(--fg);font-weight:700}
+    .tile:hover{outline:2px solid var(--accent)}
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav">
+      <a class="tile" href="index.html" style="padding:8px 12px;border-radius:10px">← Home</a>
+      <div class="brand">Welders Helper</div>
+    </nav>
+  </header>
+  <main>
+    <div class="grid">
+      <a class="tile" href="receiving.html">Receiving Reports</a>
+      <a class="tile" href="#" onclick="alert('P# Lookup — coming soon');return false;">P# Lookup</a>
+      <a class="tile" href="#" onclick="alert('Inventory — coming soon');return false;">Inventory</a>
+      <a class="tile" href="#" onclick="alert('Weld Maps — coming soon');return false;">Weld Maps</a>
+    </div>
+  </main>
+  <script>
+    (async () => { if (!('serviceWorker' in navigator)) return;
+      try { const reg = await navigator.serviceWorker.register('service_worker.js');
+        if (reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});}
+      catch(e){console.error(e);} })();
+  </script>
+</body>
+</html>
