@@ -1,11 +1,13 @@
-/* Why: Version bump “locks” a release by invalidating older cache on update. */
-const CACHE_VERSION = 'wh-v4';                 // <- bump when you change files
+/* Why: bump forces browsers to fetch fresh files after a deploy. */
+const CACHE_VERSION = 'wh-v8';
 const CACHE_NAME = `welders-helper-${CACHE_VERSION}`;
 
 const CORE_ASSETS = [
   './',
   './index.html',
   './app.html',
+  './receiving.html',
+  './lookup.html',
   './manifest.webmanifest'
 ];
 
@@ -28,7 +30,9 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k.startsWith('welders-helper-') && k !== CACHE_NAME).map(k => caches.delete(k)));
+    await Promise.all(keys
+      .filter(k => k.startsWith('welders-helper-') && k !== CACHE_NAME)
+      .map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });
@@ -37,7 +41,6 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-/* HTML: network-first; static: cache-first */
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const accept = req.headers.get('accept') || '';
@@ -56,19 +59,29 @@ async function cacheThenNetwork(request) {
     const c = await caches.open(CACHE_NAME);
     c.put(request, res.clone());
     return res;
-  } catch { return cached || new Response('', { status: 504, statusText: 'Offline' }); }
+  } catch {
+    return cached || new Response('', { status: 504, statusText: 'Offline' });
+  }
 }
 
 async function networkThenCache(request) {
   try {
     const res = await fetch(request, { cache: 'no-store' });
     const c = await caches.open(CACHE_NAME);
-    if (new URL(request.url).pathname.endsWith('/index.html')) c.put('./index.html', res.clone());
-    if (new URL(request.url).pathname.endsWith('/app.html')) c.put('./app.html', res.clone());
+    const path = new URL(request.url).pathname;
+    if (path.endsWith('/index.html')) c.put('./index.html', res.clone());
+    if (path.endsWith('/app.html')) c.put('./app.html', res.clone());
+    if (path.endsWith('/receiving.html')) c.put('./receiving.html', res.clone());
+    if (path.endsWith('/lookup.html')) c.put('./lookup.html', res.clone());
     return res;
   } catch {
-    const fallback = new URL(request.url).pathname.endsWith('/app.html') ? './app.html' : './index.html';
+    const path = new URL(request.url).pathname;
+    const fallback = path.endsWith('/app.html') ? './app.html'
+                    : path.endsWith('/receiving.html') ? './receiving.html'
+                    : path.endsWith('/lookup.html') ? './lookup.html'
+                    : './index.html';
     const cached = await caches.match(fallback);
     return cached || new Response('<h1>Offline</h1>', { headers: { 'Content-Type': 'text/html' } });
   }
 }
+
