@@ -84,3 +84,4 @@ async function networkThenCache(request) {
     return cached || new Response('<h1>Offline</h1>', { headers: { 'Content-Type': 'text/html' } });
   }
 }
+
