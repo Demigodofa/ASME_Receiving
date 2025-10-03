@@ -1,5 +1,5 @@
 /* Why: Version bump “locks” a release by invalidating older cache on update. */
-const CACHE_VERSION = 'wh-v6';                 // <- bump when you change files
+const CACHE_VERSION = 'wh-v7';                 // <- bump when you change files
 const CACHE_NAME = `welders-helper-${CACHE_VERSION}`;
 
 const CORE_ASSETS = [
