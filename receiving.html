@@ -1,75 +1,347 @@
+<!-- /receiving.html  — RECEIVING ENTRY + LIST (ALL CAPS, offline) -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Welders Helper — Receiving Reports</title>
-  <meta name="theme-color" content="#101828" />
+  <title>WELDERS HELPER — RECEIVING</title>
+  <meta name="theme-color" content="#0A0F1A" />
   <link rel="manifest" href="manifest.webmanifest" />
   <style>
-    :root{--bg:#0b1120;--card:#111827;--border:#1f2937;--fg:#e5e7eb;--muted:#94a3b8;--accent:#22c55e;--warn:#f59e0b;--danger:#ef4444}
+    :root{--bg:#0A0F1A;--panel:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C;--danger:#FF5A5F;--focus:#8AB4F8}
     *{box-sizing:border-box} html,body{height:100%;margin:0}
-    body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    header{background:#111827;border-bottom:1px solid var(--border)}
-    .nav{display:flex;gap:10px;align-items:center;padding:10px 16px;max-width:1080px;margin:0 auto}
-    .brand{font-weight:800} main{max-width:1080px;margin:24px auto;padding:0 16px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
-    .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-    label{font-weight:600;font-size:14px} input,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:#0f172a;color:var(--fg)}
-    textarea{min-height:80px;resize:vertical}
-    .btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;background:#1f2937;color:var(--fg)}
-    .btn.primary{background:var(--accent);color:#052e16} .btn.warn{background:var(--warn);color:#111827} .btn.danger{background:var(--danger)}
-    table{width:100%;border-collapse:collapse;margin-top:10px} th,td{border-bottom:1px solid var(--border);padding:8px;text-align:left;font-size:14px}
-    th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#0f172a;border:1px solid var(--border);font-size:12px}
-    .empty{color:var(--muted);text-align:center;padding:16px}
+    body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;letter-spacing:.02em}
+    header{position:sticky;top:0;background:#0C1320CC;backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+    .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1100px;margin:0 auto}
+    .btn{
+      border:1px solid var(--border);background:#0F172A;color:var(--fg);padding:10px 14px;border-radius:12px;
+      font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;text-decoration:none
+    }
+    .btn.primary{background:var(--accent);color:#052e16;border-color:#1B9E64}
+    .btn.danger{background:var(--danger);border-color:#D83A3F}
+    .btn:focus{outline:3px solid var(--focus);outline-offset:2px}
+    .brand{font-weight:900}
+    main{max-width:1100px;margin:22px auto;padding:0 16px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
+    .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    label{display:block;color:var(--muted);font-size:12px;font-weight:900;margin:6px 0}
+    input,select,textarea{
+      width:100%;border:1px solid var(--border);background:#0D1424;color:var(--fg);
+      border-radius:12px;padding:10px 12px;font-weight:800;text-transform:uppercase
+    }
+    textarea{min-height:88px;resize:vertical}
+    input::placeholder,textarea::placeholder{text-transform:none;color:#6C809E}
+    .groupTitle{font-size:12px;color:var(--muted);margin:8px 0 2px 2px;text-transform:uppercase}
+    .xbox{display:flex;align-items:center;gap:8px}
+    .box{
+      width:22px;height:22px;border:2px solid var(--border);border-radius:6px;display:inline-grid;place-items:center;font-weight:900
+    }
+    .hint{color:var(--muted);font-size:12px;text-transform:uppercase}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid var(--border);padding:12px 8px}
+    th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+    .pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#0F172A;border:1px solid var(--border);font-size:12px;font-weight:900}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
   </style>
 </head>
 <body>
   <header>
     <nav class="nav">
-      <a class="btn" href="app.html">← Back</a>
-      <div class="brand">Receiving Reports</div>
+      <a class="btn" href="app.html">← APP</a>
+      <div class="brand">RECEIVING</div>
+      <div style="flex:1"></div>
+      <span class="pill">OFFLINE READY</span>
     </nav>
   </header>
+
   <main>
+    <!-- FORM -->
     <section class="card">
       <div class="row">
-        <div><label>Date*</label><input id="date" type="date"></div>
-        <div><label>PO #*</label><input id="po" type="text"></div>
-        <div><label>Part/Spec</label><input id="part" type="text"></div>
-        <div><label>Heat #</label><input id="heat" type="text"></div>
-        <div><label>Quantity*</label><input id="qty" type="number" min="0"></div>
-        <div><label>Received By</label><input id="recvBy" type="text"></div>
-        <div style="grid-column:1/-1"><label>Notes</label><textarea id="notes"></textarea></div>
+        <div>
+          <label for="title">TITLE (30)</label>
+          <input id="title" maxlength="30" placeholder="VALVE F22 12IN" />
+        </div>
+        <div>
+          <label for="jobNo">JOB NO. (8)</label>
+          <input id="jobNo" maxlength="8" />
+        </div>
+        <div>
+          <label for="vendor">VENDOR (20)</label>
+          <input id="vendor" maxlength="20" placeholder="VELAN" />
+        </div>
+        <div>
+          <label for="po">PO. (20)</label>
+          <input id="po" maxlength="20" placeholder="PO7777" />
+        </div>
+        <div>
+          <label for="date">DATE</label>
+          <input id="date" type="date" />
+        </div>
+        <div>
+          <label for="qty">QUANTITY (≤5 DIGITS)</label>
+          <input id="qty" inputmode="numeric" pattern="[0-9]{1,5}" maxlength="5" placeholder="1" />
+        </div>
       </div>
-      <button class="btn primary" id="saveBtn">Save</button>
+
+      <div class="groupTitle">PRODUCT / SPEC / GRADE / FITTING</div>
+      <div class="row">
+        <div>
+          <label for="product">PRODUCT</label>
+          <select id="product">
+            <option>TUBE</option><option>PIPE</option><option>FORGING</option>
+            <option>BAR</option><option>CASTING</option><option>OTHER</option>
+          </select>
+        </div>
+        <div>
+          <label>SPECIFICATION</label>
+          <div class="row" style="grid-template-columns:120px 1fr">
+            <select id="specPrefix"><option>SA</option><option>A</option></select>
+            <input id="specCode" maxlength="6" placeholder="182" />
+          </div>
+        </div>
+        <div>
+          <label for="grade">GRADE / TYPE (6)</label>
+          <input id="grade" maxlength="6" placeholder="F22" />
+        </div>
+        <div>
+          <label>FITTING (B16.X)</label>
+          <div class="row" style="grid-template-columns:90px 1fr">
+            <input value="B16." disabled />
+            <div class="row" style="grid-template-columns:1fr 1fr;gap:8px">
+              <select id="b16Suffix">
+                <option value="">(BLANK)</option>
+                <option value="5">.5</option>
+                <option value="9">.9</option>
+                <option value="11">.11</option>
+                <option value="34">.34</option>
+              </select>
+              <input id="b16Override" maxlength="2" placeholder="OVR" title="Override suffix (2 digits)" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="groupTitle">DIMENSIONS</div>
+      <div class="row">
+        <div><label for="th1">TH (8)</label><input id="th1" maxlength="8" placeholder="TH" /></div>
+        <div><label for="th2">TH (8)</label><input id="th2" maxlength="8" /></div>
+        <div><label for="th3">TH (8)</label><input id="th3" maxlength="8" /></div>
+        <div><label for="th4">TH (8)</label><input id="th4" maxlength="8" /></div>
+      </div>
+      <div class="row">
+        <div><label for="width">WIDTH (10)</label><input id="width" maxlength="10" /></div>
+        <div><label for="length">LENGTH (10)</label><input id="length" maxlength="10" /></div>
+        <div>
+          <label>DIAMETER (5) + TYPE</label>
+          <div class="row" style="grid-template-columns:1fr 120px">
+            <input id="diameter" maxlength="5" placeholder="12" />
+            <select id="diaType"><option>O.D.</option><option>I.D.</option></select>
+          </div>
+        </div>
+        <div><label for="dimOther">OTHER (12)</label><input id="dimOther" maxlength="12" /></div>
+      </div>
+
+      <div class="groupTitle">ACCEPTABILITY</div>
+      <div class="row">
+        <div>
+          <label for="visualOk">VISUAL INSPECTION ACCEPTABLE</label>
+          <select id="visualOk"><option>YES</option><option>NO</option><option>N/A</option></select>
+        </div>
+        <div>
+          <label for="b16Ok">B16 DIMENSIONS ACCEPTABLE</label>
+          <select id="b16Ok"><option>YES</option><option>NO</option><option>N/A</option></select>
+        </div>
+      </div>
+
+      <div class="groupTitle">MARKINGS</div>
+      <div class="row">
+        <div style="grid-column:1/-1">
+          <label for="marking">ACTUAL MATERIAL MARKING (≤200)</label>
+          <textarea id="marking" maxlength="200" placeholder="VELAN 12'' 1500 FORG // SA-182-F22 ..."></textarea>
+        </div>
+        <div>
+          <label for="markingCode">MARKING ACCEPTABLE TO CODE/STANDARD</label>
+          <select id="markingCode"><option>YES</option><option>NO</option><option>N/A</option></select>
+        </div>
+        <div>
+          <label for="mtrOk">MTR/COFC ACCEPTABLE TO SPECIFICATION</label>
+          <select id="mtrOk"><option>YES</option><option>NO</option><option>N/A</option></select>
+        </div>
+      </div>
+
+      <div class="groupTitle">DECISION / COMMENTS</div>
+      <div class="row">
+        <div class="xbox">
+          <div class="box" id="boxAccept"> </div><button id="btnAccept" class="btn">ACCEPT</button>
+          <div class="box" id="boxReject" style="margin-left:14px"> </div><button id="btnReject" class="btn danger">REJECT</button>
+        </div>
+        <div>
+          <label for="comments">COMMENTS (50)</label>
+          <input id="comments" maxlength="50" />
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+        <button id="saveBtn" class="btn primary">SAVE</button>
+        <button id="resetBtn" class="btn">RESET</button>
+      </div>
+      <div class="hint" style="margin-top:6px">SAVED LOCALLY • JOB FILTER APPLIES BELOW</div>
     </section>
+
+    <!-- LIST -->
     <section class="card">
-      <table id="table">
-        <thead><tr><th>ID</th><th>Date</th><th>PO</th><th>Part</th><th>Heat</th><th>Qty</th><th>By</th></tr></thead>
-        <tbody id="tbody"><tr><td class="empty" colspan="7">No reports yet.</td></tr></tbody>
+      <table>
+        <thead><tr><th>JOB</th><th>TITLE</th><th>DATE</th><th>QTY</th><th>ACTIONS</th></tr></thead>
+        <tbody id="listBody"><tr><td colspan="5" class="hint">NO RECEIVING ENTRIES</td></tr></tbody>
       </table>
     </section>
   </main>
-  <script>
-    const KEY='wh_receiving_v1';
-    const read=()=>JSON.parse(localStorage.getItem(KEY)||'[]');
-    const write=a=>localStorage.setItem(KEY,JSON.stringify(a));
-    const uid=()=>Date.now().toString(36);
 
-    const $=id=>document.getElementById(id);
-    $('saveBtn').onclick=()=>{
-      const obj={id:uid(),date:$('date').value,po:$('po').value,part:$('part').value,heat:$('heat').value,qty:$('qty').value,recvBy:$('recvBy').value,notes:$('notes').value};
-      const all=read(); all.push(obj); write(all); render();
+  <script>
+    // Storage
+    const RECV_KEY='wh_receiving_v1';
+    const readAll = () => JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
+    const writeAll = (rows) => localStorage.setItem(RECV_KEY, JSON.stringify(rows));
+    const qs = (k)=> new URLSearchParams(location.search).get(k)||'';
+
+    // Elements
+    const $ = (id)=>document.getElementById(id);
+
+    // Decision toggle
+    let decision='ACCEPT';
+    function renderDecision(){
+      $('boxAccept').textContent = decision==='ACCEPT' ? 'X' : ' ';
+      $('boxReject').textContent = decision==='REJECT' ? 'X' : ' ';
+    }
+    $('btnAccept').onclick=()=>{decision='ACCEPT';renderDecision();};
+    $('btnReject').onclick=()=>{decision='REJECT';renderDecision();};
+
+    // Today
+    function today(){ return new Date().toISOString().slice(0,10); }
+
+    // Build record from form
+    function getForm(id=null){
+      const suffix = $('b16Override').value.trim() || $('b16Suffix').value;
+      return {
+        id: id || (crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)),
+        jobNo: $('jobNo').value.trim().toUpperCase(),
+        title: $('title').value.trim().toUpperCase(),
+        vendor:$('vendor').value.trim().toUpperCase(),
+        po:$('po').value.trim().toUpperCase(),
+        date:$('date').value || today(),
+        qty:$('qty').value.trim(),
+        product:$('product').value,
+        specPrefix:$('specPrefix').value,
+        specCode:$('specCode').value.trim().toUpperCase(),
+        grade:$('grade').value.trim().toUpperCase(),
+        fitting: 'B16.' + (suffix||''),
+        th:[ $('th1').value, $('th2').value, $('th3').value, $('th4').value ].map(v=>v.trim().toUpperCase()),
+        width:$('width').value.trim().toUpperCase(),
+        length:$('length').value.trim().toUpperCase(),
+        diameter:$('diameter').value.trim().toUpperCase(),
+        diaType:$('diaType').value,
+        dimOther:$('dimOther').value.trim().toUpperCase(),
+        visualOk:$('visualOk').value,
+        b16Ok:$('b16Ok').value,
+        marking:$('marking').value.trim().toUpperCase(),
+        markingCode:$('markingCode').value,
+        mtrOk:$('mtrOk').value,
+        decision,
+        comments:$('comments').value.trim().toUpperCase(),
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    function setForm(r){
+      $('title').value=r.title||'';
+      $('jobNo').value=r.jobNo||'';
+      $('vendor').value=r.vendor||'';
+      $('po').value=r.po||'';
+      $('date').value=r.date||today();
+      $('qty').value=r.qty||'';
+      $('product').value=r.product||'TUBE';
+      $('specPrefix').value=r.specPrefix||'SA';
+      $('specCode').value=r.specCode||'';
+      $('grade').value=r.grade||'';
+      const suf=(r.fitting||'').replace('B16.','');
+      if(['5','9','11','34',''].includes(suf)){ $('b16Suffix').value=suf; $('b16Override').value=''; }
+      else { $('b16Suffix').value=''; $('b16Override').value=suf.slice(0,2); }
+      $('th1').value=r.th?.[0]||''; $('th2').value=r.th?.[1]||''; $('th3').value=r.th?.[2]||''; $('th4').value=r.th?.[3]||'';
+      $('width').value=r.width||''; $('length').value=r.length||'';
+      $('diameter').value=r.diameter||''; $('diaType').value=r.diaType||'O.D.';
+      $('dimOther').value=r.dimOther||'';
+      $('visualOk').value=r.visualOk||'YES'; $('b16Ok').value=r.b16Ok||'YES';
+      $('marking').value=r.marking||''; $('markingCode').value=r.markingCode||'YES'; $('mtrOk').value=r.mtrOk||'YES';
+      decision=r.decision||'ACCEPT'; renderDecision();
+      $('comments').value=r.comments||'';
+    }
+
+    // List render (filtered by job)
+    let editingId=null;
+    function renderList(){
+      const job = $('jobNo').value.trim().toUpperCase();
+      const rows = readAll().filter(r=>r.jobNo===job).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+      const tb=$('listBody'); tb.innerHTML='';
+      if(!rows.length){ tb.innerHTML='<tr><td colspan="5" class="hint">NO RECEIVING ENTRIES</td></tr>'; return; }
+      for(const r of rows){
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td><span class="pill">${r.jobNo}</span></td>
+          <td>${r.title||'(UNTITLED)'}</td>
+          <td>${(r.date||'').toUpperCase()}</td>
+          <td style="text-align:right">${r.qty||''}</td>
+          <td class="actions">
+            <button class="btn" data-act="edit" data-id="${r.id}">VIEW / EDIT</button>
+            <button class="btn danger" data-act="del" data-id="${r.id}">DELETE</button>
+          </td>`;
+        tb.appendChild(tr);
+      }
+    }
+
+    $('listBody').onclick=(e)=>{
+      const btn=e.target.closest('button'); if(!btn) return;
+      const id=btn.dataset.id, act=btn.dataset.act;
+      const rows=readAll();
+      const idx=rows.findIndex(x=>x.id===id);
+      if(idx<0) return;
+      if(act==='edit'){ editingId=id; setForm(rows[idx]); window.scrollTo({top:0,behavior:'smooth'}); }
+      if(act==='del'){
+        if(confirm('ARE YOU SURE YOU WANT TO DELETE THIS RECEIVING ENTRY?')){
+          rows.splice(idx,1); writeAll(rows); renderList();
+        }
+      }
     };
 
-    function render(){
-      const rows=read(); const tb=$('tbody'); tb.innerHTML='';
-      if(!rows.length){tb.innerHTML='<tr><td class="empty" colspan="7">No reports yet.</td></tr>';return;}
-      for(const r of rows){tb.innerHTML+=`<tr><td>${r.id}</td><td>${r.date}</td><td>${r.po}</td><td>${r.part}</td><td>${r.heat}</td><td>${r.qty}</td><td>${r.recvBy}</td></tr>`;}
-    }
-    render();
+    // Save
+    $('saveBtn').onclick=()=>{
+      const rec=getForm(editingId);
+      if(!rec.jobNo) return alert('JOB NO. REQUIRED');
+      if(!rec.title) return alert('TITLE REQUIRED');
+      const rows=readAll();
+      const idx=rows.findIndex(x=>x.id===rec.id);
+      if(idx>=0) rows[idx]=rec; else rows.unshift(rec);
+      writeAll(rows);
+      editingId=null;
+      setForm({jobNo:rec.jobNo,date:today()}); // keep context
+      renderList();
+      document.querySelector('section.card + section.card').scrollIntoView({behavior:'smooth'});
+    };
+    $('resetBtn').onclick=()=>{ editingId=null; setForm({jobNo:$('jobNo').value,date:today()}); };
+
+    // Init
+    (function init(){
+      $('date').value=today();
+      const job=qs('job')?.toUpperCase()||'';
+      $('jobNo').value=job;
+      renderDecision();
+      renderList();
+    })();
+
+    // SW (no-op if already)
+    (async()=>{ if(!('serviceWorker'in navigator))return;
+      try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){}
+    })();
   </script>
 </body>
 </html>
