@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Welders Helper — Jobs</title>
+  <meta name="theme-color" content="#101828" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    :root{--bg:#0b1120;--card:#111827;--border:#1f2937;--fg:#e5e7eb;--muted:#94a3b8;--accent:#22c55e;--danger:#ef4444}
+    *{box-sizing:border-box} html,body{height:100%;margin:0}
+    body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    header{position:sticky;top:0;background:rgba(17,24,39,.85);backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+    .nav{display:flex;gap:10px;align-items:center;padding:10px 16px;max-width:1080px;margin:0 auto}
+    .brand{font-weight:800}
+    main{max-width:1080px;margin:24px auto;padding:0 16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
+    label{font-weight:600;font-size:14px}
+    input{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:#0f172a;color:var(--fg)}
+    .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+    .btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;background:#1f2937;color:var(--fg)}
+    .btn.primary{background:var(--accent);color:#052e16}
+    .btn.danger{background:var(--danger)}
+    table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--border);padding:10px;text-align:left}
+    th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#0f172a;border:1px solid var(--border);font-size:12px}
+    .hint{color:var(--muted);font-size:12px;margin-top:6px}
+    .empty{color:var(--muted);text-align:center;padding:16px}
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav">
+      <a class="btn" href="app.html">← App</a>
+      <div class="brand">Jobs</div>
+      <div style="flex:1"></div>
+      <span class="pill">Offline ready</span>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="row">
+        <div>
+          <label for="jobNo">JOB NO. (max 8)*</label>
+          <input id="jobNo" type="text" maxlength="8" placeholder="e.g., 24A001B2" />
+        </div>
+        <div>
+          <label for="desc">DESC. (max 12)</label>
+          <input id="desc" type="text" maxlength="12" placeholder="e.g., BAY-3" />
+        </div>
+        <div>
+          <label for="startDate">Start Date</label>
+          <input id="startDate" type="date" />
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button id="createBtn" class="btn primary">Create Job</button>
+        <button id="clearBtn" class="btn">Clear</button>
+      </div>
+      <div class="hint">* letters, numbers, punctuation allowed; Job No. must be unique.</div>
+    </section>
+
+    <section class="card">
+      <table>
+        <thead><tr><th>Job No.</th><th>Desc.</th><th>Start</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody id="jobsBody"><tr><td class="empty" colspan="5">No jobs yet.</td></tr></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const JOBS_KEY='wh_jobs_v1';
+    const RECV_KEY='wh_receiving_v1';
+    const $=id=>document.getElementById(id);
+    const readJobs=()=>JSON.parse(localStorage.getItem(JOBS_KEY)||'[]');
+    const writeJobs=a=>localStorage.setItem(JOBS_KEY,JSON.stringify(a));
+    const readReceiving=()=>JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
+
+    function renderJobs(){
+      const rows=readJobs().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+      const tb=$('jobsBody'); tb.innerHTML='';
+      if(!rows.length){ tb.innerHTML='<tr><td class="empty" colspan="5">No jobs yet.</td></tr>'; return; }
+      for(const j of rows){
+        const tr=document.createElement('tr');
+        const hasReports = readReceiving().some(r=>r.jobNo===j.jobNo);
+        tr.innerHTML = `
+          <td><span class="pill">${j.jobNo}</span></td>
+          <td>${j.desc||''}</td>
+          <td>${j.startDate||''}</td>
+          <td>${new Date(j.createdAt).toLocaleString()}</td>
+          <td>
+            <a class="btn" href="job.html?job=${encodeURIComponent(j.jobNo)}">Open</a>
+            <button class="btn danger" data-del="${j.jobNo}" ${hasReports?'disabled title="Has reports"':''}>Delete</button>
+          </td>`;
+        tb.appendChild(tr);
+      }
+    }
+
+    function validateJob(jobNo){
+      if(!jobNo) return 'Job No. required';
+      if(jobNo.length>8) return 'Job No. must be ≤ 8 chars';
+      const exists = readJobs().some(j=>j.jobNo.toUpperCase()===jobNo.toUpperCase());
+      if(exists) return 'Job No. already exists';
+      return '';
+    }
+
+    $('createBtn').onclick=()=>{
+      const jobNo=$('jobNo').value.trim();
+      const desc=$('desc').value.trim();
+      const start=$('startDate').value || new Date().toISOString().slice(0,10);
+      const err=validateJob(jobNo);
+      if(err) return alert(err);
+      const now=new Date().toISOString();
+      const id=(crypto.randomUUID&&crypto.randomUUID())||Math.random().toString(36).slice(2);
+      const jobs=readJobs(); jobs.unshift({ id, jobNo, desc, startDate:start, createdAt:now });
+      writeJobs(jobs);
+      $('jobNo').value=''; $('desc').value='';
+      $('startDate').value=new Date().toISOString().slice(0,10);
+      renderJobs();
+    };
+
+    $('clearBtn').onclick=()=>{ $('jobNo').value=''; $('desc').value=''; };
+
+    $('jobsBody').onclick=(e)=>{
+      const del=e.target.getAttribute('data-del');
+      if(del){
+        if(readReceiving().some(r=>r.jobNo===del)) return; // protected
+        if(confirm(`Delete job ${del}?`)){
+          writeJobs(readJobs().filter(j=>j.jobNo!==del));
+          renderJobs();
+        }
+      }
+    };
+
+    (function init(){
+      if(!$('startDate').value) $('startDate').value=new Date().toISOString().slice(0,10);
+      renderJobs();
+    })();
+
+    (async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){console.error(e);} })();
+  </script>
+</body>
+</html>

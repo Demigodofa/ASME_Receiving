@@ -1,12 +1,15 @@
-/* Why: bump forces browsers to fetch fresh files after a deploy. */
-const CACHE_VERSION = 'wh-v8';
+/* Why: bump forces browsers to fetch fresh files after deploy. */
+const CACHE_VERSION = 'wh-v10';
 const CACHE_NAME = `welders-helper-${CACHE_VERSION}`;
 
 const CORE_ASSETS = [
   './',
   './index.html',
   './app.html',
+  './jobs.html',
+  './job.html',
   './receiving.html',
+  './hydro.html',
   './lookup.html',
   './manifest.webmanifest'
 ];
@@ -30,9 +33,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys
-      .filter(k => k.startsWith('welders-helper-') && k !== CACHE_NAME)
-      .map(k => caches.delete(k)));
+    await Promise.all(keys.filter(k => k.startsWith('welders-helper-') && k !== CACHE_NAME).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });
@@ -59,29 +60,32 @@ async function cacheThenNetwork(request) {
     const c = await caches.open(CACHE_NAME);
     c.put(request, res.clone());
     return res;
-  } catch {
-    return cached || new Response('', { status: 504, statusText: 'Offline' });
-  }
+  } catch { return cached || new Response('', { status: 504, statusText: 'Offline' }); }
 }
 
 async function networkThenCache(request) {
   try {
     const res = await fetch(request, { cache: 'no-store' });
     const c = await caches.open(CACHE_NAME);
-    const path = new URL(request.url).pathname;
-    if (path.endsWith('/index.html')) c.put('./index.html', res.clone());
-    if (path.endsWith('/app.html')) c.put('./app.html', res.clone());
-    if (path.endsWith('/receiving.html')) c.put('./receiving.html', res.clone());
-    if (path.endsWith('/lookup.html')) c.put('./lookup.html', res.clone());
+    const p = new URL(request.url).pathname;
+    if (p.endsWith('/index.html')) c.put('./index.html', res.clone());
+    if (p.endsWith('/app.html')) c.put('./app.html', res.clone());
+    if (p.endsWith('/jobs.html')) c.put('./jobs.html', res.clone());
+    if (p.endsWith('/job.html')) c.put('./job.html', res.clone());
+    if (p.endsWith('/receiving.html')) c.put('./receiving.html', res.clone());
+    if (p.endsWith('/hydro.html')) c.put('./hydro.html', res.clone());
+    if (p.endsWith('/lookup.html')) c.put('./lookup.html', res.clone());
     return res;
   } catch {
-    const path = new URL(request.url).pathname;
-    const fallback = path.endsWith('/app.html') ? './app.html'
-                    : path.endsWith('/receiving.html') ? './receiving.html'
-                    : path.endsWith('/lookup.html') ? './lookup.html'
-                    : './index.html';
+    const p = new URL(request.url).pathname;
+    const fallback = p.endsWith('/app.html') ? './app.html'
+                  : p.endsWith('/jobs.html') ? './jobs.html'
+                  : p.endsWith('/job.html') ? './job.html'
+                  : p.endsWith('/receiving.html') ? './receiving.html'
+                  : p.endsWith('/hydro.html') ? './hydro.html'
+                  : p.endsWith('/lookup.html') ? './lookup.html'
+                  : './index.html';
     const cached = await caches.match(fallback);
     return cached || new Response('<h1>Offline</h1>', { headers: { 'Content-Type': 'text/html' } });
   }
 }
-
