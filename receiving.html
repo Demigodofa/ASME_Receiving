@@ -1,3 +1,4 @@
+<!-- /ASME_Receiving/receiving.html  -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -34,28 +35,6 @@
     .thumb{position:relative}
     .thumb img{width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
     .thumb button{position:absolute;top:4px;right:4px}
-
-    /* PRINT 3-UP */
-    @media print {
-      @page { size: Letter; margin: 0.5in; }
-      body { background: #fff !important; color:#000 !important; }
-      header, .no-print, main > .card { display:none !important; }
-      #printRoot { display:block !important; }
-    }
-    #printRoot{ display:none; font-family:Arial, Helvetica, sans-serif; color:#000; }
-    .p-page{ page-break-after:always; }
-    .p-title{ font-weight:900; font-size:18px; text-align:center; margin:0 0 8px 0; }
-    .p-box{ border:1px solid #111; padding:8px; margin-bottom:8px; }
-    .p-grid{ width:100%; border-collapse:collapse; }
-    .p-grid td{ border:1px solid #222; padding:6px 8px; font-size:12px; vertical-align:top; }
-    .p-lbl{ width:22%; font-weight:700; background:#f3f4f6; }
-    .p-sec{ font-weight:800; background:#e5e7eb; text-align:left; padding:6px 8px; border:1px solid #222; margin:10px 0 4px 0; }
-    .p-row{ display:flex; gap:8px; align-items:center; }
-    .p-pill{ display:inline-block; border:1px solid #222; padding:0 6px; border-radius:6px; font-weight:800; }
-    .p-x{ display:inline-block; width:18px; height:18px; border:2px solid #111; text-align:center; line-height:16px; font-weight:900; }
-    .p-photos{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
-    .p-photos img{ width:160px; height:160px; object-fit:cover; border:1px solid #222; }
-    .p-footer{ margin-top:10px; border:1px solid #111; padding:6px 8px; font-size:12px; }
   </style>
 </head>
 <body>
@@ -69,7 +48,7 @@
   </header>
 
   <main>
-    <!-- FORM (unchanged functional fields) -->
+    <!-- FORM -->
     <section class="card">
       <div class="row">
         <div><label for="title">TITLE (30)</label><input id="title" maxlength="30" placeholder="VALVE F22 12IN" /></div>
@@ -130,7 +109,7 @@
 
       <div class="groupTitle">MARKINGS</div>
       <div class="row">
-        <div style="grid-column:1/-1"><label for="marking">ACTUAL MATERIAL MARKING (≤200)</label><textarea id="marking" maxlength="200" placeholder="VELAN 12'' 1500 FORG//SLIDEGATE SA-182-F22 ..."></textarea></div>
+        <div style="grid-column:1/-1"><label for="marking">ACTUAL MATERIAL MARKING (≤200)</label><textarea id="marking" maxlength="200" placeholder="VELAN 12'' 1500 FORG // SA-182-F22 ..."></textarea></div>
         <div><label for="markingCode">MARKING ACCEPTABLE TO CODE/STANDARD</label><select id="markingCode"><option>YES</option><option>NO</option><option>N/A</option></select></div>
         <div><label for="mtrOk">MTR/COFC ACCEPTABLE TO SPECIFICATION</label><select id="mtrOk"><option>YES</option><option>NO</option><option>N/A</option></select></div>
       </div>
@@ -159,11 +138,8 @@
       <div class="hint" style="margin-top:6px">SAVED LOCALLY • JOB FILTER APPLIES BELOW</div>
     </section>
 
-    <!-- LIST + Export control -->
+    <!-- LIST -->
     <section class="card">
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:8px">
-        <button id="export3upBtn" class="btn">EXPORT (PDF 3-UP)</button>
-      </div>
       <table>
         <thead><tr><th>JOB</th><th>TITLE</th><th>DATE</th><th>QTY</th><th>ACTIONS</th></tr></thead>
         <tbody id="listBody"><tr><td colspan="5" class="hint">NO RECEIVING ENTRIES</td></tr></tbody>
@@ -171,24 +147,17 @@
     </section>
   </main>
 
-  <!-- PRINT ROOT (hidden) -->
-  <div id="printRoot"></div>
-
   <script>
-    /* ===== Storage & utils ===== */
     const RECV_KEY='wh_receiving_v1';
     const readAll=()=>JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
     const writeAll=(rows)=>localStorage.setItem(RECV_KEY,JSON.stringify(rows));
-    const $=id=>document.getElementById(id);
-    const qs=(k)=>new URLSearchParams(location.search).get(k)||'';
-    function today(){return new Date().toISOString().slice(0,10);}
+    const qs=(k)=>new URLSearchParams(location.search).get(k)||''; const $=id=>document.getElementById(id);
 
-    /* ===== Decision toggle ===== */
-    let decision='ACCEPT';
-    function renderDecision(){ $('boxAccept').textContent=decision==='ACCEPT'?'X':' '; $('boxReject').textContent=decision==='REJECT'?'X':' '; }
+    // ACCEPT/REJECT
+    let decision='ACCEPT'; function renderDecision(){ $('boxAccept').textContent=decision==='ACCEPT'?'X':' '; $('boxReject').textContent=decision==='REJECT'?'X':' '; }
     $('btnAccept').onclick=()=>{decision='ACCEPT';renderDecision();}; $('btnReject').onclick=()=>{decision='REJECT';renderDecision();};
 
-    /* ===== Photos ===== */
+    // Photos — always auto-name; never block saving
     let photos=[];
     function renderPhotos(){
       const wrap=$('photoStrip'); wrap.innerHTML='';
@@ -207,195 +176,74 @@
         const tmp=URL.createObjectURL(new Blob([buf],{type:f.type}));
         const dataUrl=await fetch(tmp).then(r=>r.blob()).then(b=>new Promise(res=>{const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(b);}));
         URL.revokeObjectURL(tmp);
-        const baseTitle=($('title').value||'ITEM').trim().toUpperCase()||'ITEM';
-        photos.push({name:`${baseTitle} (${photos.length+1}).jpg`, dataUrl});
+        const job=($('jobNo').value||'JOB').trim().toUpperCase()||'JOB';
+        const baseTitle=($('title').value||'ITEM').trim().toUpperCase()||'ITEM'; // WHY: auto-name at night
+        photos.push({name:`${job}-${baseTitle} (${photos.length+1}).jpg`, dataUrl});
       }
       e.target.value=''; renderPhotos();
     };
 
-    /* ===== Form ↔ record ===== */
-    let editingId=null;
+    function today(){return new Date().toISOString().slice(0,10);}
     function getForm(id=null){
       const suffix=$('b16Override')?.value.trim()||$('b16Suffix')?.value||'';
-      return{
-        id: id || (crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)),
-        jobNo:$('jobNo').value.trim().toUpperCase(),
-        title:$('title').value.trim().toUpperCase(),
-        vendor:$('vendor').value.trim().toUpperCase(),
-        po:$('po').value.trim().toUpperCase(),
-        date:$('date').value||today(),
-        qty:$('qty').value.trim(),
-        product:$('product').value,
-        specPrefix:$('specPrefix').value,
-        specCode:$('specCode').value.trim().toUpperCase(),
-        grade:$('grade').value.trim().toUpperCase(),
-        fitting:'B16.'+(suffix||''),
+      return{ id: id || (crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)),
+        jobNo:$('jobNo').value.trim().toUpperCase(), title:$('title').value.trim().toUpperCase(),
+        vendor:$('vendor').value.trim().toUpperCase(), po:$('po').value.trim().toUpperCase(),
+        date:$('date').value||today(), qty:$('qty').value.trim(),
+        product:$('product').value, specPrefix:$('specPrefix').value, specCode:$('specCode').value.trim().toUpperCase(),
+        grade:$('grade').value.trim().toUpperCase(), fitting:'B16.'+(suffix||''),
         th:[$('th1').value,$('th2').value,$('th3').value,$('th4').value].map(s=>s.trim().toUpperCase()),
-        width:$('width').value.trim().toUpperCase(),
-        length:$('length').value.trim().toUpperCase(),
-        diameter:$('diameter').value.trim().toUpperCase(),
-        diaType:$('diaType').value,
-        dimOther:$('dimOther').value.trim().toUpperCase(),
-        visualOk:$('visualOk').value,
-        b16Ok:$('b16Ok').value,
-        marking:$('marking').value.trim().toUpperCase(),
-        markingCode:$('markingCode').value,
-        mtrOk:$('mtrOk').value,
-        decision,
-        comments:$('comments').value.trim().toUpperCase(),
-        photos,
-        createdAt:new Date().toISOString()
-      };
+        width:$('width').value.trim().toUpperCase(), length:$('length').value.trim().toUpperCase(),
+        diameter:$('diameter').value.trim().toUpperCase(), diaType:$('diaType').value, dimOther:$('dimOther').value.trim().toUpperCase(),
+        visualOk:$('visualOk').value, b16Ok:$('b16Ok').value, marking:$('marking').value.trim().toUpperCase(),
+        markingCode:$('markingCode').value, mtrOk:$('mtrOk').value,
+        decision, comments:$('comments').value.trim().toUpperCase(),
+        photos, createdAt:new Date().toISOString() };
     }
     function setForm(r){
       $('title').value=r.title||''; $('jobNo').value=r.jobNo||''; $('vendor').value=r.vendor||''; $('po').value=r.po||'';
       $('date').value=r.date||today(); $('qty').value=r.qty||''; $('product').value=r.product||'TUBE';
       $('specPrefix').value=r.specPrefix||'SA'; $('specCode').value=r.specCode||''; $('grade').value=r.grade||'';
-      const suf=(r.fitting||'').replace('B16.',''); if(['5','9','11','34',''].includes(suf)){ $('b16Suffix').value=suf; $('b16Override').value=''; } else { $('b16Suffix').value=''; $('b16Override').value=suf.slice(0,2); }
+      const suf=(r.fitting||'').replace('B16.',''); if(['5','9','11','34',''].includes(suf)){$('b16Suffix').value=suf;$('b16Override').value='';} else {$('b16Suffix').value='';$('b16Override').value=suf.slice(0,2);}
       $('th1').value=r.th?.[0]||''; $('th2').value=r.th?.[1]||''; $('th3').value=r.th?.[2]||''; $('th4').value=r.th?.[3]||'';
-      $('width').value=r.width||''; $('length').value=r.length||'';
-      $('diameter').value=r.diameter||''; $('diaType').value=r.diaType||'O.D.'; $('dimOther').value=r.dimOther||'';
-      $('visualOk').value=r.visualOk||'YES'; $('b16Ok').value=r.b16Ok||'YES';
-      $('marking').value=r.marking||''; $('markingCode').value=r.markingCode||'YES'; $('mtrOk').value=r.mtrOk||'YES';
+      $('width').value=r.width||''; $('length').value=r.length||''; $('diameter').value=r.diameter||''; $('diaType').value=r.diaType||'O.D.'; $('dimOther').value=r.dimOther||'';
+      $('visualOk').value=r.visualOk||'YES'; $('b16Ok').value=r.b16Ok||'YES'; $('marking').value=r.marking||''; $('markingCode').value=r.markingCode||'YES'; $('mtrOk').value=r.mtrOk||'YES';
       decision=r.decision||'ACCEPT'; renderDecision();
       $('comments').value=r.comments||''; photos=r.photos||[]; renderPhotos();
     }
 
-    /* ===== List ===== */
+    let editingId=null;
     function renderList(){
       const job=$('jobNo').value.trim().toUpperCase();
       const rows=readAll().filter(r=>r.jobNo===job).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
-      const tb=$('listBody'); tb.innerHTML='';
-      if(!rows.length){ tb.innerHTML='<tr><td colspan="5" class="hint">NO RECEIVING ENTRIES</td></tr>'; return; }
+      const tb=$('listBody'); tb.innerHTML=''; if(!rows.length){tb.innerHTML='<tr><td colspan="5" class="hint">NO RECEIVING ENTRIES</td></tr>'; return;}
       for(const r of rows){
         const tr=document.createElement('tr');
-        tr.innerHTML=`<td><span class="pill">${r.jobNo}</span></td>
-          <td>${r.title||'(UNTITLED)'}</td>
-          <td>${(r.date||'').toUpperCase()}</td>
-          <td style="text-align:right">${r.qty||''}</td>
-          <td class="actions">
-            <button class="btn" data-act="edit" data-id="${r.id}">VIEW / EDIT</button>
-            <button class="btn danger" data-act="del" data-id="${r.id}">DELETE</button>
-          </td>`;
+        tr.innerHTML=`<td><span class="pill">${r.jobNo}</span></td><td>${r.title||'(UNTITLED)'}</td><td>${(r.date||'').toUpperCase()}</td><td style="text-align:right">${r.qty||''}</td>
+        <td class="actions"><button class="btn" data-act="edit" data-id="${r.id}">VIEW / EDIT</button><button class="btn danger" data-act="del" data-id="${r.id}">DELETE</button></td>`;
         tb.appendChild(tr);
       }
     }
     $('listBody').onclick=(e)=>{
       const btn=e.target.closest('button'); if(!btn) return;
-      const id=btn.dataset.id, act=btn.dataset.act;
-      const rows=readAll(); const idx=rows.findIndex(x=>x.id===id); if(idx<0) return;
-      if(act==='edit'){ editingId=id; setForm(rows[idx]); window.scrollTo({top:0,behavior:'smooth'}); }
-      if(act==='del'){
-        if(confirm('ARE YOU SURE YOU WANT TO DELETE THIS RECEIVING ENTRY?')){ rows.splice(idx,1); writeAll(rows); renderList(); }
-      }
+      const id=btn.dataset.id, act=btn.dataset.act; const rows=readAll(); const idx=rows.findIndex(x=>x.id===id); if(idx<0) return;
+      if(act==='edit'){editingId=id; setForm(rows[idx]); window.scrollTo({top:0,behavior:'smooth'});}
+      if(act==='del'){ if(confirm('ARE YOU SURE YOU WANT TO DELETE THIS RECEIVING ENTRY?')){ rows.splice(idx,1); writeAll(rows); renderList(); } }
     };
 
-    /* ===== Save / reset ===== */
     function saveCore(nextMode){
       const rec=getForm(editingId);
       if(!rec.jobNo) return alert('JOB NO. REQUIRED');
-      if(!rec.title) return alert('TITLE REQUIRED');
-      const rows=readAll();
-      const idx=rows.findIndex(x=>x.id===rec.id);
-      if(idx>=0) rows[idx]=rec; else rows.unshift(rec);
-      writeAll(rows);
-      editingId=null;
-      setForm({jobNo:rec.jobNo,date:today(),photos:[]});
-      renderList();
+      if(!rec.title) rec.title='ITEM'; // WHY: never block save on missing title
+      const rows=readAll(); const idx=rows.findIndex(x=>x.id===rec.id); if(idx>=0) rows[idx]=rec; else rows.unshift(rec); writeAll(rows);
+      editingId=null; setForm({jobNo:rec.jobNo,date:today(),photos:[]}); renderList();
       if(nextMode==='another'){ window.scrollTo({top:0,behavior:'smooth'}); }
       else if(nextMode==='done'){ location.href=`jobs.html?job=${encodeURIComponent(rec.jobNo)}`; }
       else { document.querySelector('section.card + section.card').scrollIntoView({behavior:'smooth'}); }
     }
-    $('saveBtn').onclick=()=>saveCore('list');
-    $('saveAddBtn').onclick=()=>saveCore('another');
-    $('doneBtn').onclick=()=>saveCore('done');
-    $('resetBtn').onclick=()=>{ editingId=null; setForm({jobNo:$('jobNo').value,date:today(),photos:[]}); };
+    $('saveBtn').onclick=()=>saveCore('list'); $('saveAddBtn').onclick=()=>saveCore('another'); $('doneBtn').onclick=()=>saveCore('done'); $('resetBtn').onclick=()=>{editingId=null; setForm({jobNo:$('jobNo').value,date:today(),photos:[]});};
 
-    /* ===== 3-up PDF export ===== */
-    $('export3upBtn').onclick=()=>{
-      const job=$('jobNo').value.trim().toUpperCase();
-      if(!job) return alert('SET JOB NO. FIRST');
-      const rows=readAll().filter(r=>r.jobNo===job);
-      if(!rows.length) return alert('NO RECEIVING ENTRIES FOR THIS JOB');
-      buildPrintPages(rows);
-      window.print();
-      // cleanup print DOM after print (some browsers)
-      setTimeout(()=>{ $('printRoot').innerHTML=''; }, 1000);
-    };
-
-    function tx(v){ return (v||'').toString().toUpperCase(); }
-    function cell(label, value, colspanLbl=1, colspanVal=1){
-      return `<td class="p-lbl" colspan="${colspanLbl}">${label}</td><td colspan="${colspanVal}">${value}</td>`;
-    }
-    function entryBox(rec){
-      const ths = (rec.th||[]).filter(Boolean).map(t=>tx(t)).join('&nbsp;&nbsp;&nbsp;');
-      const dimDia = `${tx(rec.diameter)} ${tx(rec.diaType)}`.trim();
-      const photos = (rec.photos||[]).map(p=>`<img src="${p.dataUrl}" alt="PHOTO">`).join('');
-      return `
-      <div class="p-box">
-        <div class="p-title">RECEIVING INSPECTION REPORT</div>
-        <table class="p-grid">
-          <tr>${cell('JOB NO.', tx(rec.jobNo))}${cell('VENDOR:', tx(rec.vendor))}</tr>
-          <tr>${cell('PO.', tx(rec.po))}${cell('DATE:', tx(rec.date))}</tr>
-          <tr>${cell('QUANTITY:', tx(rec.qty),1,3)}</tr>
-        </table>
-
-        <div class="p-sec">SPECIFICATION</div>
-        <table class="p-grid">
-          <tr>${cell('PRODUCT:', tx(rec.product))}${cell('GRADE/TYPE:', tx(rec.grade))}</tr>
-          <tr>${cell('SPECIFICATION:', tx(`${rec.specPrefix||''}- ${rec.specCode||''}`))}${cell('FITTING:', tx(rec.fitting))}</tr>
-        </table>
-
-        <div class="p-sec">DIMENSIONS</div>
-        <table class="p-grid">
-          <tr>${cell('DIMENSIONS: TH', ths,1,3)}</tr>
-          <tr>${cell('WIDTH:', tx(rec.width))}${cell('LENGTH:', tx(rec.length))}</tr>
-          <tr>${cell('DIAMETER:', tx(dimDia))}${cell('OTHER:', tx(rec.dimOther))}</tr>
-        </table>
-
-        <table class="p-grid" style="margin-top:8px">
-          <tr>${cell('VISUAL INSPECTION ACCEPTABLE:', tx(rec.visualOk))}${cell('B16 DIMENSIONS ACCEPTABLE:', tx(rec.b16Ok))}</tr>
-          <tr>${cell('ACTUAL MATERIAL MARKING:', tx(rec.marking),1,3)}</tr>
-          <tr>${cell('MARKING ACCEPTABLE TO CODE/STANDARD:', tx(rec.markingCode))}${cell('MTR/CofC ACCEPTABLE TO SPECIFICATION:', tx(rec.mtrOk))}</tr>
-          <tr>
-            <td class="p-lbl">ACCEPT / REJECT</td>
-            <td colspan="1">
-              <span class="p-pill">ACCEPT</span> <span class="p-x">${rec.decision==='ACCEPT'?'X':''}</span>
-              &nbsp;&nbsp;&nbsp;
-              <span class="p-pill">REJECT</span> <span class="p-x">${rec.decision==='REJECT'?'X':''}</span>
-            </td>
-            ${cell('COMMENTS:', tx(rec.comments))}
-          </tr>
-          <tr>${cell('QUALITY CONTROL:', 'INITIALS / DATE',1,3)}</tr>
-        </table>
-
-        ${photos ? `<div class="p-sec">PHOTOS</div><div class="p-photos">${photos}</div>` : ''}
-      </div>`;
-    }
-
-    function buildPrintPages(records){
-      const root=$('printRoot'); root.innerHTML='';
-      // chunk into groups of 3
-      for(let i=0;i<records.length;i+=3){
-        const pageRecords=records.slice(i,i+3);
-        const page=document.createElement('div'); page.className='p-page';
-        page.innerHTML = pageRecords.map(entryBox).join('') +
-          `<div class="p-footer">
-            <strong>MATERIAL APPROVAL:</strong> APPROVED &nbsp;&nbsp; 
-            <strong>QC MANAGER:</strong> INITIALS / DATE
-          </div>`;
-        root.appendChild(page);
-      }
-      root.style.display='block';
-    }
-
-    /* ===== Init & SW ===== */
-    (function init(){
-      $('date').value=today();
-      const job=(qs('job')||'').toUpperCase();
-      $('jobNo').value=job;
-      renderDecision(); renderPhotos(); renderList(); 
-    })();
+    (function init(){ $('date').value=today(); const job=(new URLSearchParams(location.search).get('job')||'').toUpperCase(); $('jobNo').value=job; renderDecision(); renderPhotos(); renderList(); })();
     (async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){} })();
   </script>
 </body>
