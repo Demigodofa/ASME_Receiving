@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Welders Helper — Job</title>
+  <meta name="theme-color" content="#101828" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    :root{--bg:#0b1120;--card:#111827;--border:#1f2937;--fg:#e5e7eb;--muted:#94a3b8;--accent:#22c55e}
+    *{box-sizing:border-box} html,body{height:100%;margin:0}
+    body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    header{position:sticky;top:0;background:rgba(17,24,39,.85);backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+    .nav{display:flex;gap:10px;align-items:center;padding:10px 16px;max-width:980px;margin:0 auto}
+    .brand{font-weight:800}
+    main{max-width:980px;margin:24px auto;padding:0 16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+    .tile{display:block;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;text-decoration:none;color:var(--fg);font-weight:700}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#0f172a;border:1px solid var(--border);font-size:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav">
+      <a class="tile" href="jobs.html" style="padding:8px 12px;border-radius:10px">← Jobs</a>
+      <div id="title" class="brand">Job</div>
+      <div style="flex:1"></div>
+      <a class="tile" href="app.html" style="padding:8px 12px;border-radius:10px">App</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card">
+      <div id="jobMeta" class="pill">Loading…</div>
+    </section>
+
+    <section class="card">
+      <div class="grid">
+        <a id="recvBtn" class="tile" href="#">Receiving Reports</a>
+        <a id="hydroBtn" class="tile" href="#">Hydro Reports</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <div id="stats" style="color:#94a3b8">No data yet.</div>
+    </section>
+  </main>
+
+  <script>
+    const JOBS_KEY='wh_jobs_v1';
+    const RECV_KEY='wh_receiving_v1';
+    const $=id=>document.getElementById(id);
+    const qs=new URLSearchParams(location.search);
+    const jobNo=qs.get('job');
+
+    function readJobs(){ return JSON.parse(localStorage.getItem(JOBS_KEY)||'[]'); }
+    function readRecv(){ return JSON.parse(localStorage.getItem(RECV_KEY)||'[]'); }
+
+    function load(){
+      if(!jobNo){ $('jobMeta').textContent='Missing job number.'; return; }
+      const job=readJobs().find(j=>j.jobNo===jobNo);
+      if(!job){ $('jobMeta').textContent=`Job ${jobNo} not found.`; return; }
+
+      $('title').textContent=`Job ${job.jobNo}`;
+      $('jobMeta').textContent=`Job ${job.jobNo} — ${job.desc||'—'} — Start: ${job.startDate||'n/a'}`;
+
+      $('recvBtn').href=`receiving.html?job=${encodeURIComponent(job.jobNo)}`;
+      $('hydroBtn').href=`hydro.html?job=${encodeURIComponent(job.jobNo)}`;
+
+      const recvCount=readRecv().filter(r=>r.jobNo===job.jobNo).length;
+      $('stats').textContent = `Receiving: ${recvCount} item(s).`;
+    }
+
+    (function init(){ load(); })();
+    (async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){console.error(e);} })();
+  </script>
+</body>
+</html>
