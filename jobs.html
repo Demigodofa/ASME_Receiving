@@ -1,4 +1,4 @@
-<!-- /ASME_Receiving/jobs.html -->
+<!-- /ASME_Receiving/jobs.html  -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -24,12 +24,12 @@
     input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid var(--border);background:#0D1424;color:#E6EAF0;text-transform:uppercase;font-weight:800}
     .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
     .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#0F172A;border:1px solid var(--border);font-size:12px;font-weight:800}
-    table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--border);padding:14px 10px} th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+    table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--border);padding:14px 10px} th{font-size:11px;color:#8FA3BD;text-transform:uppercase;letter-spacing:.06em}
     .empty{color:var(--muted);text-align:center;padding:18px;text-transform:uppercase}
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50}
-    .sheet{width:min(560px,92%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
-    .sheet h2{margin:0 0 8px 0;font-size:20px;text-transform:uppercase}
-    .meta{color:var(--muted);font-size:14px;margin-bottom:8px}
+    .sheet{width:min(620px,92%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+    .sheet h2{margin:0 0 4px 0;font-size:20px;text-transform:uppercase}
+    .meta{color:#E6EAF0;font-size:18px;font-weight:900;letter-spacing:.06em;margin:4px 0 10px 0} /* BIGGER JOB — DESC */
     .stack{display:flex;flex-direction:column;gap:10px;align-items:center}
     .wide{width:100%;text-align:center}
     .confirm{display:none;margin-top:10px;text-align:center}
@@ -148,29 +148,23 @@
     };
     $('clearBtn').onclick=()=>{$('jobNo').value='';$('desc').value='';};
 
-    /* ===== PDF (3-up, multi-page, no libs) ===== */
+    /* ===== PDF (3-up, no libs) ===== */
     $('pdfBtn').onclick=async ()=>{
       if(!current) return;
       const rows=readRecv().filter(r=>r.jobNo===current.jobNo);
       if(!rows.length) return alert('NO RECEIVING ENTRIES FOR THIS JOB');
-      const pageCanvases=await renderThreeUpPages(rows); // canvases
-      // Convert canvases -> JPEG u8
-      const jpegU8s=[];
-      for(const c of pageCanvases){
-        const url=c.toDataURL('image/jpeg', 0.9);
-        jpegU8s.push(dataUrlToU8(url));
-      }
-      // Build PDF (Letter landscape, 792x612 pt)
-      const pdfBlob = buildPdfFromJpegs(jpegU8s, 792, 612);
+      const canvases=await renderThreeUpPages(rows);
+      const jpegU8s = canvases.map(c => dataUrlToU8(c.toDataURL('image/jpeg', 0.92)));
+      const pdfBlob = buildPdfFromJpegs(jpegU8s, 792, 612); // Letter landscape points
       download(pdfBlob, `${current.jobNo}-REPORT.pdf`);
     };
 
-    /* ===== ZIP: PDF + PHOTOS (JPEGs only) ===== */
-    const ZIP_CAP_BYTES = 20 * 1024 * 1024; // WHY: email/share size cap
-    $('zipDocBtn').onclick=async ()=>{ if(!current) return; const blob=await buildJobZipDocs(current.jobNo,false); if(blob) download(blob, `${current.jobNo}-DOCS.zip`); };
+    /* ===== ZIP: PDF + PHOTOS ===== */
+    const ZIP_CAP_BYTES = 20 * 1024 * 1024;
+    $('zipDocBtn').onclick=async ()=>{ if(!current) return; const blob=await buildJobZipDocs(current.jobNo); if(blob) download(blob, `${current.jobNo}-DOCS.zip`); };
     $('shareZipDocBtn').onclick=async ()=>{
       if(!current) return;
-      const blob=await buildJobZipDocs(current.jobNo,true);
+      const blob=await buildJobZipDocs(current.jobNo);
       if(!blob) return;
       const file=new File([blob],`${current.jobNo}-DOCS.zip`,{type:'application/zip'});
       if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
@@ -178,42 +172,36 @@
       } else { download(blob, file.name); alert('SHARE NOT SUPPORTED — ZIP DOWNLOADED INSTEAD.'); }
     };
 
-    async function buildJobZipDocs(jobNo, showProgress){
+    async function buildJobZipDocs(jobNo){
       const rows=readRecv().filter(r=>r.jobNo===jobNo);
       if(!rows.length){ alert('NO RECEIVING ENTRIES FOR THIS JOB'); return null; }
-      // pages -> canvases -> JPEG u8
       const canvases=await renderThreeUpPages(rows);
-      const pdfU8 = dataUrlToU8(URL.createObjectURL(buildPdfFromJpegs(await Promise.all(canvases.map(c=>new Promise(res=>res(c.toDataURL('image/jpeg',0.9)) ).then(u=>dataUrlToU8(u)))), 792, 612))); // not used; keep simpler below
-
-      // Simpler: rebuild once (avoid objectURL revoke races)
-      const jpegU8s=[]; for(const c of canvases){ jpegU8s.push(dataUrlToU8(c.toDataURL('image/jpeg',0.9))); }
+      const jpegU8s = canvases.map(c => dataUrlToU8(c.toDataURL('image/jpeg', 0.92)));
       const pdfBlob = buildPdfFromJpegs(jpegU8s, 792, 612);
-      const pdfArr = await blobToU8(pdfBlob);
+      const pdfU8 = await blobToU8(pdfBlob);
 
-      // photos (compress if needed)
-      let quality=0.7, maxDim=1600;
+      // Photos (compress to fit cap if needed)
+      let quality=0.8, maxDim=1600;
       const photoItems=[];
       rows.forEach((r,idx)=> (r.photos||[]).forEach((p,i)=> photoItems.push({
         path: `${jobNo}/PHOTOS/${(r.title||'ITEM').toUpperCase().replace(/[^A-Z0-9\-_. ]/g,'_')}_${idx+1}_${i+1}.jpg`,
         dataUrl: p.dataUrl
       })));
-      const files = [{name:`${jobNo}/${jobNo}-REPORT.pdf`, data: pdfArr}];
-      for(const ph of photoItems){
-        const {u8} = await compressDataUrlToJpegU8(ph.dataUrl, maxDim, quality);
-        files.push({name:ph.path, data:u8});
-      }
+      let files = [{name:`${jobNo}/${jobNo}-REPORT.pdf`, data: pdfU8}];
+      for(const ph of photoItems){ const {u8}=await compressDataUrlToJpegU8(ph.dataUrl, maxDim, quality); files.push({name:ph.path, data:u8}); }
+
       let zipBlob = zipStore(files);
       if(zipBlob.size > ZIP_CAP_BYTES){
         $('zipNote').textContent = `Optimizing ZIP size… (${Math.round(zipBlob.size/1024/1024)} MB)`;
-        for(const q of [0.6,0.5,0.4]){
-          const smaller=[{name:`${jobNo}/${jobNo}-REPORT.pdf`, data: pdfArr}];
+        for(const q of [0.7,0.6,0.5,0.4]){
+          const smaller=[{name:`${jobNo}/${jobNo}-REPORT.pdf`, data: pdfU8}];
           for(const ph of photoItems){ const {u8}=await compressDataUrlToJpegU8(ph.dataUrl, maxDim, q); smaller.push({name:ph.path, data:u8}); }
           zipBlob = zipStore(smaller);
           if(zipBlob.size <= ZIP_CAP_BYTES) break;
         }
         if(zipBlob.size > ZIP_CAP_BYTES){
           maxDim = 1200;
-          const smaller=[{name:`${jobNo}/${jobNo}-REPORT.pdf`, data: pdfArr}];
+          const smaller=[{name:`${jobNo}/${jobNo}-REPORT.pdf`, data: pdfU8}];
           for(const ph of photoItems){ const {u8}=await compressDataUrlToJpegU8(ph.dataUrl, maxDim, 0.5); smaller.push({name:ph.path, data:u8}); }
           zipBlob = zipStore(smaller);
         }
@@ -224,76 +212,98 @@
       return zipBlob;
     }
 
-    /* ===== Render 3-up pages (canvas) ===== */
+    /* ===== Render 3-up pages (canvas) — tuned for your form ===== */
     async function renderThreeUpPages(records){
-      // Letter landscape @ ~150dpi canvas: 1650 x 1275
-      const W=1650, H=1275, PAD=36, BOX_GAP=24;
-      const ctxFontTitle='bold 22px Arial'; const ctxFontLabel='bold 14px Arial'; const ctxFontText='12px Arial';
-      const pages=[]; for(let i=0;i<records.length;i+=3){
+      // Letter landscape ~150dpi: 1650x1275. Positions tuned to your boxes/labels.
+      const W=1650, H=1275, PAD=40, GAP=22;
+      const titleY=30, rowY1=60, rowStep=24;
+      const pageFooterH=30;
+      const pages=[];
+      for(let i=0;i<records.length;i+=3){
         const slice=records.slice(i,i+3);
         const c=document.createElement('canvas'); c.width=W; c.height=H; const g=c.getContext('2d');
-        g.fillStyle='#FFFFFF'; g.fillRect(0,0,W,H); g.strokeStyle='#111'; g.fillStyle='#000'; g.lineWidth=1;
+        g.fillStyle='#FFF'; g.fillRect(0,0,W,H); g.strokeStyle='#111'; g.fillStyle='#000'; g.lineWidth=1;
 
-        // footer
-        const footerY=H-PAD; g.font=ctxFontText;
-        g.strokeRect(PAD, footerY-28, W-2*PAD, 28);
-        g.fillText('MATERIAL APPROVAL: APPROVED', PAD+8, footerY-10);
-        g.fillText('QC MANAGER: INITIALS / DATE', PAD+360, footerY-10);
+        // Footer line
+        g.strokeRect(PAD, H-PAD-pageFooterH, W-2*PAD, pageFooterH);
+        g.font='12px Arial';
+        g.fillText('MATERIAL APPROVAL: APPROVED', PAD+10, H-PAD-10);
+        g.fillText('QC MANAGER: INITIALS / DATE', PAD+360, H-PAD-10);
 
-        const boxHeight=(H - PAD*2 - 28 - BOX_GAP*2)/3;
+        const boxH = (H - PAD*2 - pageFooterH - GAP*2) / 3;
+
         for(let r=0;r<slice.length;r++){
-          const rec=slice[r]; const top=PAD + r*(boxHeight+BOX_GAP);
-          g.strokeRect(PAD, top, W-2*PAD, boxHeight);
-          g.font=ctxFontTitle; g.fillText('RECEIVING INSPECTION REPORT', PAD+10, top+28);
+          const rec=slice[r];
+          const top=PAD + r*(boxH+GAP);
 
-          const L=(t,x,y)=>{g.font=ctxFontLabel;g.fillText(t,x,y);};
-          const V=(t,x,y)=>{g.font=ctxFontText;g.fillText((t||'').toString().toUpperCase(),x,y);};
+          // Outer box
+          g.strokeRect(PAD, top, W-2*PAD, boxH);
 
-          L('JOB NO.', PAD+10, top+58); V(rec.jobNo, PAD+110, top+58);
-          L('VENDOR:', PAD+420, top+58); V(rec.vendor, PAD+520, top+58);
+          // Title
+          g.font='bold 22px Arial';
+          g.fillText('RECEIVING INSPECTION REPORT', PAD+10, top+titleY);
 
-          L('PO.', PAD+10, top+82); V(rec.po, PAD+110, top+82);
-          L('DATE:', PAD+420, top+82); V(rec.date, PAD+520, top+82);
+          // Labels & values
+          const L=(t,x,y)=>{g.font='bold 14px Arial'; g.fillText(t,x,y);};
+          const V=(t,x,y)=>{g.font='12px Arial'; g.fillText((t||'').toString().toUpperCase(),x,y);};
 
-          L('QUANTITY:', PAD+10, top+106); V(rec.qty, PAD+110, top+106);
+          // Row 1
+          L('JOB NO.', PAD+10, top+rowY1); V(rec.jobNo, PAD+110, top+rowY1);
+          L('VENDOR:', PAD+430, top+rowY1); V(rec.vendor, PAD+520, top+rowY1);
 
-          g.strokeRect(PAD+6, top+120, W-2*PAD-12, 24); g.font=ctxFontLabel; g.fillText('SPECIFICATION', PAD+12, top+138);
+          // Row 2
+          L('PO.', PAD+10, top+rowY1+rowStep); V(rec.po, PAD+110, top+rowY1+rowStep);
+          L('DATE:', PAD+430, top+rowY1+rowStep); V(rec.date, PAD+520, top+rowY1+rowStep);
 
-          L('PRODUCT:', PAD+10, top+168); V(rec.product, PAD+110, top+168);
-          L('GRADE/TYPE:', PAD+420, top+168); V(rec.grade, PAD+540, top+168);
+          // Row 3
+          L('QUANTITY:', PAD+10, top+rowY1+rowStep*2); V(rec.qty, PAD+110, top+rowY1+rowStep*2);
 
-          L('SPECIFICATION:', PAD+10, top+192); V(`${(rec.specPrefix||'').toUpperCase()} - ${(rec.specCode||'').toUpperCase()}`, PAD+160, top+192);
-          L('FITTING:', PAD+420, top+192); V(rec.fitting, PAD+500, top+192);
+          // SPEC section header
+          g.strokeRect(PAD+6, top+rowY1+rowStep*2+16, W-2*PAD-12, 24);
+          g.font='bold 14px Arial'; g.fillText('SPECIFICATION', PAD+12, top+rowY1+rowStep*2+33);
 
-          g.strokeRect(PAD+6, top+206, W-2*PAD-12, 24); g.fillText('DIMENSIONS', PAD+12, top+224);
+          // Spec rows
+          L('PRODUCT:', PAD+10, top+rowY1+rowStep*3+24); V(rec.product, PAD+110, top+rowY1+rowStep*3+24);
+          L('GRADE/TYPE:', PAD+430, top+rowY1+rowStep*3+24); V(rec.grade, PAD+540, top+rowY1+rowStep*3+24);
 
-          L('DIMENSIONS: TH', PAD+10, top+252); V((rec.th||[]).filter(Boolean).map(s=>s.toUpperCase()).join('   '), PAD+170, top+252);
-          L('WIDTH:', PAD+10, top+276); V(rec.width, PAD+110, top+276);
-          L('LENGTH:', PAD+300, top+276); V(rec.length, PAD+380, top+276);
-          L('DIAMETER:', PAD+600, top+276); V(`${(rec.diameter||'').toUpperCase()} ${(rec.diaType||'').toUpperCase()}`, PAD+700, top+276);
-          L('OTHER:', PAD+980, top+276); V(rec.dimOther, PAD+1040, top+276);
+          L('SPECIFICATION:', PAD+10, top+rowY1+rowStep*4+24); V(`${(rec.specPrefix||'').toUpperCase()} - ${(rec.specCode||'').toUpperCase()}`, PAD+160, top+rowY1+rowStep*4+24);
+          L('FITTING:', PAD+430, top+rowY1+rowStep*4+24); V(rec.fitting, PAD+500, top+rowY1+rowStep*4+24);
 
-          L('VISUAL INSPECTION ACCEPTABLE:', PAD+10, top+304); V(rec.visualOk, PAD+260, top+304);
-          L('B16 DIMENSIONS ACCEPTABLE:', PAD+500, top+304); V(rec.b16Ok, PAD+760, top+304);
+          // DIMENSIONS section header
+          g.strokeRect(PAD+6, top+rowY1+rowStep*4+38, W-2*PAD-12, 24);
+          g.font='bold 14px Arial'; g.fillText('DIMENSIONS', PAD+12, top+rowY1+rowStep*4+55);
 
-          L('ACTUAL MATERIAL MARKING:', PAD+10, top+328);
-          wrapText(g, (rec.marking||'').toUpperCase(), PAD+230, top+328, W-2*PAD-240, 14, ctxFontText);
+          L('DIMENSIONS: TH', PAD+10, top+rowY1+rowStep*6-20); V((rec.th||[]).filter(Boolean).map(s=>s.toUpperCase()).join('   '), PAD+170, top+rowY1+rowStep*6-20);
+          L('WIDTH:', PAD+10, top+rowY1+rowStep*6+4); V(rec.width, PAD+110, top+rowY1+rowStep*6+4);
+          L('LENGTH:', PAD+300, top+rowY1+rowStep*6+4); V(rec.length, PAD+380, top+rowY1+rowStep*6+4);
+          L('DIAMETER:', PAD+600, top+rowY1+rowStep*6+4); V(`${(rec.diameter||'').toUpperCase()} ${(rec.diaType||'').toUpperCase()}`, PAD+700, top+rowY1+rowStep*6+4);
+          L('OTHER:', PAD+980, top+rowY1+rowStep*6+4); V(rec.dimOther, PAD+1040, top+rowY1+rowStep*6+4);
 
-          L('MARKING ACCEPTABLE TO CODE/STANDARD:', PAD+10, top+372); V(rec.markingCode, PAD+330, top+372);
-          L('MTR/CofC ACCEPTABLE TO SPECIFICATION:', PAD+500, top+372); V(rec.mtrOk, PAD+820, top+372);
+          // Acceptability rows
+          L('VISUAL INSPECTION ACCEPTABLE:', PAD+10, top+rowY1+rowStep*7+6); V(rec.visualOk, PAD+260, top+rowY1+rowStep*7+6);
+          L('B16 DIMENSIONS ACCEPTABLE:', PAD+500, top+rowY1+rowStep*7+6); V(rec.b16Ok, PAD+760, top+rowY1+rowStep*7+6);
 
-          L('ACCEPT / REJECT', PAD+10, top+396);
-          g.strokeRect(PAD+160, top+382, 18, 18); if((rec.decision||'ACCEPT')==='ACCEPT'){ g.fillText('X', PAD+163, top+396); }
-          g.fillText('ACCEPT', PAD+185, top+396);
-          g.strokeRect(PAD+270, top+382, 18, 18); if((rec.decision||'REJECT')==='REJECT'){ g.fillText('X', PAD+273, top+396); }
-          g.fillText('REJECT', PAD+295, top+396);
+          // Marking block
+          L('ACTUAL MATERIAL MARKING:', PAD+10, top+rowY1+rowStep*8+8);
+          wrapText(g, (rec.marking||'').toUpperCase(), PAD+230, top+rowY1+rowStep*8+8, W-2*PAD-240, 14, '12px Arial');
 
-          L('COMMENTS:', PAD+420, top+396);
-          wrapText(g, (rec.comments||'').toUpperCase(), PAD+510, top+396, 500, 14, ctxFontText);
+          L('MARKING ACCEPTABLE TO CODE/STANDARD:', PAD+10, top+rowY1+rowStep*10-6); V(rec.markingCode, PAD+330, top+rowY1+rowStep*10-6);
+          L('MTR/CofC ACCEPTABLE TO SPECIFICATION:', PAD+500, top+rowY1+rowStep*10-6); V(rec.mtrOk, PAD+820, top+rowY1+rowStep*10-6);
 
+          // Decision / comments
+          L('ACCEPT / REJECT', PAD+10, top+rowY1+rowStep*11-6);
+          g.strokeRect(PAD+160, top+rowY1+rowStep*11-20, 18, 18); if((rec.decision||'ACCEPT')==='ACCEPT'){ g.fillText('X', PAD+163, top+rowY1+rowStep*11-6); }
+          g.fillText('ACCEPT', PAD+185, top+rowY1+rowStep*11-6);
+          g.strokeRect(PAD+270, top+rowY1+rowStep*11-20, 18, 18); if((rec.decision||'REJECT')==='REJECT'){ g.fillText('X', PAD+273, top+rowY1+rowStep*11-6); }
+          g.fillText('REJECT', PAD+295, top+rowY1+rowStep*11-6);
+
+          L('COMMENTS:', PAD+420, top+rowY1+rowStep*11-6);
+          wrapText(g, (rec.comments||'').toUpperCase(), PAD+510, top+rowY1+rowStep*11-6, 500, 14, '12px Arial');
+
+          // Photos small strip
           if((rec.photos||[]).length){
-            g.fillText('PHOTOS:', PAD+10, top+424);
-            const thumb=100, gap=6; let x=PAD+90, y=top+392;
+            g.fillText('PHOTOS:', PAD+10, top+rowY1+rowStep*12-10);
+            const thumb=100, gap=6; let x=PAD+90, y=top+rowY1+rowStep*11-40;
             for(let pi=0;pi<Math.min(rec.photos.length,5);pi++){
               const img=await loadImage(rec.photos[pi].dataUrl);
               const {w,h}=fitInside(img.width,img.height,thumb,thumb);
@@ -317,114 +327,48 @@
     function fitInside(w,h,maxW,maxH){ const s=Math.min(maxW/w,maxH/h); return {w:Math.round(w*s), h:Math.round(h*s)}; }
     function loadImage(src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.src=src; }); }
 
-    /* ===== Build multi-page PDF from JPEGs (no libs) ===== */
-    function buildPdfFromJpegs(jpegsU8, pageWpt=792, pageHpt=612){
-      // Minimal PDF: one page per JPEG; each page draws the image full-bleed
-      const objects=[]; const xref=[]; let offset=0;
-      const w = pageWpt, h = pageHpt;
+    /* ===== PDF builder (multi-page, JPEG per page) ===== */
+    function buildPdfFromJpegs(jpegsU8, pageWpt, pageHpt){
+      const parts=[]; const xref=[null]; let offset=0; const enc=new TextEncoder();
+      const push=(u8)=>{parts.push(u8); offset+=u8.length;};
+      const pushS=(s)=>push(enc.encode(s));
 
-      const header = `%PDF-1.4\n`;
-      const catId = 1, pagesId = 2;
-      const kids = [];
+      const header='%PDF-1.4\n'; pushS(header);
 
-      // image + content + page objects
-      let objId = 3;
-      for (let i=0;i<jpegsU8.length;i++){
-        const imgId = objId++;
-        const contId = objId++;
-        const pageId = objId++;
-        kids.push(pageId);
+      // Catalog (1), Pages (2)
+      const cat=1, pages=2; xref[cat]=offset; pushS(`${cat} 0 obj\n<< /Type /Catalog /Pages ${pages} 0 R >>\nendobj\n`);
+      xref[pages]=offset; pushS(`${pages} 0 obj\n<< /Type /Pages /Count ${jpegsU8.length} /Kids [ `);
+      let nextId=3; const pageIds=[]; for(let i=0;i<jpegsU8.length;i++){ pageIds.push(nextId+2); nextId+=3; }
+      pushS(pageIds.map(id=>`${id} 0 R `).join('')); pushS(`] >>\nendobj\n`);
 
-        // Image object (DCTDecode)
-        const imgStream = streamObject(imgId, [
-          `/Type /XObject`,
-          `/Subtype /Image`,
-          `/Filter /DCTDecode`,
-          `/ColorSpace /DeviceRGB`,
-          `/Width ${w}`,
-          `/Height ${h}`,
-          `/BitsPerComponent 8`,
-          `/Length ${jpegsU8[i].length}`
-        ].join('\n'), jpegsU8[i]);
-
-        // Content stream: draw image to page size
-        const contentStr = `q\n${w} 0 0 ${h} 0 0 cm\n/Im${i} Do\nQ\n`;
-        const contStream = streamObject(contId, [
-          `/Length ${contentStr.length}`
-        ].join('\n'), new TextEncoder().encode(contentStr));
-
-        // Page object
-        const pageObj = `${pageId} 0 obj\n<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${w} ${h}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${contId} 0 R >>\nendobj\n`;
-
-        objects.push(imgStream, contStream, pageObj);
-      }
-
-      // Pages object
-      const pagesObj = `${pagesId} 0 obj\n<< /Type /Pages /Count ${kids.length} /Kids [ ${kids.map(id=>`${id} 0 R`).join(' ')} ] >>\nendobj\n`;
-      // Catalog
-      const catalogObj = `${catId} 0 obj\n<< /Type /Catalog /Pages ${pagesId} 0 R >>\nendobj\n`;
-
-      // Assemble
-      let body = catalogObj + pagesObj + objects.join('');
-      // XREF
-      const full = header + body;
-      const encoder = new TextEncoder();
-      let bytes = encoder.encode(header);
-      let bodyBytes = encoder.encode(body);
-
-      // We need correct xref: recompute with actual offsets
-      // Build in pieces with tracking offsets
-      const parts=[]; offset=0;
-      function pushStr(str){ const u=encoder.encode(str); parts.push(u); offset+=u.length; }
-      function pushBin(bin){ parts.push(bin); offset+=bin.length; }
-
-      // Write header
-      pushStr(header);
-
-      // Catalog
-      xref[catId]=offset; pushStr(`${catId} 0 obj\n<< /Type /Catalog /Pages ${pagesId} 0 R >>\nendobj\n`);
-      // Pages
-      xref[pagesId]=offset; pushStr(`${pagesId} 0 obj\n<< /Type /Pages /Count ${kids.length} /Kids [ ${kids.map(id=>`${id} 0 R`).join(' ')} ] >>\nendobj\n`);
-
-      // For each page triple (img, content, page)
-      let idx=0; objId=3;
-      for (let i=0;i<jpegsU8.length;i++){
-        const imgId = objId++;
-        const contId = objId++;
-        const pageId = objId++;
+      // Per page: Image (DCT), Content, Page
+      nextId=3;
+      for(let i=0;i<jpegsU8.length;i++){
+        const imgId=nextId++, contId=nextId++, pageId=nextId++;
 
         // Image
-        xref[imgId]=offset;
-        const imgDict = `/Type /XObject\n/Subtype /Image\n/Filter /DCTDecode\n/ColorSpace /DeviceRGB\n/Width ${w}\n/Height ${h}\n/BitsPerComponent 8\n/Length ${jpegsU8[i].length}`;
-        pushStr(`${imgId} 0 obj\n<< ${imgDict} >>\nstream\n`); pushBin(jpegsU8[i]); pushStr(`\nendstream\nendobj\n`);
+        const img=jpegsU8[i], imgDict=`/Type /XObject\n/Subtype /Image\n/Filter /DCTDecode\n/ColorSpace /DeviceRGB\n/BitsPerComponent 8\n/Width ${pageWpt}\n/Height ${pageHpt}\n/Length ${img.length}`;
+        xref[imgId]=offset; pushS(`${imgId} 0 obj\n<< ${imgDict} >>\nstream\n`); push(img); pushS(`\nendstream\nendobj\n`);
 
         // Content
-        const contentStr = `q\n${w} 0 0 ${h} 0 0 cm\n/Im${i} Do\nQ\n`;
-        xref[contId]=offset;
-        pushStr(`${contId} 0 obj\n<< /Length ${contentStr.length} >>\nstream\n${contentStr}\nendstream\nendobj\n`);
+        const content=`q\n${pageWpt} 0 0 ${pageHpt} 0 0 cm\n/Im${i} Do\nQ\n`;
+        xref[contId]=offset; pushS(`${contId} 0 obj\n<< /Length ${content.length} >>\nstream\n${content}\nendstream\nendobj\n`);
 
         // Page
-        xref[pageId]=offset;
-        pushStr(`${pageId} 0 obj\n<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${w} ${h}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${contId} 0 R >>\nendobj\n`);
+        xref[pageId]=offset; pushS(`${pageId} 0 obj\n<< /Type /Page /Parent ${pages} 0 R /MediaBox [0 0 ${pageWpt} ${pageHpt}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${contId} 0 R >>\nendobj\n`);
       }
 
-      const xrefStart = offset;
-      pushStr(`xref\n0 ${xref.length}\n`);
-      // object 0
-      pushStr(`0000000000 65535 f \n`);
+      const xrefStart=offset; pushS(`xref\n0 ${xref.length}\n`);
+      pushS(`0000000000 65535 f \n`);
       for(let i=1;i<xref.length;i++){
-        const off = xref[i]||0;
-        const line = (off.toString().padStart(10,'0')) + ' 00000 n \n';
-        pushStr(line);
+        const off=String(xref[i]||0).padStart(10,'0'); pushS(`${off} 00000 n \n`);
       }
-      // trailer
-      pushStr(`trailer\n<< /Size ${xref.length} /Root ${catId} 0 R >>\nstartxref\n${xrefStart}\n%%EOF`);
-
-      return new Blob(parts, {type:'application/pdf'});
+      pushS(`trailer\n<< /Size ${xref.length} /Root ${cat} 0 R >>\nstartxref\n${xrefStart}\n%%EOF`);
+      return new Blob(parts,{type:'application/pdf'});
     }
 
-    /* ===== Images & ZIP helpers ===== */
-    async function compressDataUrlToJpegU8(dataUrl, maxDim=1600, quality=0.7){
+    /* ===== Image compress & ZIP ===== */
+    async function compressDataUrlToJpegU8(dataUrl, maxDim=1600, quality=0.8){
       const img = await loadImage(dataUrl);
       const scale = Math.min(1, maxDim/Math.max(img.width,img.height));
       const w = Math.max(1, Math.round(img.width*scale));
@@ -437,6 +381,7 @@
     function dataUrlToU8(durl){ const i=durl.indexOf(','); const bin=atob(durl.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
     function blobToU8(blob){ return new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(new Uint8Array(fr.result)); fr.readAsArrayBuffer(blob); }); }
 
+    // ZIP store-only (no compression): robust and small code
     function crc32(u8){ let c=~0>>>0; for(let i=0;i<u8.length;i++){ c^=u8[i]; for(let k=0;k<8;k++) c=(c>>>1) ^ (0xEDB88320 & -(c&1)); } return (~c)>>>0; }
     function strU8(s){ return new TextEncoder().encode(s); }
     function num4(n){ const a=new Uint8Array(4); a[0]=n&255;a[1]=(n>>>8)&255;a[2]=(n>>>16)&255;a[3]=(n>>>24)&255; return a; }
