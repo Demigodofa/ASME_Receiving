@@ -1,42 +1,63 @@
+<!-- /app.html  — HOME MENU (clean, ALL CAPS, adds JOBS tile) -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Welders Helper — App</title>
-  <meta name="theme-color" content="#101828" />
+  <title>WELDERS HELPER — APP</title>
+  <meta name="theme-color" content="#0A0F1A" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png" />
   <style>
-    :root{--bg:#0b1120;--card:#111827;--border:#1f2937;--fg:#e5e7eb;--muted:#94a3b8;--accent:#22c55e}
+    :root{--bg:#0A0F1A;--card:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C}
     *{box-sizing:border-box} html,body{height:100%;margin:0}
     body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    header{position:sticky;top:0;background:rgba(17,24,39,.85);backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
-    .nav{display:flex;gap:10px;align-items:center;padding:10px 16px;max-width:980px;margin:0 auto}
-    .brand{font-weight:800}
-    main{max-width:980px;margin:24px auto;padding:0 16px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
-    .tile{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;text-decoration:none;color:var(--fg);font-weight:700}
+    header{position:sticky;top:0;background:#0C1320CC;backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+    .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1080px;margin:0 auto}
+    .brand{font-weight:900;letter-spacing:.02em}
+    main{max-width:1080px;margin:24px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+    .tile{
+      display:block;background:var(--card);border:1px solid var(--border);
+      border-radius:16px;padding:18px 16px;text-decoration:none;color:var(--fg);
+      font-weight:900;letter-spacing:.04em;text-transform:uppercase;
+    }
     .tile:hover{outline:2px solid var(--accent)}
+    .sub{display:block;color:var(--muted);font-size:12px;margin-top:6px;text-transform:none}
   </style>
 </head>
 <body>
   <header>
     <nav class="nav">
-      <a class="tile" href="index.html" style="padding:8px 12px;border-radius:10px">← Home</a>
-      <div class="brand">Welders Helper</div>
+      <a class="tile" href="index.html" style="padding:8px 12px;border-radius:10px">← HOME</a>
+      <div class="brand">WELDERS HELPER</div>
     </nav>
   </header>
+
   <main>
     <div class="grid">
-      <a class="tile" href="receiving.html">Receiving Reports</a>
-      <a class="tile" href="lookup.html">P# Lookup</a>
+      <!-- Primary flow -->
+      <a class="tile" href="jobs.html">Jobs
+        <span class="sub">Create • Open • Export per job</span>
+      </a>
+
+      <!-- Optional: keep Receiving for quick direct access; recommend using Jobs -->
+      <!-- Remove this tile if you want to force job-first flow -->
+      <!-- <a class="tile" href="receiving.html">Receiving Reports
+        <span class="sub">Direct access (use Jobs for per-job)</span>
+      </a> -->
+
+      <a class="tile" href="lookup.html">P# Lookup
+        <span class="sub">Coming soon</span>
+      </a>
+
       <a class="tile" href="#" onclick="alert('Inventory — coming soon');return false;">Inventory</a>
       <a class="tile" href="#" onclick="alert('Weld Maps — coming soon');return false;">Weld Maps</a>
       <a class="tile" href="#" onclick="alert('Settings — coming soon');return false;">Settings</a>
     </div>
   </main>
+
   <script>
     (async () => {
       if (!('serviceWorker' in navigator)) return;
@@ -48,4 +69,3 @@
   </script>
 </body>
 </html>
-
