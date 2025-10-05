@@ -1,4 +1,3 @@
-<!-- /receiving.html  — RECEIVING ENTRY + LIST (ALL CAPS, offline) -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -13,10 +12,7 @@
     body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;letter-spacing:.02em}
     header{position:sticky;top:0;background:#0C1320CC;backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
     .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1100px;margin:0 auto}
-    .btn{
-      border:1px solid var(--border);background:#0F172A;color:var(--fg);padding:10px 14px;border-radius:12px;
-      font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;text-decoration:none
-    }
+    .btn{border:1px solid var(--border);background:#0F172A;color:var(--fg);padding:10px 14px;border-radius:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;text-decoration:none}
     .btn.primary{background:var(--accent);color:#052e16;border-color:#1B9E64}
     .btn.danger{background:var(--danger);border-color:#D83A3F}
     .btn:focus{outline:3px solid var(--focus);outline-offset:2px}
@@ -25,23 +21,19 @@
     .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
     .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
     label{display:block;color:var(--muted);font-size:12px;font-weight:900;margin:6px 0}
-    input,select,textarea{
-      width:100%;border:1px solid var(--border);background:#0D1424;color:var(--fg);
-      border-radius:12px;padding:10px 12px;font-weight:800;text-transform:uppercase
-    }
+    input,select,textarea{width:100%;border:1px solid var(--border);background:#0D1424;color:var(--fg);border-radius:12px;padding:10px 12px;font-weight:800;text-transform:uppercase}
     textarea{min-height:88px;resize:vertical}
-    input::placeholder,textarea::placeholder{text-transform:none;color:#6C809E}
     .groupTitle{font-size:12px;color:var(--muted);margin:8px 0 2px 2px;text-transform:uppercase}
     .xbox{display:flex;align-items:center;gap:8px}
-    .box{
-      width:22px;height:22px;border:2px solid var(--border);border-radius:6px;display:inline-grid;place-items:center;font-weight:900
-    }
+    .box{width:22px;height:22px;border:2px solid var(--border);border-radius:6px;display:inline-grid;place-items:center;font-weight:900}
     .hint{color:var(--muted);font-size:12px;text-transform:uppercase}
-    table{width:100%;border-collapse:collapse}
-    th,td{border-bottom:1px solid var(--border);padding:12px 8px}
-    th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+    table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--border);padding:12px 8px} th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
     .pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#0F172A;border:1px solid var(--border);font-size:12px;font-weight:900}
     .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .photos{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .thumb{position:relative}
+    .thumb img{width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
+    .thumb button{position:absolute;top:4px;right:4px}
   </style>
 </head>
 <body>
@@ -58,40 +50,19 @@
     <!-- FORM -->
     <section class="card">
       <div class="row">
-        <div>
-          <label for="title">TITLE (30)</label>
-          <input id="title" maxlength="30" placeholder="VALVE F22 12IN" />
-        </div>
-        <div>
-          <label for="jobNo">JOB NO. (8)</label>
-          <input id="jobNo" maxlength="8" />
-        </div>
-        <div>
-          <label for="vendor">VENDOR (20)</label>
-          <input id="vendor" maxlength="20" placeholder="VELAN" />
-        </div>
-        <div>
-          <label for="po">PO. (20)</label>
-          <input id="po" maxlength="20" placeholder="PO7777" />
-        </div>
-        <div>
-          <label for="date">DATE</label>
-          <input id="date" type="date" />
-        </div>
-        <div>
-          <label for="qty">QUANTITY (≤5 DIGITS)</label>
-          <input id="qty" inputmode="numeric" pattern="[0-9]{1,5}" maxlength="5" placeholder="1" />
-        </div>
+        <div><label for="title">TITLE (30)</label><input id="title" maxlength="30" placeholder="VALVE F22 12IN" /></div>
+        <div><label for="jobNo">JOB NO. (8)</label><input id="jobNo" maxlength="8" /></div>
+        <div><label for="vendor">VENDOR (20)</label><input id="vendor" maxlength="20" placeholder="VELAN" /></div>
+        <div><label for="po">PO. (20)</label><input id="po" maxlength="20" placeholder="PO7777" /></div>
+        <div><label for="date">DATE</label><input id="date" type="date" /></div>
+        <div><label for="qty">QUANTITY (≤5 DIGITS)</label><input id="qty" inputmode="numeric" pattern="[0-9]{1,5}" maxlength="5" placeholder="1" /></div>
       </div>
 
       <div class="groupTitle">PRODUCT / SPEC / GRADE / FITTING</div>
       <div class="row">
         <div>
           <label for="product">PRODUCT</label>
-          <select id="product">
-            <option>TUBE</option><option>PIPE</option><option>FORGING</option>
-            <option>BAR</option><option>CASTING</option><option>OTHER</option>
-          </select>
+          <select id="product"><option>TUBE</option><option>PIPE</option><option>FORGING</option><option>BAR</option><option>CASTING</option><option>OTHER</option></select>
         </div>
         <div>
           <label>SPECIFICATION</label>
@@ -100,23 +71,14 @@
             <input id="specCode" maxlength="6" placeholder="182" />
           </div>
         </div>
-        <div>
-          <label for="grade">GRADE / TYPE (6)</label>
-          <input id="grade" maxlength="6" placeholder="F22" />
-        </div>
+        <div><label for="grade">GRADE / TYPE (6)</label><input id="grade" maxlength="6" placeholder="F22" /></div>
         <div>
           <label>FITTING (B16.X)</label>
           <div class="row" style="grid-template-columns:90px 1fr">
             <input value="B16." disabled />
             <div class="row" style="grid-template-columns:1fr 1fr;gap:8px">
-              <select id="b16Suffix">
-                <option value="">(BLANK)</option>
-                <option value="5">.5</option>
-                <option value="9">.9</option>
-                <option value="11">.11</option>
-                <option value="34">.34</option>
-              </select>
-              <input id="b16Override" maxlength="2" placeholder="OVR" title="Override suffix (2 digits)" />
+              <select id="b16Suffix"><option value="">(BLANK)</option><option value="5">.5</option><option value="9">.9</option><option value="11">.11</option><option value="34">.34</option></select>
+              <input id="b16Override" maxlength="2" placeholder="OTHER" title="Override suffix (2 digits)" />
             </div>
           </div>
         </div>
@@ -144,30 +106,15 @@
 
       <div class="groupTitle">ACCEPTABILITY</div>
       <div class="row">
-        <div>
-          <label for="visualOk">VISUAL INSPECTION ACCEPTABLE</label>
-          <select id="visualOk"><option>YES</option><option>NO</option><option>N/A</option></select>
-        </div>
-        <div>
-          <label for="b16Ok">B16 DIMENSIONS ACCEPTABLE</label>
-          <select id="b16Ok"><option>YES</option><option>NO</option><option>N/A</option></select>
-        </div>
+        <div><label for="visualOk">VISUAL INSPECTION ACCEPTABLE</label><select id="visualOk"><option>YES</option><option>NO</option><option>N/A</option></select></div>
+        <div><label for="b16Ok">B16 DIMENSIONS ACCEPTABLE</label><select id="b16Ok"><option>YES</option><option>NO</option><option>N/A</option></select></div>
       </div>
 
       <div class="groupTitle">MARKINGS</div>
       <div class="row">
-        <div style="grid-column:1/-1">
-          <label for="marking">ACTUAL MATERIAL MARKING (≤200)</label>
-          <textarea id="marking" maxlength="200" placeholder="VELAN 12'' 1500 FORG // SA-182-F22 ..."></textarea>
-        </div>
-        <div>
-          <label for="markingCode">MARKING ACCEPTABLE TO CODE/STANDARD</label>
-          <select id="markingCode"><option>YES</option><option>NO</option><option>N/A</option></select>
-        </div>
-        <div>
-          <label for="mtrOk">MTR/COFC ACCEPTABLE TO SPECIFICATION</label>
-          <select id="mtrOk"><option>YES</option><option>NO</option><option>N/A</option></select>
-        </div>
+        <div style="grid-column:1/-1"><label for="marking">ACTUAL MATERIAL MARKING (≤200)</label><textarea id="marking" maxlength="200" placeholder="VELAN 12'' 1500 FORG // SA-182-F22 ..."></textarea></div>
+        <div><label for="markingCode">MARKING ACCEPTABLE TO CODE/STANDARD</label><select id="markingCode"><option>YES</option><option>NO</option><option>N/A</option></select></div>
+        <div><label for="mtrOk">MTR/COFC ACCEPTABLE TO SPECIFICATION</label><select id="mtrOk"><option>YES</option><option>NO</option><option>N/A</option></select></div>
       </div>
 
       <div class="groupTitle">DECISION / COMMENTS</div>
@@ -176,14 +123,19 @@
           <div class="box" id="boxAccept"> </div><button id="btnAccept" class="btn">ACCEPT</button>
           <div class="box" id="boxReject" style="margin-left:14px"> </div><button id="btnReject" class="btn danger">REJECT</button>
         </div>
-        <div>
-          <label for="comments">COMMENTS (50)</label>
-          <input id="comments" maxlength="50" />
-        </div>
+        <div><label for="comments">COMMENTS (50)</label><input id="comments" maxlength="50" /></div>
       </div>
 
-      <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+      <!-- Photos -->
+      <div class="groupTitle">PHOTOS (UP TO 5)</div>
+      <button id="photoBtn" class="btn" type="button">📷 TAKE PHOTO(S)</button>
+      <input id="photoInput" type="file" accept="image/*" capture="environment" multiple style="display:none" />
+      <div id="photoStrip" class="photos"></div>
+
+      <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap">
         <button id="saveBtn" class="btn primary">SAVE</button>
+        <button id="saveAddBtn" class="btn">SAVE & ADD ANOTHER</button>
+        <button id="doneBtn" class="btn">DONE</button>
         <button id="resetBtn" class="btn">RESET</button>
       </div>
       <div class="hint" style="margin-top:6px">SAVED LOCALLY • JOB FILTER APPLIES BELOW</div>
@@ -199,149 +151,118 @@
   </main>
 
   <script>
-    // Storage
     const RECV_KEY='wh_receiving_v1';
-    const readAll = () => JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
-    const writeAll = (rows) => localStorage.setItem(RECV_KEY, JSON.stringify(rows));
-    const qs = (k)=> new URLSearchParams(location.search).get(k)||'';
+    const readAll=()=>JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
+    const writeAll=(rows)=>localStorage.setItem(RECV_KEY,JSON.stringify(rows));
+    const qs=(k)=>new URLSearchParams(location.search).get(k)||''; const $=id=>document.getElementById(id);
 
-    // Elements
-    const $ = (id)=>document.getElementById(id);
+    // Decision
+    let decision='ACCEPT'; function renderDecision(){ $('boxAccept').textContent=decision==='ACCEPT'?'X':' '; $('boxReject').textContent=decision==='REJECT'?'X':' '; }
+    $('btnAccept').onclick=()=>{decision='ACCEPT';renderDecision();}; $('btnReject').onclick=()=>{decision='REJECT';renderDecision();};
 
-    // Decision toggle
-    let decision='ACCEPT';
-    function renderDecision(){
-      $('boxAccept').textContent = decision==='ACCEPT' ? 'X' : ' ';
-      $('boxReject').textContent = decision==='REJECT' ? 'X' : ' ';
+    // Photos (data URLs, max 5)
+    let photos=[]; // [{name,dataUrl}]
+    function renderPhotos(){
+      const wrap=$('photoStrip'); wrap.innerHTML='';
+      photos.forEach((p,i)=>{
+        const div=document.createElement('div'); div.className='thumb';
+        div.innerHTML=`<img alt="photo ${i+1}" src="${p.dataUrl}"><button class="btn danger" data-i="${i}" type="button">X</button>`;
+        wrap.appendChild(div);
+      });
     }
-    $('btnAccept').onclick=()=>{decision='ACCEPT';renderDecision();};
-    $('btnReject').onclick=()=>{decision='REJECT';renderDecision();};
+    $('photoStrip').onclick=(e)=>{const b=e.target.closest('button'); if(!b) return; const i=+b.dataset.i; photos.splice(i,1); renderPhotos();};
+    $('photoBtn').onclick=()=>{const remain=5-photos.length; if(remain<=0){alert('MAX 5 PHOTOS');return;} $('photoInput').click();};
+    $('photoInput').onchange=async (e)=>{
+      const files=[...e.target.files].slice(0,5-photos.length);
+      for (let i=0;i<files.length;i++){
+        const f=files[i];
+        const buf=await f.arrayBuffer();
+        const b64=URL.createObjectURL(new Blob([buf],{type:f.type}));
+        // convert to dataURL for persistence (ensures offline restore)
+        const dataUrl=await fetch(b64).then(r=>r.blob()).then(b=>new Promise(res=>{const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(b);}));
+        URL.revokeObjectURL(b64);
+        const baseTitle=($('title').value||'ITEM').trim().toUpperCase()||'ITEM';
+        photos.push({name:`${baseTitle} (${photos.length+1}).jpg`, dataUrl});
+      }
+      e.target.value=''; renderPhotos();
+    };
 
-    // Today
-    function today(){ return new Date().toISOString().slice(0,10); }
+    function today(){return new Date().toISOString().slice(0,10);}
 
-    // Build record from form
     function getForm(id=null){
-      const suffix = $('b16Override').value.trim() || $('b16Suffix').value;
-      return {
+      const suffix=$('b16Override').value.trim()||$('b16Suffix').value;
+      return{
         id: id || (crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)),
-        jobNo: $('jobNo').value.trim().toUpperCase(),
-        title: $('title').value.trim().toUpperCase(),
+        jobNo:$('jobNo').value.trim().toUpperCase(),
+        title:$('title').value.trim().toUpperCase(),
         vendor:$('vendor').value.trim().toUpperCase(),
         po:$('po').value.trim().toUpperCase(),
-        date:$('date').value || today(),
+        date:$('date').value||today(),
         qty:$('qty').value.trim(),
         product:$('product').value,
-        specPrefix:$('specPrefix').value,
-        specCode:$('specCode').value.trim().toUpperCase(),
+        specPrefix:$('specPrefix').value, specCode:$('specCode').value.trim().toUpperCase(),
         grade:$('grade').value.trim().toUpperCase(),
-        fitting: 'B16.' + (suffix||''),
-        th:[ $('th1').value, $('th2').value, $('th3').value, $('th4').value ].map(v=>v.trim().toUpperCase()),
+        fitting:'B16.'+(suffix||''),
+        th:[$('th1').value,$('th2').value,$('th3').value,$('th4').value].map(s=>s.trim().toUpperCase()),
         width:$('width').value.trim().toUpperCase(),
         length:$('length').value.trim().toUpperCase(),
-        diameter:$('diameter').value.trim().toUpperCase(),
-        diaType:$('diaType').value,
+        diameter:$('diameter').value.trim().toUpperCase(), diaType:$('diaType').value,
         dimOther:$('dimOther').value.trim().toUpperCase(),
-        visualOk:$('visualOk').value,
-        b16Ok:$('b16Ok').value,
-        marking:$('marking').value.trim().toUpperCase(),
-        markingCode:$('markingCode').value,
-        mtrOk:$('mtrOk').value,
-        decision,
-        comments:$('comments').value.trim().toUpperCase(),
-        createdAt: new Date().toISOString()
+        visualOk:$('visualOk').value, b16Ok:$('b16Ok').value,
+        marking:$('marking').value.trim().toUpperCase(), markingCode:$('markingCode').value, mtrOk:$('mtrOk').value,
+        decision, comments:$('comments').value.trim().toUpperCase(),
+        photos, // array of {name,dataUrl}
+        createdAt:new Date().toISOString()
       };
     }
-
     function setForm(r){
-      $('title').value=r.title||'';
-      $('jobNo').value=r.jobNo||'';
-      $('vendor').value=r.vendor||'';
-      $('po').value=r.po||'';
-      $('date').value=r.date||today();
-      $('qty').value=r.qty||'';
-      $('product').value=r.product||'TUBE';
-      $('specPrefix').value=r.specPrefix||'SA';
-      $('specCode').value=r.specCode||'';
-      $('grade').value=r.grade||'';
-      const suf=(r.fitting||'').replace('B16.','');
-      if(['5','9','11','34',''].includes(suf)){ $('b16Suffix').value=suf; $('b16Override').value=''; }
-      else { $('b16Suffix').value=''; $('b16Override').value=suf.slice(0,2); }
+      $('title').value=r.title||''; $('jobNo').value=r.jobNo||''; $('vendor').value=r.vendor||''; $('po').value=r.po||'';
+      $('date').value=r.date||today(); $('qty').value=r.qty||''; $('product').value=r.product||'TUBE';
+      $('specPrefix').value=r.specPrefix||'SA'; $('specCode').value=r.specCode||''; $('grade').value=r.grade||'';
+      const suf=(r.fitting||'').replace('B16.',''); if(['5','9','11','34',''].includes(suf)){$('b16Suffix').value=suf;$('b16Override').value='';} else {$('b16Suffix').value='';$('b16Override').value=suf.slice(0,2);}
       $('th1').value=r.th?.[0]||''; $('th2').value=r.th?.[1]||''; $('th3').value=r.th?.[2]||''; $('th4').value=r.th?.[3]||'';
-      $('width').value=r.width||''; $('length').value=r.length||'';
-      $('diameter').value=r.diameter||''; $('diaType').value=r.diaType||'O.D.';
-      $('dimOther').value=r.dimOther||'';
-      $('visualOk').value=r.visualOk||'YES'; $('b16Ok').value=r.b16Ok||'YES';
-      $('marking').value=r.marking||''; $('markingCode').value=r.markingCode||'YES'; $('mtrOk').value=r.mtrOk||'YES';
+      $('width').value=r.width||''; $('length').value=r.length||''; $('diameter').value=r.diameter||''; $('diaType').value=r.diaType||'O.D.'; $('dimOther').value=r.dimOther||'';
+      $('visualOk').value=r.visualOk||'YES'; $('b16Ok').value=r.b16Ok||'YES'; $('marking').value=r.marking||''; $('markingCode').value=r.markingCode||'YES'; $('mtrOk').value=r.mtrOk||'YES';
       decision=r.decision||'ACCEPT'; renderDecision();
-      $('comments').value=r.comments||'';
+      $('comments').value=r.comments||''; photos=r.photos||[]; renderPhotos();
     }
 
-    // List render (filtered by job)
     let editingId=null;
     function renderList(){
-      const job = $('jobNo').value.trim().toUpperCase();
-      const rows = readAll().filter(r=>r.jobNo===job).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
-      const tb=$('listBody'); tb.innerHTML='';
-      if(!rows.length){ tb.innerHTML='<tr><td colspan="5" class="hint">NO RECEIVING ENTRIES</td></tr>'; return; }
+      const job=$('jobNo').value.trim().toUpperCase();
+      const rows=readAll().filter(r=>r.jobNo===job).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+      const tb=$('listBody'); tb.innerHTML=''; if(!rows.length){tb.innerHTML='<tr><td colspan="5" class="hint">NO RECEIVING ENTRIES</td></tr>'; return;}
       for(const r of rows){
         const tr=document.createElement('tr');
-        tr.innerHTML=`
-          <td><span class="pill">${r.jobNo}</span></td>
-          <td>${r.title||'(UNTITLED)'}</td>
-          <td>${(r.date||'').toUpperCase()}</td>
-          <td style="text-align:right">${r.qty||''}</td>
-          <td class="actions">
-            <button class="btn" data-act="edit" data-id="${r.id}">VIEW / EDIT</button>
-            <button class="btn danger" data-act="del" data-id="${r.id}">DELETE</button>
-          </td>`;
+        tr.innerHTML=`<td><span class="pill">${r.jobNo}</span></td><td>${r.title||'(UNTITLED)'}</td><td>${(r.date||'').toUpperCase()}</td><td style="text-align:right">${r.qty||''}</td>
+        <td class="actions"><button class="btn" data-act="edit" data-id="${r.id}">VIEW / EDIT</button><button class="btn danger" data-act="del" data-id="${r.id}">DELETE</button></td>`;
         tb.appendChild(tr);
       }
     }
-
     $('listBody').onclick=(e)=>{
       const btn=e.target.closest('button'); if(!btn) return;
-      const id=btn.dataset.id, act=btn.dataset.act;
-      const rows=readAll();
-      const idx=rows.findIndex(x=>x.id===id);
-      if(idx<0) return;
-      if(act==='edit'){ editingId=id; setForm(rows[idx]); window.scrollTo({top:0,behavior:'smooth'}); }
-      if(act==='del'){
-        if(confirm('ARE YOU SURE YOU WANT TO DELETE THIS RECEIVING ENTRY?')){
-          rows.splice(idx,1); writeAll(rows); renderList();
-        }
-      }
+      const id=btn.dataset.id, act=btn.dataset.act; const rows=readAll(); const idx=rows.findIndex(x=>x.id===id); if(idx<0) return;
+      if(act==='edit'){editingId=id; setForm(rows[idx]); window.scrollTo({top:0,behavior:'smooth'});}
+      if(act==='del'){ if(confirm('ARE YOU SURE YOU WANT TO DELETE THIS RECEIVING ENTRY?')){ rows.splice(idx,1); writeAll(rows); renderList(); } }
     };
 
-    // Save
-    $('saveBtn').onclick=()=>{
+    function saveCore(nextMode){
       const rec=getForm(editingId);
       if(!rec.jobNo) return alert('JOB NO. REQUIRED');
       if(!rec.title) return alert('TITLE REQUIRED');
-      const rows=readAll();
-      const idx=rows.findIndex(x=>x.id===rec.id);
-      if(idx>=0) rows[idx]=rec; else rows.unshift(rec);
-      writeAll(rows);
+      const rows=readAll(); const idx=rows.findIndex(x=>x.id===rec.id); if(idx>=0) rows[idx]=rec; else rows.unshift(rec); writeAll(rows);
       editingId=null;
-      setForm({jobNo:rec.jobNo,date:today()}); // keep context
+      setForm({jobNo:rec.jobNo,date:today(),photos:[]});
       renderList();
-      document.querySelector('section.card + section.card').scrollIntoView({behavior:'smooth'});
-    };
-    $('resetBtn').onclick=()=>{ editingId=null; setForm({jobNo:$('jobNo').value,date:today()}); };
+      if(nextMode==='another'){ window.scrollTo({top:0,behavior:'smooth'}); }
+      else if(nextMode==='done'){ location.href=`jobs.html?job=${encodeURIComponent(rec.jobNo)}`; }
+      else { document.querySelector('section.card + section.card').scrollIntoView({behavior:'smooth'}); }
+    }
+    $('saveBtn').onclick=()=>saveCore('list'); $('saveAddBtn').onclick=()=>saveCore('another'); $('doneBtn').onclick=()=>saveCore('done'); $('resetBtn').onclick=()=>{editingId=null; setForm({jobNo:$('jobNo').value,date:today(),photos:[]});};
 
-    // Init
-    (function init(){
-      $('date').value=today();
-      const job=qs('job')?.toUpperCase()||'';
-      $('jobNo').value=job;
-      renderDecision();
-      renderList();
-    })();
+    (function init(){ $('date').value=today(); const job=(new URLSearchParams(location.search).get('job')||'').toUpperCase(); $('jobNo').value=job; renderDecision(); renderPhotos(); renderList(); })();
 
-    // SW (no-op if already)
-    (async()=>{ if(!('serviceWorker'in navigator))return;
-      try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){}
-    })();
+    (async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){} })();
   </script>
 </body>
 </html>
