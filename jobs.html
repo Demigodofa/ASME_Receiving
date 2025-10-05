@@ -1,8 +1,3 @@
-<!-- ======================================================================
-File: jobs.html   (REPLACE your current file with this)
-Purpose: Create jobs; list jobs; tap job row → VIEW / EXPORT / DELETE menu
-Design: ALL CAPS, high-contrast, large targets, enterprise feel
-====================================================================== -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -12,68 +7,34 @@ Design: ALL CAPS, high-contrast, large targets, enterprise feel
   <meta name="theme-color" content="#0A0F1A" />
   <link rel="manifest" href="manifest.webmanifest" />
   <style>
-    :root{
-      --bg:#0A0F1A;        /* very dark navy */
-      --panel:#101826;     /* dark card */
-      --border:#223046;    /* slate border */
-      --fg:#E6EAF0;        /* light text */
-      --muted:#8FA3BD;     /* slate text */
-      --accent:#26D07C;    /* green */
-      --danger:#FF5A5F;    /* red */
-      --focus:#8AB4F8;     /* focus ring */
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0}
-    body{
-      background:var(--bg);color:var(--fg);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      letter-spacing:.02em;
-    }
+    :root{--bg:#0A0F1A;--panel:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C;--danger:#FF5A5F;--focus:#8AB4F8}
+    *{box-sizing:border-box} html,body{height:100%;margin:0}
+    body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;letter-spacing:.02em}
     header{position:sticky;top:0;background:#0C1320CC;backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
     .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1120px;margin:0 auto}
     .brand{font-weight:900}
-    .btn{
-      border:1px solid var(--border);background:#0F172A;color:var(--fg);
-      padding:10px 14px;border-radius:12px;font-weight:800;cursor:pointer;text-decoration:none;
-      text-transform:uppercase;
-    }
+    .btn{border:1px solid var(--border);background:#0F172A;color:var(--fg);padding:10px 14px;border-radius:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;text-decoration:none}
     .btn:focus{outline:3px solid var(--focus);outline-offset:2px}
     .btn.primary{background:var(--accent);color:#052e16;border-color:#1B9E64}
     .btn.danger{background:var(--danger);border-color:#D83A3F}
     main{max-width:1120px;margin:24px auto;padding:0 16px}
     .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
     label{font-size:12px;color:var(--muted);font-weight:800;display:block;margin-bottom:6px}
-    input{
-      width:100%;padding:12px 12px;border-radius:12px;border:1px solid var(--border);
-      background:#0D1424;color:var(--fg);text-transform:uppercase;font-weight:800;
-    }
-    input::placeholder{text-transform:none;color:#6C809E}
+    input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid var(--border);background:#0D1424;color:var(--fg);text-transform:uppercase;font-weight:800}
     .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-    .hint{color:var(--muted);font-size:12px;margin-top:6px;text-transform:uppercase}
-    /* Table */
-    table{width:100%;border-collapse:collapse}
-    th,td{border-bottom:1px solid var(--border);padding:14px 10px}
-    th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-    .jobrow{
-      cursor:pointer;
-    }
-    .jobrow:hover{background:#0E1729}
-    .pill{
-      display:inline-block;padding:4px 10px;border-radius:999px;background:#0F172A;border:1px solid var(--border);
-      font-size:12px;font-weight:800
-    }
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#0F172A;border:1px solid var(--border);font-size:12px;font-weight:800}
+    table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--border);padding:14px 10px} th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
     .empty{color:var(--muted);text-align:center;padding:18px;text-transform:uppercase}
-    /* Action Menu (overlay) */
-    .overlay{
-      position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50;
-    }
-    .sheet{
-      width:min(480px,92%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:16px;
-      box-shadow:0 20px 60px rgba(0,0,0,.45)
-    }
-    .sheet h2{margin:0 0 12px 0;font-size:18px;text-transform:uppercase}
-    .stack{display:flex;flex-direction:column;gap:10px}
-    .muted{color:var(--muted);font-size:12px;text-transform:uppercase}
+
+    /* Overlay */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50}
+    .sheet{width:min(520px,92%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+    .sheet h2{margin:0 0 8px 0;font-size:20px;text-transform:uppercase}
+    .meta{color:var(--muted);font-size:14px;margin-bottom:8px} /* slightly smaller than title */
+    .stack{display:flex;flex-direction:column;gap:10px;align-items:center}
+    .wide{width:100%;text-align:center}
+    .confirm{display:none;margin-top:10px;text-align:center}
+    .confirm .rowc{display:flex;gap:10px;justify-content:center;margin-top:10px}
   </style>
 </head>
 <body>
@@ -87,180 +48,155 @@ Design: ALL CAPS, high-contrast, large targets, enterprise feel
   </header>
 
   <main>
-    <!-- Create Job -->
+    <!-- Create -->
     <section class="card">
       <div class="row">
-        <div>
-          <label for="jobNo">JOB NO. (MAX 8) *</label>
-          <input id="jobNo" type="text" maxlength="8" placeholder="24A001B2" />
-        </div>
-        <div>
-          <label for="desc">DESC. (MAX 12)</label>
-          <input id="desc" type="text" maxlength="12" placeholder="BAY-3" />
-        </div>
-        <div>
-          <label for="startDate">START DATE</label>
-          <input id="startDate" type="date" />
-        </div>
+        <div><label for="jobNo">JOB NO. (MAX 8) *</label><input id="jobNo" maxlength="8" /></div>
+        <div><label for="desc">DESC. (MAX 12)</label><input id="desc" maxlength="12" /></div>
+        <div><label for="startDate">START DATE</label><input id="startDate" type="date" /></div>
       </div>
       <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
         <button id="createBtn" class="btn primary">CREATE JOB</button>
         <button id="clearBtn" class="btn">CLEAR</button>
       </div>
-      <div class="hint">LETTERS / NUMBERS / PUNCTUATION ALLOWED • JOB NO. MUST BE UNIQUE</div>
     </section>
 
-    <!-- List Jobs -->
+    <!-- List -->
     <section class="card">
       <table>
-        <thead>
-          <tr><th>JOB</th><th>DESC</th><th>START</th><th>CREATED</th></tr>
-        </thead>
-        <tbody id="jobsBody">
-          <tr><td class="empty" colspan="4">NO JOBS YET</td></tr>
-        </tbody>
+        <thead><tr><th>JOB</th><th>DESC</th><th>START</th><th>CREATED</th></tr></thead>
+        <tbody id="jobsBody"><tr><td colspan="4" class="empty">NO JOBS YET</td></tr></tbody>
       </table>
-      <div class="hint">TIP: TAP A ROW FOR ACTIONS</div>
+      <div style="color:#8FA3BD;font-size:12px;margin-top:6px;text-transform:uppercase">TIP: TAP A ROW FOR ACTIONS</div>
     </section>
   </main>
 
-  <!-- Action Menu Overlay -->
+  <!-- ACTION MENU -->
   <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
     <div class="sheet">
       <h2 id="dlgTitle">JOB ACTIONS</h2>
-      <div id="dlgMeta" class="muted">JOB — DESC</div>
-      <div class="stack" style="margin-top:12px">
-        <a id="viewBtn" class="btn" href="#">VIEW JOB</a>
-        <button id="exportBtn" class="btn">EXPORT JOB</button>
-        <button id="deleteBtn" class="btn danger">DELETE JOB</button>
-        <button id="closeBtn" class="btn" style="margin-top:6px">CLOSE</button>
+      <div id="dlgMeta" class="meta">JOB — DESC</div>
+      <div class="stack">
+        <a id="viewBtn" class="btn primary wide" href="#">VIEW JOB</a> <!-- green + centered -->
+        <button id="exportBtn" class="btn wide">EXPORT JOB</button>
+        <button id="shareBtn" class="btn wide">SHARE (BETA)</button>
+        <button id="deleteBtn" class="btn danger wide">DELETE JOB</button>
+        <button id="closeBtn" class="btn wide">CLOSE</button>
+
+        <!-- Custom YES/NO confirm -->
+        <div id="confirmBox" class="confirm">
+          <div>ARE YOU SURE YOU WANT TO DELETE THIS JOB?</div>
+          <div class="rowc">
+            <button id="yesDel" class="btn danger">YES</button>
+            <button id="noDel" class="btn">NO</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // Storage keys
-    const JOBS_KEY='wh_jobs_v1';
-    const RECV_KEY='wh_receiving_v1'; // receiving entries
+    const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
     const $=id=>document.getElementById(id);
+    const readJobs=()=>JSON.parse(localStorage.getItem(JOBS_KEY)||'[]');
+    const writeJobs=a=>localStorage.setItem(JOBS_KEY,JSON.stringify(a));
+    const readRecv=()=>JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
+    function today(){return new Date().toISOString().slice(0,10);}
 
-    // helpers
-    const readJobs = () => JSON.parse(localStorage.getItem(JOBS_KEY)||'[]');
-    const writeJobs = a => localStorage.setItem(JOBS_KEY, JSON.stringify(a));
-    const readRecv = () => JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
-
-    function todayStr(){ return new Date().toISOString().slice(0,10); }
-
-    // Render jobs list
     function renderJobs(){
       const rows=readJobs().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
       const tb=$('jobsBody'); tb.innerHTML='';
-      if(!rows.length){ tb.innerHTML='<tr><td class="empty" colspan="4">NO JOBS YET</td></tr>'; return; }
+      if(!rows.length){tb.innerHTML='<tr><td colspan="4" class="empty">NO JOBS YET</td></tr>';return;}
       for(const j of rows){
-        const tr=document.createElement('tr');
-        tr.className='jobrow';
-        tr.dataset.job=j.jobNo;
-        tr.innerHTML = `
-          <td><span class="pill">${j.jobNo}</span></td>
+        const tr=document.createElement('tr'); tr.className='jobrow'; tr.dataset.job=j.jobNo;
+        tr.innerHTML=`<td><span class="pill">${j.jobNo}</span></td>
           <td>${(j.desc||'').toUpperCase()}</td>
           <td>${j.startDate||''}</td>
-          <td>${new Date(j.createdAt).toLocaleString().toUpperCase()}</td>
-        `;
+          <td>${new Date(j.createdAt).toLocaleString().toUpperCase()}</td>`;
         tb.appendChild(tr);
       }
     }
 
-    // Validation
-    function validateJob(jobNo){
-      if(!jobNo) return 'JOB NO. REQUIRED';
-      if(jobNo.length>8) return 'JOB NO. MUST BE ≤ 8';
-      const exists = readJobs().some(j=>j.jobNo.toUpperCase()===jobNo.toUpperCase());
-      if(exists) return 'JOB NO. ALREADY EXISTS';
-      return '';
-    }
+    $('jobsBody').onclick=(e)=>{const tr=e.target.closest('tr.jobrow'); if(tr) openMenu(tr.dataset.job);};
 
-    // Create
-    $('createBtn').onclick=()=>{
-      const jobNo = $('jobNo').value.trim().toUpperCase();
-      const desc  = $('desc').value.trim().toUpperCase();
-      const start = $('startDate').value || todayStr();
-      const err = validateJob(jobNo);
-      if(err) return alert(err);
-      const now = new Date().toISOString();
-      const id  = (crypto.randomUUID&&crypto.randomUUID()) || Math.random().toString(36).slice(2);
-      const jobs= readJobs(); jobs.unshift({ id, jobNo, desc, startDate:start, createdAt:now });
-      writeJobs(jobs);
-      $('jobNo').value=''; $('desc').value=''; $('startDate').value=todayStr();
-      renderJobs();
-    };
-
-    $('clearBtn').onclick=()=>{ $('jobNo').value=''; $('desc').value=''; };
-
-    // Action menu
-    let currentJob=null;
+    let current=null;
     function openMenu(jobNo){
-      const job = readJobs().find(j=>j.jobNo===jobNo);
-      if(!job) return;
-      currentJob=job;
-      $('dlgMeta').textContent = `${job.jobNo} — ${(job.desc||'')}`;
-      $('viewBtn').href = `job.html?job=${encodeURIComponent(job.jobNo)}`;
+      const job=readJobs().find(j=>j.jobNo===jobNo); if(!job) return;
+      current=job; $('dlgMeta').textContent=`${job.jobNo} — ${(job.desc||'')}`;
+      $('viewBtn').href=`job.html?job=${encodeURIComponent(job.jobNo)}`;
+      $('confirmBox').style.display='none';
       $('overlay').style.display='flex';
       $('closeBtn').focus();
     }
-    function closeMenu(){ $('overlay').style.display='none'; currentJob=null; }
+    function closeMenu(){ $('overlay').style.display='none'; current=null; }
 
-    $('jobsBody').onclick=(e)=>{
-      const tr = e.target.closest('tr.jobrow');
-      if(!tr) return;
-      openMenu(tr.dataset.job);
-    };
     $('closeBtn').onclick=closeMenu;
     $('overlay').onclick=(e)=>{ if(e.target===e.currentTarget) closeMenu(); };
 
-    // EXPORT: CSV of receiving for this job + JSON summary
+    // Create
+    $('createBtn').onclick=()=>{
+      const jobNo=$('jobNo').value.trim().toUpperCase();
+      const desc=$('desc').value.trim().toUpperCase();
+      const start=$('startDate').value || today();
+      if(!jobNo) return alert('JOB NO. REQUIRED');
+      if(jobNo.length>8) return alert('JOB NO. MUST BE ≤ 8');
+      if(readJobs().some(j=>j.jobNo===jobNo)) return alert('JOB NO. ALREADY EXISTS');
+      const now=new Date().toISOString();
+      const id=(crypto.randomUUID&&crypto.randomUUID())||Math.random().toString(36).slice(2);
+      const jobs=readJobs(); jobs.unshift({id,jobNo,desc,startDate:start,createdAt:now}); writeJobs(jobs);
+      $('jobNo').value=''; $('desc').value=''; $('startDate').value=today(); renderJobs();
+    };
+    $('clearBtn').onclick=()=>{$('jobNo').value='';$('desc').value='';};
+
+    // EXPORT (CSV + JSON)
     $('exportBtn').onclick=()=>{
-      if(!currentJob) return;
-      const jobNo=currentJob.jobNo;
-      const rows=readRecv().filter(r=>r.jobNo===jobNo);
-      // CSV
-      const cols=['id','jobNo','date','po','part','heat','qty','recvBy','notes'];
+      if(!current) return;
+      const rows=readRecv().filter(r=>r.jobNo===current.jobNo);
+      const cols=['id','jobNo','date','qty','product','specPrefix','specCode','grade','fitting','width','length','diameter','diaType','dimOther','visualOk','b16Ok','markingCode','mtrOk','decision','title','vendor','po','comments'];
       const esc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
       const csv=[cols.join(',')].concat(rows.map(r=>cols.map(c=>esc(r[c])).join(','))).join('\n');
-      const a1=document.createElement('a');
-      a1.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-      a1.download=`${jobNo}-RECEIVING-${todayStr()}.csv`; a1.click();
-      setTimeout(()=>URL.revokeObjectURL(a1.href),1000);
-      // JSON summary (job metadata)
-      const summary=JSON.stringify(currentJob,null,2);
-      const a2=document.createElement('a');
-      a2.href=URL.createObjectURL(new Blob([summary],{type:'application/json'}));
-      a2.download=`${jobNo}-JOB.json`; a2.click();
-      setTimeout(()=>URL.revokeObjectURL(a2.href),1000);
+      download(new Blob([csv],{type:'text/csv'}),`${current.jobNo}-RECEIVING.csv`);
+      download(new Blob([JSON.stringify(current,null,2)],{type:'application/json'}),`${current.jobNo}-JOB.json`);
     };
 
-    // DELETE (blocked if has reports)
-    $('deleteBtn').onclick=()=>{
-      if(!currentJob) return;
-      const hasReports = readRecv().some(r=>r.jobNo===currentJob.jobNo);
-      if(hasReports) return alert('CANNOT DELETE — JOB HAS RECEIVING REPORTS');
-      if(confirm(`ARE YOU SURE YOU WANT TO DELETE JOB ${currentJob.jobNo}?`)){
-        writeJobs(readJobs().filter(j=>j.jobNo!==currentJob.jobNo));
-        closeMenu(); renderJobs();
+    // SHARE (beta) — Android Chrome supports files; iOS may download instead
+    $('shareBtn').onclick=async ()=>{
+      if(!current) return;
+      const rows=readRecv().filter(r=>r.jobNo===current.jobNo);
+      const cols=['id','jobNo','date','qty','product','specPrefix','specCode','grade','fitting','width','length','diameter','diaType','dimOther','visualOk','b16Ok','markingCode','mtrOk','decision','title','vendor','po','comments'];
+      const esc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+      const csv=[cols.join(',')].concat(rows.map(r=>cols.map(c=>esc(r[c])).join(','))).join('\n');
+      const files=[
+        new File([csv],`${current.jobNo}-RECEIVING.csv`,{type:'text/csv'}),
+        new File([JSON.stringify(current,null,2)],`${current.jobNo}-JOB.json`,{type:'application/json'})
+      ];
+      if(navigator.share && navigator.canShare && navigator.canShare({files})){
+        try{ await navigator.share({title:`${current.jobNo} — RECEIVING`, files}); }catch{}
+      }else{
+        // fallback to download
+        files.forEach(f=>download(f,f.name));
+        alert('SHARE NOT SUPPORTED — FILES DOWNLOADED INSTEAD.');
       }
     };
 
-    // Init
-    (function init(){
-      if(!$('startDate').value) $('startDate').value=todayStr();
-      renderJobs();
-    })();
+    function download(blob, name){
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    }
 
-    // SW
-    (async()=>{ if(!('serviceWorker'in navigator))return;
-      try{ const r=await navigator.serviceWorker.register('service_worker.js');
-        if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});
-      }catch(e){ console.error(e); }
-    })();
+    // DELETE with YES/NO confirm
+    $('deleteBtn').onclick=()=>{ $('confirmBox').style.display='block'; };
+    $('yesDel').onclick=()=>{
+      if(!current) return;
+      const has=readRecv().some(r=>r.jobNo===current.jobNo);
+      if(has) { alert('CANNOT DELETE — JOB HAS RECEIVING REPORTS'); return; }
+      writeJobs(readJobs().filter(j=>j.jobNo!==current.jobNo));
+      closeMenu(); renderJobs();
+    };
+    $('noDel').onclick=()=>{ $('confirmBox').style.display='none'; };
+
+    (function init(){ if(!$('startDate').value) $('startDate').value=today(); renderJobs(); })();
+
+    (async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){} })();
   </script>
 </body>
 </html>
