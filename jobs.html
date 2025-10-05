@@ -1,3 +1,4 @@
+<!-- /jobs.html  (REPLACE your current jobs.html with this) -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -17,6 +18,7 @@
     .btn:focus{outline:3px solid var(--focus);outline-offset:2px}
     .btn.primary{background:var(--accent);color:#052e16;border-color:#1B9E64}
     .btn.danger{background:var(--danger);border-color:#D83A3F}
+    .btn.ghost{background:#0F172A80}
     main{max-width:1120px;margin:24px auto;padding:0 16px}
     .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
     label{font-size:12px;color:var(--muted);font-weight:800;display:block;margin-bottom:6px}
@@ -25,16 +27,16 @@
     .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#0F172A;border:1px solid var(--border);font-size:12px;font-weight:800}
     table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--border);padding:14px 10px} th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
     .empty{color:var(--muted);text-align:center;padding:18px;text-transform:uppercase}
-
     /* Overlay */
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50}
-    .sheet{width:min(520px,92%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+    .sheet{width:min(560px,92%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
     .sheet h2{margin:0 0 8px 0;font-size:20px;text-transform:uppercase}
-    .meta{color:var(--muted);font-size:14px;margin-bottom:8px} /* slightly smaller than title */
+    .meta{color:var(--muted);font-size:14px;margin-bottom:8px}
     .stack{display:flex;flex-direction:column;gap:10px;align-items:center}
     .wide{width:100%;text-align:center}
     .confirm{display:none;margin-top:10px;text-align:center}
     .confirm .rowc{display:flex;gap:10px;justify-content:center;margin-top:10px}
+    .small{font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
@@ -67,7 +69,7 @@
         <thead><tr><th>JOB</th><th>DESC</th><th>START</th><th>CREATED</th></tr></thead>
         <tbody id="jobsBody"><tr><td colspan="4" class="empty">NO JOBS YET</td></tr></tbody>
       </table>
-      <div style="color:#8FA3BD;font-size:12px;margin-top:6px;text-transform:uppercase">TIP: TAP A ROW FOR ACTIONS</div>
+      <div class="small">TIP: TAP A ROW FOR ACTIONS</div>
     </section>
   </main>
 
@@ -77,13 +79,12 @@
       <h2 id="dlgTitle">JOB ACTIONS</h2>
       <div id="dlgMeta" class="meta">JOB — DESC</div>
       <div class="stack">
-        <a id="viewBtn" class="btn primary wide" href="#">VIEW JOB</a> <!-- green + centered -->
-        <button id="exportBtn" class="btn wide">EXPORT JOB</button>
-        <button id="shareBtn" class="btn wide">SHARE (BETA)</button>
+        <a id="viewBtn" class="btn primary wide" href="#">VIEW JOB</a>
+        <button id="exportBtn" class="btn wide">EXPORT CSV + JSON</button>
+        <button id="zipBtn" class="btn wide">EXPORT ZIP (CSV + JSON + 3-UP + PHOTOS)</button>
+        <button id="shareZipBtn" class="btn wide">SHARE ZIP (≤ 20MB)</button>
         <button id="deleteBtn" class="btn danger wide">DELETE JOB</button>
         <button id="closeBtn" class="btn wide">CLOSE</button>
-
-        <!-- Custom YES/NO confirm -->
         <div id="confirmBox" class="confirm">
           <div>ARE YOU SURE YOU WANT TO DELETE THIS JOB?</div>
           <div class="rowc">
@@ -91,11 +92,13 @@
             <button id="noDel" class="btn">NO</button>
           </div>
         </div>
+        <div id="zipNote" class="small"></div>
       </div>
     </div>
   </div>
 
   <script>
+    /* ========= Storage ========= */
     const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
     const $=id=>document.getElementById(id);
     const readJobs=()=>JSON.parse(localStorage.getItem(JOBS_KEY)||'[]');
@@ -103,6 +106,7 @@
     const readRecv=()=>JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
     function today(){return new Date().toISOString().slice(0,10);}
 
+    /* ========= UI: list ========= */
     function renderJobs(){
       const rows=readJobs().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
       const tb=$('jobsBody'); tb.innerHTML='';
@@ -116,24 +120,22 @@
         tb.appendChild(tr);
       }
     }
-
     $('jobsBody').onclick=(e)=>{const tr=e.target.closest('tr.jobrow'); if(tr) openMenu(tr.dataset.job);};
 
+    /* ========= Action menu ========= */
     let current=null;
     function openMenu(jobNo){
       const job=readJobs().find(j=>j.jobNo===jobNo); if(!job) return;
       current=job; $('dlgMeta').textContent=`${job.jobNo} — ${(job.desc||'')}`;
       $('viewBtn').href=`job.html?job=${encodeURIComponent(job.jobNo)}`;
-      $('confirmBox').style.display='none';
-      $('overlay').style.display='flex';
-      $('closeBtn').focus();
+      $('confirmBox').style.display='none'; $('zipNote').textContent='';
+      $('overlay').style.display='flex'; $('closeBtn').focus();
     }
     function closeMenu(){ $('overlay').style.display='none'; current=null; }
-
     $('closeBtn').onclick=closeMenu;
     $('overlay').onclick=(e)=>{ if(e.target===e.currentTarget) closeMenu(); };
 
-    // Create
+    /* ========= Create ========= */
     $('createBtn').onclick=()=>{
       const jobNo=$('jobNo').value.trim().toUpperCase();
       const desc=$('desc').value.trim().toUpperCase();
@@ -148,7 +150,7 @@
     };
     $('clearBtn').onclick=()=>{$('jobNo').value='';$('desc').value='';};
 
-    // EXPORT (CSV + JSON)
+    /* ========= CSV + JSON (existing) ========= */
     $('exportBtn').onclick=()=>{
       if(!current) return;
       const rows=readRecv().filter(r=>r.jobNo===current.jobNo);
@@ -159,45 +161,250 @@
       download(new Blob([JSON.stringify(current,null,2)],{type:'application/json'}),`${current.jobNo}-JOB.json`);
     };
 
-    // SHARE (beta) — Android Chrome supports files; iOS may download instead
-    $('shareBtn').onclick=async ()=>{
+    /* ========= ZIP EXPORT (no libs) ========= */
+    const ZIP_CAP_BYTES = 20 * 1024 * 1024; // 20 MB default cap
+    $('zipBtn').onclick=async ()=>{ if(!current) return; const blob=await buildJobZip(current.jobNo,false); if(blob) download(blob, `${current.jobNo}-PACKAGE.zip`); };
+    $('shareZipBtn').onclick=async ()=>{
       if(!current) return;
-      const rows=readRecv().filter(r=>r.jobNo===current.jobNo);
-      const cols=['id','jobNo','date','qty','product','specPrefix','specCode','grade','fitting','width','length','diameter','diaType','dimOther','visualOk','b16Ok','markingCode','mtrOk','decision','title','vendor','po','comments'];
-      const esc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
-      const csv=[cols.join(',')].concat(rows.map(r=>cols.map(c=>esc(r[c])).join(','))).join('\n');
-      const files=[
-        new File([csv],`${current.jobNo}-RECEIVING.csv`,{type:'text/csv'}),
-        new File([JSON.stringify(current,null,2)],`${current.jobNo}-JOB.json`,{type:'application/json'})
-      ];
-      if(navigator.share && navigator.canShare && navigator.canShare({files})){
-        try{ await navigator.share({title:`${current.jobNo} — RECEIVING`, files}); }catch{}
-      }else{
-        // fallback to download
-        files.forEach(f=>download(f,f.name));
-        alert('SHARE NOT SUPPORTED — FILES DOWNLOADED INSTEAD.');
+      const blob=await buildJobZip(current.jobNo,true);
+      if(!blob) return;
+      const file=new File([blob],`${current.jobNo}-PACKAGE.zip`,{type:'application/zip'});
+      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+        try{ await navigator.share({title:`${current.jobNo} — PACKAGE`, files:[file]}); }catch(e){}
+      } else {
+        download(blob, file.name);
+        alert('SHARE NOT SUPPORTED — ZIP DOWNLOADED INSTEAD.');
       }
     };
 
+    async function buildJobZip(jobNo, showProgress){
+      const rows=readRecv().filter(r=>r.jobNo===jobNo);
+      const cols=['id','jobNo','date','qty','product','specPrefix','specCode','grade','fitting','width','length','diameter','diaType','dimOther','visualOk','b16Ok','markingCode','mtrOk','decision','title','vendor','po','comments'];
+      const esc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+      const csv=[cols.join(',')].concat(rows.map(r=>cols.map(c=>esc(r[c])).join(','))).join('\n');
+      const jobMeta = JSON.stringify(readJobs().find(j=>j.jobNo===jobNo)||{},null,2);
+
+      // Build 3-UP HTML (exact-print template) for all entries
+      const reportHtml = buildReport3upHTML(jobNo, rows);
+
+      // Prepare files to add (as Uint8Array)
+      const files = [];
+      files.push({name:`${jobNo}/README.txt`, data:utf8(`PACKAGE FOR JOB ${jobNo}\nIncludes: CSV, JOB.json, 3UP report HTML, photos (compressed).\n`)});      
+      files.push({name:`${jobNo}/${jobNo}-RECEIVING.csv`, data:utf8(csv)});
+      files.push({name:`${jobNo}/${jobNo}-JOB.json`, data:utf8(jobMeta)});
+      files.push({name:`${jobNo}/${jobNo}-REPORT-3UP.html`, data:utf8(reportHtml)});
+
+      // Photos: compress and include
+      let quality=0.7, maxDim=1280;
+      const allPhotos=[];
+      rows.forEach((r,idx)=> (r.photos||[]).forEach((p,i)=> allPhotos.push({title:r.title||'ITEM', idx, i, dataUrl:p.dataUrl})));
+      for(let k=0;k<allPhotos.length;k++){
+        const p=allPhotos[k];
+        const {u8, bytes} = await compressDataUrlToJpegU8(p.dataUrl, maxDim, quality);
+        files.push({name:`${jobNo}/PHOTOS/${(p.title||'ITEM').toUpperCase().replace(/[^A-Z0-9\-_. ]/g,'_')}_${p.idx+1}_${p.i+1}.jpg`, data:u8});
+      }
+
+      // Assemble ZIP; if over cap, progressively compress
+      let zipBlob = zipStore(files);
+      if(zipBlob.size > ZIP_CAP_BYTES){
+        $('zipNote').textContent = `Optimizing ZIP size… (${Math.round(zipBlob.size/1024/1024)} MB)`;
+        // reduce quality then dimensions
+        for(const q of [0.6,0.5,0.4,0.3]){
+          const smaller=[]; smaller.push(...files.slice(0,4)); // meta + csv + json + html
+          for(let k=0;k<allPhotos.length;k++){
+            const p=allPhotos[k];
+            const {u8} = await compressDataUrlToJpegU8(p.dataUrl, maxDim, q);
+            smaller.push({name:files[4+k].name, data:u8});
+          }
+          zipBlob = zipStore(smaller);
+          if(zipBlob.size <= ZIP_CAP_BYTES) break;
+        }
+        if(zipBlob.size > ZIP_CAP_BYTES){
+          // fallback: halve dimensions
+          maxDim = 960;
+          const smaller=[]; smaller.push(...files.slice(0,4));
+          for(let k=0;k<allPhotos.length;k++){
+            const p=allPhotos[k];
+            const {u8} = await compressDataUrlToJpegU8(p.dataUrl, maxDim, 0.5);
+            smaller.push({name:files[4+k].name, data:u8});
+          }
+          zipBlob = zipStore(smaller);
+        }
+        $('zipNote').textContent = zipBlob.size > ZIP_CAP_BYTES
+          ? `ZIP still large (${Math.round(zipBlob.size/1024/1024)} MB). Consider fewer photos.`
+          : `ZIP size: ${Math.round(zipBlob.size/1024/1024)} MB`;
+      }
+      return zipBlob;
+    }
+
+    /* ========= Helpers ========= */
     function download(blob, name){
       const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
     }
+    function utf8(str){ return new TextEncoder().encode(str); }
 
-    // DELETE with YES/NO confirm
+    function buildReport3upHTML(jobNo, rows){
+      // Builds a self-contained HTML with inline CSS closely matching your QC sheet, 3 entries per page
+      const css = `
+        @page { size: Letter; margin: 0.5in; }
+        body { font-family: Arial, Helvetica, sans-serif; color:#000; margin:0; }
+        .page{ page-break-after:always; }
+        .title{ font-weight:900; font-size:18px; text-align:center; margin:0 0 8px 0; }
+        .box{ border:1px solid #111; padding:8px; margin-bottom:8px; }
+        table { width:100%; border-collapse:collapse; }
+        td { border:1px solid #222; padding:6px 8px; font-size:12px; vertical-align:top; }
+        .lbl { width:22%; font-weight:700; background:#f3f4f6; }
+        .sec { font-weight:800; background:#e5e7eb; text-align:left; padding:6px 8px; border:1px solid #222; margin:10px 0 4px 0;}
+        .pill{ display:inline-block; border:1px solid #222; padding:0 6px; border-radius:6px; font-weight:800; }
+        .x { display:inline-block; width:18px; height:18px; border:2px solid #111; text-align:center; line-height:16px; font-weight:900; }
+        .photos { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+        .photos img{ width:160px; height:160px; object-fit:cover; border:1px solid #222; }
+        .footer{ margin-top:10px; border:1px solid #111; padding:6px 8px; font-size:12px; }
+      `.trim();
+
+      const esc=(v)=>String(v??'').toUpperCase();
+      const chunked = [];
+      for(let i=0;i<rows.length;i+=3) chunked.push(rows.slice(i,i+3));
+      const pages = chunked.map(chunk=>{
+        const items = chunk.map(rec=>{
+          const ths = (rec.th||[]).filter(Boolean).map(esc).join('&nbsp;&nbsp;&nbsp;');
+          const dimDia = `${esc(rec.diameter)} ${esc(rec.diaType)}`.trim();
+          const photos = (rec.photos||[]).map(p=>`<img src="${p.dataUrl}" alt="PHOTO">`).join('');
+          return `
+          <div class="box">
+            <div class="title">RECEIVING INSPECTION REPORT</div>
+            <table>
+              <tr><td class="lbl">JOB NO.</td><td>${esc(rec.jobNo)}</td><td class="lbl">VENDOR:</td><td>${esc(rec.vendor)}</td></tr>
+              <tr><td class="lbl">PO.</td><td>${esc(rec.po)}</td><td class="lbl">DATE:</td><td>${esc(rec.date)}</td></tr>
+              <tr><td class="lbl">QUANTITY:</td><td colspan="3">${esc(rec.qty)}</td></tr>
+            </table>
+            <div class="sec">SPECIFICATION</div>
+            <table>
+              <tr><td class="lbl">PRODUCT:</td><td>${esc(rec.product)}</td><td class="lbl">GRADE/TYPE:</td><td>${esc(rec.grade)}</td></tr>
+              <tr><td class="lbl">SPECIFICATION:</td><td>${esc(`${rec.specPrefix||''}- ${rec.specCode||''}`)}</td><td class="lbl">FITTING:</td><td>${esc(rec.fitting)}</td></tr>
+            </table>
+            <div class="sec">DIMENSIONS</div>
+            <table>
+              <tr><td class="lbl">DIMENSIONS: TH</td><td colspan="3">${ths}</td></tr>
+              <tr><td class="lbl">WIDTH:</td><td>${esc(rec.width)}</td><td class="lbl">LENGTH:</td><td>${esc(rec.length)}</td></tr>
+              <tr><td class="lbl">DIAMETER:</td><td>${dimDia}</td><td class="lbl">OTHER:</td><td>${esc(rec.dimOther)}</td></tr>
+            </table>
+            <table style="margin-top:8px">
+              <tr><td class="lbl">VISUAL INSPECTION ACCEPTABLE:</td><td>${esc(rec.visualOk)}</td><td class="lbl">B16 DIMENSIONS ACCEPTABLE:</td><td>${esc(rec.b16Ok)}</td></tr>
+              <tr><td class="lbl">ACTUAL MATERIAL MARKING:</td><td colspan="3">${esc(rec.marking)}</td></tr>
+              <tr><td class="lbl">MARKING ACCEPTABLE TO CODE/STANDARD:</td><td>${esc(rec.markingCode)}</td><td class="lbl">MTR/CofC ACCEPTABLE TO SPECIFICATION:</td><td>${esc(rec.mtrOk)}</td></tr>
+              <tr>
+                <td class="lbl">ACCEPT / REJECT</td>
+                <td>
+                  <span class="pill">ACCEPT</span> <span class="x">${rec.decision==='ACCEPT'?'X':''}</span>
+                  &nbsp;&nbsp;&nbsp;
+                  <span class="pill">REJECT</span> <span class="x">${rec.decision==='REJECT'?'X':''}</span>
+                </td>
+                <td class="lbl">COMMENTS:</td><td>${esc(rec.comments)}</td>
+              </tr>
+              <tr><td class="lbl">QUALITY CONTROL:</td><td colspan="3">INITIALS / DATE</td></tr>
+            </table>
+            ${photos ? `<div class="sec">PHOTOS</div><div class="photos">${photos}</div>` : ''}
+          </div>`;
+        }).join('');
+        return `<div class="page">${items}<div class="footer"><strong>MATERIAL APPROVAL:</strong> APPROVED &nbsp;&nbsp; <strong>QC MANAGER:</strong> INITIALS / DATE</div></div>`;
+      }).join('');
+
+      return `<!doctype html><html><head><meta charset="utf-8"><title>${jobNo} — RECEIVING 3-UP</title><style>${css}</style></head><body>${pages}</body></html>`;
+    }
+
+    /* ========= Image compress (canvas) ========= */
+    async function compressDataUrlToJpegU8(dataUrl, maxDim=1280, quality=0.7){
+      const img = await new Promise(res=>{const im=new Image(); im.onload=()=>res(im); im.src=dataUrl;});
+      const scale = Math.min(1, maxDim/Math.max(img.width,img.height));
+      const w = Math.max(1, Math.round(img.width*scale));
+      const h = Math.max(1, Math.round(img.height*scale));
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      const out = c.toDataURL('image/jpeg', quality);
+      const u8 = dataUrlToU8(out);
+      return {u8, bytes:u8.length};
+    }
+    function dataUrlToU8(durl){
+      const i=durl.indexOf(','); const b64=durl.slice(i+1);
+      const bin=atob(b64); const len=bin.length; const u8=new Uint8Array(len);
+      for(let k=0;k<len;k++) u8[k]=bin.charCodeAt(k);
+      return u8;
+    }
+
+    /* ========= Minimal ZIP (store-only) ========= */
+    function crc32(u8){
+      let c=~0>>>0;
+      for(let i=0;i<u8.length;i++){
+        c ^= u8[i];
+        for(let k=0;k<8;k++) c = (c>>>1) ^ (0xEDB88320 & -(c&1));
+      }
+      return (~c)>>>0;
+    }
+    function strU8(s){ return new TextEncoder().encode(s); }
+    function num4(n){ const a=new Uint8Array(4); a[0]=n&255;a[1]=(n>>>8)&255;a[2]=(n>>>16)&255;a[3]=(n>>>24)&255; return a; }
+    function num2(n){ const a=new Uint8Array(2); a[0]=n&255;a[1]=(n>>>8)&255; return a; }
+    function concatU8(arrs){
+      let len=0; for(const a of arrs) len+=a.length;
+      const out=new Uint8Array(len); let o=0;
+      for(const a of arrs){ out.set(a,o); o+=a.length; }
+      return out;
+    }
+    function zipStore(files){
+      // files: {name: string, data: Uint8Array}
+      const headers=[]; const datas=[]; const centrals=[]; let offset=0;
+      for(const f of files){
+        const nameU8 = strU8(f.name);
+        const crc = crc32(f.data);
+        const size = f.data.length;
+        const localHeader = concatU8([
+          strU8('PK\u0003\u0004'),        // local file header signature
+          num2(20), num2(0), num2(0),     // version, flags, method=0 (store)
+          num2(0), num2(0),               // mod time/date (zero)
+          num4(crc), num4(size), num4(size),
+          num2(nameU8.length), num2(0),   // name len, extra len
+          nameU8
+        ]);
+        headers.push(localHeader); datas.push(f.data);
+        // central directory
+        const central = concatU8([
+          strU8('PK\u0001\u0002'),        // central file header signature
+          num2(20), num2(20), num2(0), num2(0), num2(0), num2(0),
+          num4(crc), num4(size), num4(size),
+          num2(nameU8.length), num2(0), num2(0), num2(0), num2(0), num4(0),
+          num4(offset),
+          nameU8
+        ]);
+        centrals.push(central);
+        offset += localHeader.length + size;
+      }
+      const centralAll = concatU8(centrals);
+      const headersAll = concatU8(headers);
+      const datasAll   = concatU8(datas);
+      const end = concatU8([
+        strU8('PK\u0005\u0006'),   // end of central dir
+        num2(0), num2(0),
+        num2(files.length), num2(files.length),
+        num4(centralAll.length),
+        num4(headersAll.length + datasAll.length),
+        num2(0)
+      ]);
+      return new Blob([headersAll, datasAll, centralAll, end], {type:'application/zip'});
+    }
+
+    /* ========= Delete ========= */
     $('deleteBtn').onclick=()=>{ $('confirmBox').style.display='block'; };
     $('yesDel').onclick=()=>{
       if(!current) return;
       const has=readRecv().some(r=>r.jobNo===current.jobNo);
       if(has) { alert('CANNOT DELETE — JOB HAS RECEIVING REPORTS'); return; }
-      writeJobs(readJobs().filter(j=>j.jobNo!==current.jobNo));
-      closeMenu(); renderJobs();
+      writeJobs(readJobs().filter(j=>j.jobNo!==current.jobNo)); closeMenu(); renderJobs();
     };
     $('noDel').onclick=()=>{ $('confirmBox').style.display='none'; };
 
+    /* ========= Init & SW ========= */
     (function init(){ if(!$('startDate').value) $('startDate').value=today(); renderJobs(); })();
-
     (async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){} })();
   </script>
 </body>
 </html>
-w
