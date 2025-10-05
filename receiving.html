@@ -21,7 +21,7 @@
     .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
     .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
     label{display:block;color:var(--muted);font-size:12px;font-weight:900;margin:6px 0}
-    input,select,textarea{width:100%;border:1px solid var(--border);background:#0D1424;color:var(--fg);border-radius:12px;padding:10px 12px;font-weight:800;text-transform:uppercase}
+    input,select,textarea{width:100%;border:1px solid var(--border);background:#0D1424;color:#E6EAF0;border-radius:12px;padding:10px 12px;font-weight:800;text-transform:uppercase}
     textarea{min-height:88px;resize:vertical}
     .groupTitle{font-size:12px;color:var(--muted);margin:8px 0 2px 2px;text-transform:uppercase}
     .xbox{display:flex;align-items:center;gap:8px}
@@ -34,6 +34,27 @@
     .thumb{position:relative}
     .thumb img{width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
     .thumb button{position:absolute;top:4px;right:4px}
+
+    /* PRINT LAYOUT */
+    @media print {
+      @page { size: Letter; margin: 0.5in; }
+      body { background: #fff; color:#000; }
+      header, main > .card, .no-print { display:none !important; }
+      #printDoc { display:block !important; }
+    }
+    /* Printable doc styles */
+    #printDoc{ display:none; font-family:Arial, Helvetica, sans-serif; color:#000; }
+    .pd-title{ font-weight:900; font-size:18px; text-align:center; margin-bottom:8px; }
+    .pd-grid{ width:100%; border-collapse:collapse; margin-bottom:8px; }
+    .pd-grid th,.pd-grid td{ border:1px solid #222; padding:6px 8px; font-size:12px; vertical-align:top; }
+    .pd-label{ font-weight:700; width:22%; background:#f3f4f6; }
+    .pd-section{ font-weight:800; background:#e5e7eb; text-align:left; padding:6px 8px; border:1px solid #222; margin:10px 0 4px 0; }
+    .pd-flex{ display:flex; gap:8px; }
+    .pd-pill{ display:inline-block; border:1px solid #222; padding:0 6px; border-radius:6px; font-weight:800; }
+    .pd-photos{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+    .pd-photos img{ width:180px; height:180px; object-fit:cover; border:1px solid #222; }
+    .pd-small{ font-size:11px; color:#111; }
+    .pd-x{ display:inline-block; width:18px; height:18px; border:2px solid #111; text-align:center; line-height:16px; font-weight:900; }
   </style>
 </head>
 <body>
@@ -126,7 +147,6 @@
         <div><label for="comments">COMMENTS (50)</label><input id="comments" maxlength="50" /></div>
       </div>
 
-      <!-- Photos -->
       <div class="groupTitle">PHOTOS (UP TO 5)</div>
       <button id="photoBtn" class="btn" type="button">📷 TAKE PHOTO(S)</button>
       <input id="photoInput" type="file" accept="image/*" capture="environment" multiple style="display:none" />
@@ -150,35 +170,67 @@
     </section>
   </main>
 
+  <!-- PRINT TEMPLATE (hidden) -->
+  <div id="printDoc">
+    <div class="pd-title">RECEIVING INSPECTION REPORT</div>
+
+    <div class="pd-section">IDENTIFICATION</div>
+    <table class="pd-grid">
+      <tr><td class="pd-label">JOB NO.</td><td id="p_job"></td><td class="pd-label">DATE</td><td id="p_date"></td></tr>
+      <tr><td class="pd-label">TITLE</td><td id="p_title"></td><td class="pd-label">QUANTITY</td><td id="p_qty"></td></tr>
+      <tr><td class="pd-label">VENDOR</td><td id="p_vendor"></td><td class="pd-label">PO.</td><td id="p_po"></td></tr>
+    </table>
+
+    <div class="pd-section">SPECIFICATION</div>
+    <table class="pd-grid">
+      <tr><td class="pd-label">PRODUCT</td><td id="p_product"></td><td class="pd-label">GRADE / TYPE</td><td id="p_grade"></td></tr>
+      <tr><td class="pd-label">SPEC</td><td id="p_spec"></td><td class="pd-label">FITTING</td><td id="p_fitting"></td></tr>
+    </table>
+
+    <div class="pd-section">DIMENSIONS</div>
+    <table class="pd-grid">
+      <tr><td class="pd-label">TH</td><td id="p_th"></td><td class="pd-label">WIDTH</td><td id="p_width"></td></tr>
+      <tr><td class="pd-label">LENGTH</td><td id="p_length"></td><td class="pd-label">DIAMETER</td><td id="p_diameter"></td></tr>
+      <tr><td class="pd-label">OTHER</td><td id="p_dimOther" colspan="3"></td></tr>
+    </table>
+
+    <div class="pd-section">MARKINGS</div>
+    <table class="pd-grid">
+      <tr><td class="pd-label">ACTUAL MATERIAL MARKING</td><td id="p_marking" colspan="3" class="pd-small"></td></tr>
+      <tr><td class="pd-label">MARKING OK</td><td id="p_markOk"></td><td class="pd-label">MTR/COFC OK</td><td id="p_mtrOk"></td></tr>
+    </table>
+
+    <div class="pd-section">ACCEPTABILITY</div>
+    <table class="pd-grid">
+      <tr><td class="pd-label">VISUAL</td><td id="p_visual"></td><td class="pd-label">B16 DIMENSIONS</td><td id="p_b16"></td></tr>
+      <tr><td class="pd-label">DECISION</td>
+          <td colspan="3">
+            <span class="pd-pill">ACCEPT</span> <span id="p_acc" class="pd-x"></span>
+            &nbsp;&nbsp;&nbsp;
+            <span class="pd-pill">REJECT</span> <span id="p_rej" class="pd-x"></span>
+          </td>
+      </tr>
+      <tr><td class="pd-label">COMMENTS</td><td id="p_comments" colspan="3"></td></tr>
+    </table>
+
+    <div class="pd-section">PHOTOS</div>
+    <div id="p_photos" class="pd-photos"></div>
+  </div>
+
   <script>
     const RECV_KEY='wh_receiving_v1';
     const readAll=()=>JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
     const writeAll=(rows)=>localStorage.setItem(RECV_KEY,JSON.stringify(rows));
     const qs=(k)=>new URLSearchParams(location.search).get(k)||''; const $=id=>document.getElementById(id);
 
-    // Decision
     let decision='ACCEPT'; function renderDecision(){ $('boxAccept').textContent=decision==='ACCEPT'?'X':' '; $('boxReject').textContent=decision==='REJECT'?'X':' '; }
     $('btnAccept').onclick=()=>{decision='ACCEPT';renderDecision();}; $('btnReject').onclick=()=>{decision='REJECT';renderDecision();};
 
-    // Photos (data URLs, max 5)
-    let photos=[]; // [{name,dataUrl}]
-    function renderPhotos(){
-      const wrap=$('photoStrip'); wrap.innerHTML='';
-      photos.forEach((p,i)=>{
-        const div=document.createElement('div'); div.className='thumb';
-        div.innerHTML=`<img alt="photo ${i+1}" src="${p.dataUrl}"><button class="btn danger" data-i="${i}" type="button">X</button>`;
-        wrap.appendChild(div);
-      });
-    }
+    let photos=[]; function renderPhotos(){ const wrap=$('photoStrip'); wrap.innerHTML=''; photos.forEach((p,i)=>{ const div=document.createElement('div'); div.className='thumb'; div.innerHTML=`<img alt="photo ${i+1}" src="${p.dataUrl}"><button class="btn danger" data-i="${i}" type="button">X</button>`; wrap.appendChild(div);});}
     $('photoStrip').onclick=(e)=>{const b=e.target.closest('button'); if(!b) return; const i=+b.dataset.i; photos.splice(i,1); renderPhotos();};
     $('photoBtn').onclick=()=>{const remain=5-photos.length; if(remain<=0){alert('MAX 5 PHOTOS');return;} $('photoInput').click();};
-    $('photoInput').onchange=async (e)=>{
-      const files=[...e.target.files].slice(0,5-photos.length);
-      for (let i=0;i<files.length;i++){
-        const f=files[i];
-        const buf=await f.arrayBuffer();
-        const b64=URL.createObjectURL(new Blob([buf],{type:f.type}));
-        // convert to dataURL for persistence (ensures offline restore)
+    $('photoInput').onchange=async (e)=>{ const files=[...e.target.files].slice(0,5-photos.length);
+      for (const f of files){ const buf=await f.arrayBuffer(); const b64=URL.createObjectURL(new Blob([buf],{type:f.type}));
         const dataUrl=await fetch(b64).then(r=>r.blob()).then(b=>new Promise(res=>{const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(b);}));
         URL.revokeObjectURL(b64);
         const baseTitle=($('title').value||'ITEM').trim().toUpperCase()||'ITEM';
@@ -188,32 +240,19 @@
     };
 
     function today(){return new Date().toISOString().slice(0,10);}
-
     function getForm(id=null){
       const suffix=$('b16Override').value.trim()||$('b16Suffix').value;
-      return{
-        id: id || (crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)),
-        jobNo:$('jobNo').value.trim().toUpperCase(),
-        title:$('title').value.trim().toUpperCase(),
-        vendor:$('vendor').value.trim().toUpperCase(),
-        po:$('po').value.trim().toUpperCase(),
-        date:$('date').value||today(),
-        qty:$('qty').value.trim(),
-        product:$('product').value,
-        specPrefix:$('specPrefix').value, specCode:$('specCode').value.trim().toUpperCase(),
-        grade:$('grade').value.trim().toUpperCase(),
-        fitting:'B16.'+(suffix||''),
-        th:[$('th1').value,$('th2').value,$('th3').value,$('th4').value].map(s=>s.trim().toUpperCase()),
-        width:$('width').value.trim().toUpperCase(),
-        length:$('length').value.trim().toUpperCase(),
-        diameter:$('diameter').value.trim().toUpperCase(), diaType:$('diaType').value,
-        dimOther:$('dimOther').value.trim().toUpperCase(),
-        visualOk:$('visualOk').value, b16Ok:$('b16Ok').value,
-        marking:$('marking').value.trim().toUpperCase(), markingCode:$('markingCode').value, mtrOk:$('mtrOk').value,
+      return{ id: id || (crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)),
+        jobNo:$('jobNo').value.trim().toUpperCase(), title:$('title').value.trim().toUpperCase(), vendor:$('vendor').value.trim().toUpperCase(),
+        po:$('po').value.trim().toUpperCase(), date:$('date').value||today(), qty:$('qty').value.trim(),
+        product:$('product').value, specPrefix:$('specPrefix').value, specCode:$('specCode').value.trim().toUpperCase(), grade:$('grade').value.trim().toUpperCase(),
+        fitting:'B16.'+ (suffix||''), th:[$('th1').value,$('th2').value,$('th3').value,$('th4').value].map(s=>s.trim().toUpperCase()),
+        width:$('width').value.trim().toUpperCase(), length:$('length').value.trim().toUpperCase(),
+        diameter:$('diameter').value.trim().toUpperCase(), diaType:$('diaType').value, dimOther:$('dimOther').value.trim().toUpperCase(),
+        visualOk:$('visualOk').value, b16Ok:$('b16Ok').value, marking:$('marking').value.trim().toUpperCase(),
+        markingCode:$('markingCode').value, mtrOk:$('mtrOk').value,
         decision, comments:$('comments').value.trim().toUpperCase(),
-        photos, // array of {name,dataUrl}
-        createdAt:new Date().toISOString()
-      };
+        photos, createdAt:new Date().toISOString() };
     }
     function setForm(r){
       $('title').value=r.title||''; $('jobNo').value=r.jobNo||''; $('vendor').value=r.vendor||''; $('po').value=r.po||'';
@@ -235,7 +274,11 @@
       for(const r of rows){
         const tr=document.createElement('tr');
         tr.innerHTML=`<td><span class="pill">${r.jobNo}</span></td><td>${r.title||'(UNTITLED)'}</td><td>${(r.date||'').toUpperCase()}</td><td style="text-align:right">${r.qty||''}</td>
-        <td class="actions"><button class="btn" data-act="edit" data-id="${r.id}">VIEW / EDIT</button><button class="btn danger" data-act="del" data-id="${r.id}">DELETE</button></td>`;
+        <td class="actions">
+          <button class="btn" data-act="edit" data-id="${r.id}">VIEW / EDIT</button>
+          <button class="btn" data-act="pdf"  data-id="${r.id}">EXPORT PDF</button>
+          <button class="btn danger" data-act="del" data-id="${r.id}">DELETE</button>
+        </td>`;
         tb.appendChild(tr);
       }
     }
@@ -244,6 +287,7 @@
       const id=btn.dataset.id, act=btn.dataset.act; const rows=readAll(); const idx=rows.findIndex(x=>x.id===id); if(idx<0) return;
       if(act==='edit'){editingId=id; setForm(rows[idx]); window.scrollTo({top:0,behavior:'smooth'});}
       if(act==='del'){ if(confirm('ARE YOU SURE YOU WANT TO DELETE THIS RECEIVING ENTRY?')){ rows.splice(idx,1); writeAll(rows); renderList(); } }
+      if(act==='pdf'){ exportPDF(rows[idx]); }
     };
 
     function saveCore(nextMode){
@@ -251,19 +295,37 @@
       if(!rec.jobNo) return alert('JOB NO. REQUIRED');
       if(!rec.title) return alert('TITLE REQUIRED');
       const rows=readAll(); const idx=rows.findIndex(x=>x.id===rec.id); if(idx>=0) rows[idx]=rec; else rows.unshift(rec); writeAll(rows);
-      editingId=null;
-      setForm({jobNo:rec.jobNo,date:today(),photos:[]});
-      renderList();
+      editingId=null; setForm({jobNo:rec.jobNo,date:today(),photos:[]}); renderList();
       if(nextMode==='another'){ window.scrollTo({top:0,behavior:'smooth'}); }
       else if(nextMode==='done'){ location.href=`jobs.html?job=${encodeURIComponent(rec.jobNo)}`; }
       else { document.querySelector('section.card + section.card').scrollIntoView({behavior:'smooth'}); }
     }
     $('saveBtn').onclick=()=>saveCore('list'); $('saveAddBtn').onclick=()=>saveCore('another'); $('doneBtn').onclick=()=>saveCore('done'); $('resetBtn').onclick=()=>{editingId=null; setForm({jobNo:$('jobNo').value,date:today(),photos:[]});};
 
-    (function init(){ $('date').value=today(); const job=(new URLSearchParams(location.search).get('job')||'').toUpperCase(); $('jobNo').value=job; renderDecision(); renderPhotos(); renderList(); })();
+    function exportPDF(rec){
+      const set=(id,v)=>{$(id).textContent=(v||'').toString().toUpperCase();};
+      set('p_job',rec.jobNo); set('p_date',rec.date); set('p_title',rec.title); set('p_qty',rec.qty);
+      set('p_vendor',rec.vendor); set('p_po',rec.po);
+      set('p_product',rec.product); set('p_grade',rec.grade);
+      set('p_spec',`${rec.specPrefix||''} ${rec.specCode||''}`.trim());
+      set('p_fitting',rec.fitting);
+      set('p_th',(rec.th||[]).filter(Boolean).join('  •  '));
+      set('p_width',rec.width); set('p_length',rec.length);
+      set('p_diameter', `${rec.diameter||''} ${rec.diaType||''}`.trim());
+      set('p_dimOther',rec.dimOther);
+      set('p_marking',rec.marking);
+      set('p_markOk',rec.markingCode); set('p_mtrOk',rec.mtrOk);
+      set('p_visual',rec.visualOk); set('p_b16',rec.b16Ok);
+      $('p_acc').textContent = rec.decision==='ACCEPT'?'X':'';
+      $('p_rej').textContent = rec.decision==='REJECT'?'X':'';
+      set('p_comments',rec.comments);
+      const ph=$('p_photos'); ph.innerHTML='';
+      (rec.photos||[]).forEach(p=>{ const img=new Image(); img.src=p.dataUrl; ph.appendChild(img); });
+      window.print();
+    }
 
+    (function init(){ $('date').value=today(); const job=(new URLSearchParams(location.search).get('job')||'').toUpperCase(); $('jobNo').value=job; renderDecision(); renderPhotos(); renderList(); })();
     (async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){} })();
   </script>
 </body>
 </html>
-w
