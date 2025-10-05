@@ -394,7 +394,7 @@
       $('date').value=today();
       const job=(qs('job')||'').toUpperCase();
       $('jobNo').value=job;
-      renderDecision(); renderPhotos(); renderList();
+      renderDecision(); renderPhotos(); renderList(); 
     })();
     (async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){} })();
   </script>
