@@ -1,4 +1,4 @@
-<!-- /jobs.html  (REPLACE your current jobs.html with this) -->
+<!-- /ASME_Receiving/jobs.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -14,20 +14,18 @@
     header{position:sticky;top:0;background:#0C1320CC;backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
     .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1120px;margin:0 auto}
     .brand{font-weight:900}
-    .btn{border:1px solid var(--border);background:#0F172A;color:var(--fg);padding:10px 14px;border-radius:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;text-decoration:none}
-    .btn:focus{outline:3px solid var(--focus);outline-offset:2px}
+    .btn{border:1px solid var(--border);background:#0F172A;color:#E6EAF0;padding:10px 14px;border-radius:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;text-decoration:none}
     .btn.primary{background:var(--accent);color:#052e16;border-color:#1B9E64}
     .btn.danger{background:var(--danger);border-color:#D83A3F}
-    .btn.ghost{background:#0F172A80}
+    .btn:focus{outline:3px solid var(--focus);outline-offset:2px}
     main{max-width:1120px;margin:24px auto;padding:0 16px}
     .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
     label{font-size:12px;color:var(--muted);font-weight:800;display:block;margin-bottom:6px}
-    input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid var(--border);background:#0D1424;color:var(--fg);text-transform:uppercase;font-weight:800}
+    input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid var(--border);background:#0D1424;color:#E6EAF0;text-transform:uppercase;font-weight:800}
     .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
     .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#0F172A;border:1px solid var(--border);font-size:12px;font-weight:800}
     table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--border);padding:14px 10px} th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
     .empty{color:var(--muted);text-align:center;padding:18px;text-transform:uppercase}
-    /* Overlay */
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50}
     .sheet{width:min(560px,92%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
     .sheet h2{margin:0 0 8px 0;font-size:20px;text-transform:uppercase}
@@ -74,15 +72,15 @@
   </main>
 
   <!-- ACTION MENU -->
-  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
     <div class="sheet">
-      <h2 id="dlgTitle">JOB ACTIONS</h2>
+      <h2>JOB ACTIONS</h2>
       <div id="dlgMeta" class="meta">JOB — DESC</div>
       <div class="stack">
         <a id="viewBtn" class="btn primary wide" href="#">VIEW JOB</a>
-        <button id="exportBtn" class="btn wide">EXPORT CSV + JSON</button>
-        <button id="zipBtn" class="btn wide">EXPORT ZIP (CSV + JSON + 3-UP + PHOTOS)</button>
-        <button id="shareZipBtn" class="btn wide">SHARE ZIP (≤ 20MB)</button>
+        <button id="pdfBtn" class="btn wide">EXPORT PDF (3-UP)</button>
+        <button id="zipDocBtn" class="btn wide">EXPORT ZIP (PDF + PHOTOS)</button>
+        <button id="shareZipDocBtn" class="btn wide">SHARE ZIP (≤ 20MB)</button>
         <button id="deleteBtn" class="btn danger wide">DELETE JOB</button>
         <button id="closeBtn" class="btn wide">CLOSE</button>
         <div id="confirmBox" class="confirm">
@@ -98,7 +96,7 @@
   </div>
 
   <script>
-    /* ========= Storage ========= */
+    /* ===== Storage ===== */
     const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
     const $=id=>document.getElementById(id);
     const readJobs=()=>JSON.parse(localStorage.getItem(JOBS_KEY)||'[]');
@@ -106,7 +104,7 @@
     const readRecv=()=>JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
     function today(){return new Date().toISOString().slice(0,10);}
 
-    /* ========= UI: list ========= */
+    /* ===== UI: list ===== */
     function renderJobs(){
       const rows=readJobs().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
       const tb=$('jobsBody'); tb.innerHTML='';
@@ -122,7 +120,7 @@
     }
     $('jobsBody').onclick=(e)=>{const tr=e.target.closest('tr.jobrow'); if(tr) openMenu(tr.dataset.job);};
 
-    /* ========= Action menu ========= */
+    /* ===== Action menu ===== */
     let current=null;
     function openMenu(jobNo){
       const job=readJobs().find(j=>j.jobNo===jobNo); if(!job) return;
@@ -135,7 +133,7 @@
     $('closeBtn').onclick=closeMenu;
     $('overlay').onclick=(e)=>{ if(e.target===e.currentTarget) closeMenu(); };
 
-    /* ========= Create ========= */
+    /* ===== Create ===== */
     $('createBtn').onclick=()=>{
       const jobNo=$('jobNo').value.trim().toUpperCase();
       const desc=$('desc').value.trim().toUpperCase();
@@ -150,84 +148,73 @@
     };
     $('clearBtn').onclick=()=>{$('jobNo').value='';$('desc').value='';};
 
-    /* ========= CSV + JSON (existing) ========= */
-    $('exportBtn').onclick=()=>{
+    /* ===== PDF (3-up, multi-page, no libs) ===== */
+    $('pdfBtn').onclick=async ()=>{
       if(!current) return;
       const rows=readRecv().filter(r=>r.jobNo===current.jobNo);
-      const cols=['id','jobNo','date','qty','product','specPrefix','specCode','grade','fitting','width','length','diameter','diaType','dimOther','visualOk','b16Ok','markingCode','mtrOk','decision','title','vendor','po','comments'];
-      const esc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
-      const csv=[cols.join(',')].concat(rows.map(r=>cols.map(c=>esc(r[c])).join(','))).join('\n');
-      download(new Blob([csv],{type:'text/csv'}),`${current.jobNo}-RECEIVING.csv`);
-      download(new Blob([JSON.stringify(current,null,2)],{type:'application/json'}),`${current.jobNo}-JOB.json`);
+      if(!rows.length) return alert('NO RECEIVING ENTRIES FOR THIS JOB');
+      const pageCanvases=await renderThreeUpPages(rows); // canvases
+      // Convert canvases -> JPEG u8
+      const jpegU8s=[];
+      for(const c of pageCanvases){
+        const url=c.toDataURL('image/jpeg', 0.9);
+        jpegU8s.push(dataUrlToU8(url));
+      }
+      // Build PDF (Letter landscape, 792x612 pt)
+      const pdfBlob = buildPdfFromJpegs(jpegU8s, 792, 612);
+      download(pdfBlob, `${current.jobNo}-REPORT.pdf`);
     };
 
-    /* ========= ZIP EXPORT (no libs) ========= */
-    const ZIP_CAP_BYTES = 20 * 1024 * 1024; // 20 MB default cap
-    $('zipBtn').onclick=async ()=>{ if(!current) return; const blob=await buildJobZip(current.jobNo,false); if(blob) download(blob, `${current.jobNo}-PACKAGE.zip`); };
-    $('shareZipBtn').onclick=async ()=>{
+    /* ===== ZIP: PDF + PHOTOS (JPEGs only) ===== */
+    const ZIP_CAP_BYTES = 20 * 1024 * 1024; // WHY: email/share size cap
+    $('zipDocBtn').onclick=async ()=>{ if(!current) return; const blob=await buildJobZipDocs(current.jobNo,false); if(blob) download(blob, `${current.jobNo}-DOCS.zip`); };
+    $('shareZipDocBtn').onclick=async ()=>{
       if(!current) return;
-      const blob=await buildJobZip(current.jobNo,true);
+      const blob=await buildJobZipDocs(current.jobNo,true);
       if(!blob) return;
-      const file=new File([blob],`${current.jobNo}-PACKAGE.zip`,{type:'application/zip'});
+      const file=new File([blob],`${current.jobNo}-DOCS.zip`,{type:'application/zip'});
       if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-        try{ await navigator.share({title:`${current.jobNo} — PACKAGE`, files:[file]}); }catch(e){}
-      } else {
-        download(blob, file.name);
-        alert('SHARE NOT SUPPORTED — ZIP DOWNLOADED INSTEAD.');
-      }
+        try{ await navigator.share({title:`${current.jobNo} — DOCS`, files:[file]}); }catch(e){}
+      } else { download(blob, file.name); alert('SHARE NOT SUPPORTED — ZIP DOWNLOADED INSTEAD.'); }
     };
 
-    async function buildJobZip(jobNo, showProgress){
+    async function buildJobZipDocs(jobNo, showProgress){
       const rows=readRecv().filter(r=>r.jobNo===jobNo);
-      const cols=['id','jobNo','date','qty','product','specPrefix','specCode','grade','fitting','width','length','diameter','diaType','dimOther','visualOk','b16Ok','markingCode','mtrOk','decision','title','vendor','po','comments'];
-      const esc=v=>`"${String(v??'').replace(/"/g,'""')}"`;
-      const csv=[cols.join(',')].concat(rows.map(r=>cols.map(c=>esc(r[c])).join(','))).join('\n');
-      const jobMeta = JSON.stringify(readJobs().find(j=>j.jobNo===jobNo)||{},null,2);
+      if(!rows.length){ alert('NO RECEIVING ENTRIES FOR THIS JOB'); return null; }
+      // pages -> canvases -> JPEG u8
+      const canvases=await renderThreeUpPages(rows);
+      const pdfU8 = dataUrlToU8(URL.createObjectURL(buildPdfFromJpegs(await Promise.all(canvases.map(c=>new Promise(res=>res(c.toDataURL('image/jpeg',0.9)) ).then(u=>dataUrlToU8(u)))), 792, 612))); // not used; keep simpler below
 
-      // Build 3-UP HTML (exact-print template) for all entries
-      const reportHtml = buildReport3upHTML(jobNo, rows);
+      // Simpler: rebuild once (avoid objectURL revoke races)
+      const jpegU8s=[]; for(const c of canvases){ jpegU8s.push(dataUrlToU8(c.toDataURL('image/jpeg',0.9))); }
+      const pdfBlob = buildPdfFromJpegs(jpegU8s, 792, 612);
+      const pdfArr = await blobToU8(pdfBlob);
 
-      // Prepare files to add (as Uint8Array)
-      const files = [];
-      files.push({name:`${jobNo}/README.txt`, data:utf8(`PACKAGE FOR JOB ${jobNo}\nIncludes: CSV, JOB.json, 3UP report HTML, photos (compressed).\n`)});      
-      files.push({name:`${jobNo}/${jobNo}-RECEIVING.csv`, data:utf8(csv)});
-      files.push({name:`${jobNo}/${jobNo}-JOB.json`, data:utf8(jobMeta)});
-      files.push({name:`${jobNo}/${jobNo}-REPORT-3UP.html`, data:utf8(reportHtml)});
-
-      // Photos: compress and include
-      let quality=0.7, maxDim=1280;
-      const allPhotos=[];
-      rows.forEach((r,idx)=> (r.photos||[]).forEach((p,i)=> allPhotos.push({title:r.title||'ITEM', idx, i, dataUrl:p.dataUrl})));
-      for(let k=0;k<allPhotos.length;k++){
-        const p=allPhotos[k];
-        const {u8, bytes} = await compressDataUrlToJpegU8(p.dataUrl, maxDim, quality);
-        files.push({name:`${jobNo}/PHOTOS/${(p.title||'ITEM').toUpperCase().replace(/[^A-Z0-9\-_. ]/g,'_')}_${p.idx+1}_${p.i+1}.jpg`, data:u8});
+      // photos (compress if needed)
+      let quality=0.7, maxDim=1600;
+      const photoItems=[];
+      rows.forEach((r,idx)=> (r.photos||[]).forEach((p,i)=> photoItems.push({
+        path: `${jobNo}/PHOTOS/${(r.title||'ITEM').toUpperCase().replace(/[^A-Z0-9\-_. ]/g,'_')}_${idx+1}_${i+1}.jpg`,
+        dataUrl: p.dataUrl
+      })));
+      const files = [{name:`${jobNo}/${jobNo}-REPORT.pdf`, data: pdfArr}];
+      for(const ph of photoItems){
+        const {u8} = await compressDataUrlToJpegU8(ph.dataUrl, maxDim, quality);
+        files.push({name:ph.path, data:u8});
       }
-
-      // Assemble ZIP; if over cap, progressively compress
       let zipBlob = zipStore(files);
       if(zipBlob.size > ZIP_CAP_BYTES){
         $('zipNote').textContent = `Optimizing ZIP size… (${Math.round(zipBlob.size/1024/1024)} MB)`;
-        // reduce quality then dimensions
-        for(const q of [0.6,0.5,0.4,0.3]){
-          const smaller=[]; smaller.push(...files.slice(0,4)); // meta + csv + json + html
-          for(let k=0;k<allPhotos.length;k++){
-            const p=allPhotos[k];
-            const {u8} = await compressDataUrlToJpegU8(p.dataUrl, maxDim, q);
-            smaller.push({name:files[4+k].name, data:u8});
-          }
+        for(const q of [0.6,0.5,0.4]){
+          const smaller=[{name:`${jobNo}/${jobNo}-REPORT.pdf`, data: pdfArr}];
+          for(const ph of photoItems){ const {u8}=await compressDataUrlToJpegU8(ph.dataUrl, maxDim, q); smaller.push({name:ph.path, data:u8}); }
           zipBlob = zipStore(smaller);
           if(zipBlob.size <= ZIP_CAP_BYTES) break;
         }
         if(zipBlob.size > ZIP_CAP_BYTES){
-          // fallback: halve dimensions
-          maxDim = 960;
-          const smaller=[]; smaller.push(...files.slice(0,4));
-          for(let k=0;k<allPhotos.length;k++){
-            const p=allPhotos[k];
-            const {u8} = await compressDataUrlToJpegU8(p.dataUrl, maxDim, 0.5);
-            smaller.push({name:files[4+k].name, data:u8});
-          }
+          maxDim = 1200;
+          const smaller=[{name:`${jobNo}/${jobNo}-REPORT.pdf`, data: pdfArr}];
+          for(const ph of photoItems){ const {u8}=await compressDataUrlToJpegU8(ph.dataUrl, maxDim, 0.5); smaller.push({name:ph.path, data:u8}); }
           zipBlob = zipStore(smaller);
         }
         $('zipNote').textContent = zipBlob.size > ZIP_CAP_BYTES
@@ -237,139 +224,239 @@
       return zipBlob;
     }
 
-    /* ========= Helpers ========= */
-    function download(blob, name){
-      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    /* ===== Render 3-up pages (canvas) ===== */
+    async function renderThreeUpPages(records){
+      // Letter landscape @ ~150dpi canvas: 1650 x 1275
+      const W=1650, H=1275, PAD=36, BOX_GAP=24;
+      const ctxFontTitle='bold 22px Arial'; const ctxFontLabel='bold 14px Arial'; const ctxFontText='12px Arial';
+      const pages=[]; for(let i=0;i<records.length;i+=3){
+        const slice=records.slice(i,i+3);
+        const c=document.createElement('canvas'); c.width=W; c.height=H; const g=c.getContext('2d');
+        g.fillStyle='#FFFFFF'; g.fillRect(0,0,W,H); g.strokeStyle='#111'; g.fillStyle='#000'; g.lineWidth=1;
+
+        // footer
+        const footerY=H-PAD; g.font=ctxFontText;
+        g.strokeRect(PAD, footerY-28, W-2*PAD, 28);
+        g.fillText('MATERIAL APPROVAL: APPROVED', PAD+8, footerY-10);
+        g.fillText('QC MANAGER: INITIALS / DATE', PAD+360, footerY-10);
+
+        const boxHeight=(H - PAD*2 - 28 - BOX_GAP*2)/3;
+        for(let r=0;r<slice.length;r++){
+          const rec=slice[r]; const top=PAD + r*(boxHeight+BOX_GAP);
+          g.strokeRect(PAD, top, W-2*PAD, boxHeight);
+          g.font=ctxFontTitle; g.fillText('RECEIVING INSPECTION REPORT', PAD+10, top+28);
+
+          const L=(t,x,y)=>{g.font=ctxFontLabel;g.fillText(t,x,y);};
+          const V=(t,x,y)=>{g.font=ctxFontText;g.fillText((t||'').toString().toUpperCase(),x,y);};
+
+          L('JOB NO.', PAD+10, top+58); V(rec.jobNo, PAD+110, top+58);
+          L('VENDOR:', PAD+420, top+58); V(rec.vendor, PAD+520, top+58);
+
+          L('PO.', PAD+10, top+82); V(rec.po, PAD+110, top+82);
+          L('DATE:', PAD+420, top+82); V(rec.date, PAD+520, top+82);
+
+          L('QUANTITY:', PAD+10, top+106); V(rec.qty, PAD+110, top+106);
+
+          g.strokeRect(PAD+6, top+120, W-2*PAD-12, 24); g.font=ctxFontLabel; g.fillText('SPECIFICATION', PAD+12, top+138);
+
+          L('PRODUCT:', PAD+10, top+168); V(rec.product, PAD+110, top+168);
+          L('GRADE/TYPE:', PAD+420, top+168); V(rec.grade, PAD+540, top+168);
+
+          L('SPECIFICATION:', PAD+10, top+192); V(`${(rec.specPrefix||'').toUpperCase()} - ${(rec.specCode||'').toUpperCase()}`, PAD+160, top+192);
+          L('FITTING:', PAD+420, top+192); V(rec.fitting, PAD+500, top+192);
+
+          g.strokeRect(PAD+6, top+206, W-2*PAD-12, 24); g.fillText('DIMENSIONS', PAD+12, top+224);
+
+          L('DIMENSIONS: TH', PAD+10, top+252); V((rec.th||[]).filter(Boolean).map(s=>s.toUpperCase()).join('   '), PAD+170, top+252);
+          L('WIDTH:', PAD+10, top+276); V(rec.width, PAD+110, top+276);
+          L('LENGTH:', PAD+300, top+276); V(rec.length, PAD+380, top+276);
+          L('DIAMETER:', PAD+600, top+276); V(`${(rec.diameter||'').toUpperCase()} ${(rec.diaType||'').toUpperCase()}`, PAD+700, top+276);
+          L('OTHER:', PAD+980, top+276); V(rec.dimOther, PAD+1040, top+276);
+
+          L('VISUAL INSPECTION ACCEPTABLE:', PAD+10, top+304); V(rec.visualOk, PAD+260, top+304);
+          L('B16 DIMENSIONS ACCEPTABLE:', PAD+500, top+304); V(rec.b16Ok, PAD+760, top+304);
+
+          L('ACTUAL MATERIAL MARKING:', PAD+10, top+328);
+          wrapText(g, (rec.marking||'').toUpperCase(), PAD+230, top+328, W-2*PAD-240, 14, ctxFontText);
+
+          L('MARKING ACCEPTABLE TO CODE/STANDARD:', PAD+10, top+372); V(rec.markingCode, PAD+330, top+372);
+          L('MTR/CofC ACCEPTABLE TO SPECIFICATION:', PAD+500, top+372); V(rec.mtrOk, PAD+820, top+372);
+
+          L('ACCEPT / REJECT', PAD+10, top+396);
+          g.strokeRect(PAD+160, top+382, 18, 18); if((rec.decision||'ACCEPT')==='ACCEPT'){ g.fillText('X', PAD+163, top+396); }
+          g.fillText('ACCEPT', PAD+185, top+396);
+          g.strokeRect(PAD+270, top+382, 18, 18); if((rec.decision||'REJECT')==='REJECT'){ g.fillText('X', PAD+273, top+396); }
+          g.fillText('REJECT', PAD+295, top+396);
+
+          L('COMMENTS:', PAD+420, top+396);
+          wrapText(g, (rec.comments||'').toUpperCase(), PAD+510, top+396, 500, 14, ctxFontText);
+
+          if((rec.photos||[]).length){
+            g.fillText('PHOTOS:', PAD+10, top+424);
+            const thumb=100, gap=6; let x=PAD+90, y=top+392;
+            for(let pi=0;pi<Math.min(rec.photos.length,5);pi++){
+              const img=await loadImage(rec.photos[pi].dataUrl);
+              const {w,h}=fitInside(img.width,img.height,thumb,thumb);
+              g.drawImage(img, x, y, w, h); x+=thumb+gap;
+            }
+          }
+        }
+        pages.push(c);
+      }
+      return pages;
     }
-    function utf8(str){ return new TextEncoder().encode(str); }
+    function wrapText(g, text, x, y, maxWidth, lineHeight, font){
+      g.font=font;
+      const words=text.split(/\s+/); let line=''; let yy=y;
+      for(let n=0;n<words.length;n++){
+        const test=line? line+' '+words[n]:words[n];
+        if(g.measureText(test).width>maxWidth){ g.fillText(line, x, yy); line=words[n]; yy+=lineHeight; } else line=test;
+      }
+      if(line) g.fillText(line, x, yy);
+    }
+    function fitInside(w,h,maxW,maxH){ const s=Math.min(maxW/w,maxH/h); return {w:Math.round(w*s), h:Math.round(h*s)}; }
+    function loadImage(src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.src=src; }); }
 
-    function buildReport3upHTML(jobNo, rows){
-      // Builds a self-contained HTML with inline CSS closely matching your QC sheet, 3 entries per page
-      const css = `
-        @page { size: Letter; margin: 0.5in; }
-        body { font-family: Arial, Helvetica, sans-serif; color:#000; margin:0; }
-        .page{ page-break-after:always; }
-        .title{ font-weight:900; font-size:18px; text-align:center; margin:0 0 8px 0; }
-        .box{ border:1px solid #111; padding:8px; margin-bottom:8px; }
-        table { width:100%; border-collapse:collapse; }
-        td { border:1px solid #222; padding:6px 8px; font-size:12px; vertical-align:top; }
-        .lbl { width:22%; font-weight:700; background:#f3f4f6; }
-        .sec { font-weight:800; background:#e5e7eb; text-align:left; padding:6px 8px; border:1px solid #222; margin:10px 0 4px 0;}
-        .pill{ display:inline-block; border:1px solid #222; padding:0 6px; border-radius:6px; font-weight:800; }
-        .x { display:inline-block; width:18px; height:18px; border:2px solid #111; text-align:center; line-height:16px; font-weight:900; }
-        .photos { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
-        .photos img{ width:160px; height:160px; object-fit:cover; border:1px solid #222; }
-        .footer{ margin-top:10px; border:1px solid #111; padding:6px 8px; font-size:12px; }
-      `.trim();
+    /* ===== Build multi-page PDF from JPEGs (no libs) ===== */
+    function buildPdfFromJpegs(jpegsU8, pageWpt=792, pageHpt=612){
+      // Minimal PDF: one page per JPEG; each page draws the image full-bleed
+      const objects=[]; const xref=[]; let offset=0;
+      const w = pageWpt, h = pageHpt;
 
-      const esc=(v)=>String(v??'').toUpperCase();
-      const chunked = [];
-      for(let i=0;i<rows.length;i+=3) chunked.push(rows.slice(i,i+3));
-      const pages = chunked.map(chunk=>{
-        const items = chunk.map(rec=>{
-          const ths = (rec.th||[]).filter(Boolean).map(esc).join('&nbsp;&nbsp;&nbsp;');
-          const dimDia = `${esc(rec.diameter)} ${esc(rec.diaType)}`.trim();
-          const photos = (rec.photos||[]).map(p=>`<img src="${p.dataUrl}" alt="PHOTO">`).join('');
-          return `
-          <div class="box">
-            <div class="title">RECEIVING INSPECTION REPORT</div>
-            <table>
-              <tr><td class="lbl">JOB NO.</td><td>${esc(rec.jobNo)}</td><td class="lbl">VENDOR:</td><td>${esc(rec.vendor)}</td></tr>
-              <tr><td class="lbl">PO.</td><td>${esc(rec.po)}</td><td class="lbl">DATE:</td><td>${esc(rec.date)}</td></tr>
-              <tr><td class="lbl">QUANTITY:</td><td colspan="3">${esc(rec.qty)}</td></tr>
-            </table>
-            <div class="sec">SPECIFICATION</div>
-            <table>
-              <tr><td class="lbl">PRODUCT:</td><td>${esc(rec.product)}</td><td class="lbl">GRADE/TYPE:</td><td>${esc(rec.grade)}</td></tr>
-              <tr><td class="lbl">SPECIFICATION:</td><td>${esc(`${rec.specPrefix||''}- ${rec.specCode||''}`)}</td><td class="lbl">FITTING:</td><td>${esc(rec.fitting)}</td></tr>
-            </table>
-            <div class="sec">DIMENSIONS</div>
-            <table>
-              <tr><td class="lbl">DIMENSIONS: TH</td><td colspan="3">${ths}</td></tr>
-              <tr><td class="lbl">WIDTH:</td><td>${esc(rec.width)}</td><td class="lbl">LENGTH:</td><td>${esc(rec.length)}</td></tr>
-              <tr><td class="lbl">DIAMETER:</td><td>${dimDia}</td><td class="lbl">OTHER:</td><td>${esc(rec.dimOther)}</td></tr>
-            </table>
-            <table style="margin-top:8px">
-              <tr><td class="lbl">VISUAL INSPECTION ACCEPTABLE:</td><td>${esc(rec.visualOk)}</td><td class="lbl">B16 DIMENSIONS ACCEPTABLE:</td><td>${esc(rec.b16Ok)}</td></tr>
-              <tr><td class="lbl">ACTUAL MATERIAL MARKING:</td><td colspan="3">${esc(rec.marking)}</td></tr>
-              <tr><td class="lbl">MARKING ACCEPTABLE TO CODE/STANDARD:</td><td>${esc(rec.markingCode)}</td><td class="lbl">MTR/CofC ACCEPTABLE TO SPECIFICATION:</td><td>${esc(rec.mtrOk)}</td></tr>
-              <tr>
-                <td class="lbl">ACCEPT / REJECT</td>
-                <td>
-                  <span class="pill">ACCEPT</span> <span class="x">${rec.decision==='ACCEPT'?'X':''}</span>
-                  &nbsp;&nbsp;&nbsp;
-                  <span class="pill">REJECT</span> <span class="x">${rec.decision==='REJECT'?'X':''}</span>
-                </td>
-                <td class="lbl">COMMENTS:</td><td>${esc(rec.comments)}</td>
-              </tr>
-              <tr><td class="lbl">QUALITY CONTROL:</td><td colspan="3">INITIALS / DATE</td></tr>
-            </table>
-            ${photos ? `<div class="sec">PHOTOS</div><div class="photos">${photos}</div>` : ''}
-          </div>`;
-        }).join('');
-        return `<div class="page">${items}<div class="footer"><strong>MATERIAL APPROVAL:</strong> APPROVED &nbsp;&nbsp; <strong>QC MANAGER:</strong> INITIALS / DATE</div></div>`;
-      }).join('');
+      const header = `%PDF-1.4\n`;
+      const catId = 1, pagesId = 2;
+      const kids = [];
 
-      return `<!doctype html><html><head><meta charset="utf-8"><title>${jobNo} — RECEIVING 3-UP</title><style>${css}</style></head><body>${pages}</body></html>`;
+      // image + content + page objects
+      let objId = 3;
+      for (let i=0;i<jpegsU8.length;i++){
+        const imgId = objId++;
+        const contId = objId++;
+        const pageId = objId++;
+        kids.push(pageId);
+
+        // Image object (DCTDecode)
+        const imgStream = streamObject(imgId, [
+          `/Type /XObject`,
+          `/Subtype /Image`,
+          `/Filter /DCTDecode`,
+          `/ColorSpace /DeviceRGB`,
+          `/Width ${w}`,
+          `/Height ${h}`,
+          `/BitsPerComponent 8`,
+          `/Length ${jpegsU8[i].length}`
+        ].join('\n'), jpegsU8[i]);
+
+        // Content stream: draw image to page size
+        const contentStr = `q\n${w} 0 0 ${h} 0 0 cm\n/Im${i} Do\nQ\n`;
+        const contStream = streamObject(contId, [
+          `/Length ${contentStr.length}`
+        ].join('\n'), new TextEncoder().encode(contentStr));
+
+        // Page object
+        const pageObj = `${pageId} 0 obj\n<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${w} ${h}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${contId} 0 R >>\nendobj\n`;
+
+        objects.push(imgStream, contStream, pageObj);
+      }
+
+      // Pages object
+      const pagesObj = `${pagesId} 0 obj\n<< /Type /Pages /Count ${kids.length} /Kids [ ${kids.map(id=>`${id} 0 R`).join(' ')} ] >>\nendobj\n`;
+      // Catalog
+      const catalogObj = `${catId} 0 obj\n<< /Type /Catalog /Pages ${pagesId} 0 R >>\nendobj\n`;
+
+      // Assemble
+      let body = catalogObj + pagesObj + objects.join('');
+      // XREF
+      const full = header + body;
+      const encoder = new TextEncoder();
+      let bytes = encoder.encode(header);
+      let bodyBytes = encoder.encode(body);
+
+      // We need correct xref: recompute with actual offsets
+      // Build in pieces with tracking offsets
+      const parts=[]; offset=0;
+      function pushStr(str){ const u=encoder.encode(str); parts.push(u); offset+=u.length; }
+      function pushBin(bin){ parts.push(bin); offset+=bin.length; }
+
+      // Write header
+      pushStr(header);
+
+      // Catalog
+      xref[catId]=offset; pushStr(`${catId} 0 obj\n<< /Type /Catalog /Pages ${pagesId} 0 R >>\nendobj\n`);
+      // Pages
+      xref[pagesId]=offset; pushStr(`${pagesId} 0 obj\n<< /Type /Pages /Count ${kids.length} /Kids [ ${kids.map(id=>`${id} 0 R`).join(' ')} ] >>\nendobj\n`);
+
+      // For each page triple (img, content, page)
+      let idx=0; objId=3;
+      for (let i=0;i<jpegsU8.length;i++){
+        const imgId = objId++;
+        const contId = objId++;
+        const pageId = objId++;
+
+        // Image
+        xref[imgId]=offset;
+        const imgDict = `/Type /XObject\n/Subtype /Image\n/Filter /DCTDecode\n/ColorSpace /DeviceRGB\n/Width ${w}\n/Height ${h}\n/BitsPerComponent 8\n/Length ${jpegsU8[i].length}`;
+        pushStr(`${imgId} 0 obj\n<< ${imgDict} >>\nstream\n`); pushBin(jpegsU8[i]); pushStr(`\nendstream\nendobj\n`);
+
+        // Content
+        const contentStr = `q\n${w} 0 0 ${h} 0 0 cm\n/Im${i} Do\nQ\n`;
+        xref[contId]=offset;
+        pushStr(`${contId} 0 obj\n<< /Length ${contentStr.length} >>\nstream\n${contentStr}\nendstream\nendobj\n`);
+
+        // Page
+        xref[pageId]=offset;
+        pushStr(`${pageId} 0 obj\n<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${w} ${h}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${contId} 0 R >>\nendobj\n`);
+      }
+
+      const xrefStart = offset;
+      pushStr(`xref\n0 ${xref.length}\n`);
+      // object 0
+      pushStr(`0000000000 65535 f \n`);
+      for(let i=1;i<xref.length;i++){
+        const off = xref[i]||0;
+        const line = (off.toString().padStart(10,'0')) + ' 00000 n \n';
+        pushStr(line);
+      }
+      // trailer
+      pushStr(`trailer\n<< /Size ${xref.length} /Root ${catId} 0 R >>\nstartxref\n${xrefStart}\n%%EOF`);
+
+      return new Blob(parts, {type:'application/pdf'});
     }
 
-    /* ========= Image compress (canvas) ========= */
-    async function compressDataUrlToJpegU8(dataUrl, maxDim=1280, quality=0.7){
-      const img = await new Promise(res=>{const im=new Image(); im.onload=()=>res(im); im.src=dataUrl;});
+    /* ===== Images & ZIP helpers ===== */
+    async function compressDataUrlToJpegU8(dataUrl, maxDim=1600, quality=0.7){
+      const img = await loadImage(dataUrl);
       const scale = Math.min(1, maxDim/Math.max(img.width,img.height));
       const w = Math.max(1, Math.round(img.width*scale));
       const h = Math.max(1, Math.round(img.height*scale));
       const c=document.createElement('canvas'); c.width=w; c.height=h;
       c.getContext('2d').drawImage(img,0,0,w,h);
       const out = c.toDataURL('image/jpeg', quality);
-      const u8 = dataUrlToU8(out);
-      return {u8, bytes:u8.length};
+      return {u8: dataUrlToU8(out)};
     }
-    function dataUrlToU8(durl){
-      const i=durl.indexOf(','); const b64=durl.slice(i+1);
-      const bin=atob(b64); const len=bin.length; const u8=new Uint8Array(len);
-      for(let k=0;k<len;k++) u8[k]=bin.charCodeAt(k);
-      return u8;
-    }
+    function dataUrlToU8(durl){ const i=durl.indexOf(','); const bin=atob(durl.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
+    function blobToU8(blob){ return new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(new Uint8Array(fr.result)); fr.readAsArrayBuffer(blob); }); }
 
-    /* ========= Minimal ZIP (store-only) ========= */
-    function crc32(u8){
-      let c=~0>>>0;
-      for(let i=0;i<u8.length;i++){
-        c ^= u8[i];
-        for(let k=0;k<8;k++) c = (c>>>1) ^ (0xEDB88320 & -(c&1));
-      }
-      return (~c)>>>0;
-    }
+    function crc32(u8){ let c=~0>>>0; for(let i=0;i<u8.length;i++){ c^=u8[i]; for(let k=0;k<8;k++) c=(c>>>1) ^ (0xEDB88320 & -(c&1)); } return (~c)>>>0; }
     function strU8(s){ return new TextEncoder().encode(s); }
     function num4(n){ const a=new Uint8Array(4); a[0]=n&255;a[1]=(n>>>8)&255;a[2]=(n>>>16)&255;a[3]=(n>>>24)&255; return a; }
     function num2(n){ const a=new Uint8Array(2); a[0]=n&255;a[1]=(n>>>8)&255; return a; }
-    function concatU8(arrs){
-      let len=0; for(const a of arrs) len+=a.length;
-      const out=new Uint8Array(len); let o=0;
-      for(const a of arrs){ out.set(a,o); o+=a.length; }
-      return out;
-    }
+    function concatU8(arrs){ let len=0; for(const a of arrs) len+=a.length; const out=new Uint8Array(len); let o=0; for(const a of arrs){ out.set(a,o); o+=a.length; } return out; }
     function zipStore(files){
-      // files: {name: string, data: Uint8Array}
       const headers=[]; const datas=[]; const centrals=[]; let offset=0;
       for(const f of files){
         const nameU8 = strU8(f.name);
         const crc = crc32(f.data);
         const size = f.data.length;
         const localHeader = concatU8([
-          strU8('PK\u0003\u0004'),        // local file header signature
-          num2(20), num2(0), num2(0),     // version, flags, method=0 (store)
-          num2(0), num2(0),               // mod time/date (zero)
+          strU8('PK\u0003\u0004'), num2(20), num2(0), num2(0), num2(0), num2(0),
           num4(crc), num4(size), num4(size),
-          num2(nameU8.length), num2(0),   // name len, extra len
+          num2(nameU8.length), num2(0),
           nameU8
         ]);
         headers.push(localHeader); datas.push(f.data);
-        // central directory
         const central = concatU8([
-          strU8('PK\u0001\u0002'),        // central file header signature
-          num2(20), num2(20), num2(0), num2(0), num2(0), num2(0),
+          strU8('PK\u0001\u0002'), num2(20), num2(20), num2(0), num2(0), num2(0), num2(0),
           num4(crc), num4(size), num4(size),
           num2(nameU8.length), num2(0), num2(0), num2(0), num2(0), num4(0),
           num4(offset),
@@ -382,8 +469,7 @@
       const headersAll = concatU8(headers);
       const datasAll   = concatU8(datas);
       const end = concatU8([
-        strU8('PK\u0005\u0006'),   // end of central dir
-        num2(0), num2(0),
+        strU8('PK\u0005\u0006'), num2(0), num2(0),
         num2(files.length), num2(files.length),
         num4(centralAll.length),
         num4(headersAll.length + datasAll.length),
@@ -391,8 +477,9 @@
       ]);
       return new Blob([headersAll, datasAll, centralAll, end], {type:'application/zip'});
     }
+    function download(blob, name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
 
-    /* ========= Delete ========= */
+    /* ===== Delete ===== */
     $('deleteBtn').onclick=()=>{ $('confirmBox').style.display='block'; };
     $('yesDel').onclick=()=>{
       if(!current) return;
@@ -402,7 +489,6 @@
     };
     $('noDel').onclick=()=>{ $('confirmBox').style.display='none'; };
 
-    /* ========= Init & SW ========= */
     (function init(){ if(!$('startDate').value) $('startDate').value=today(); renderJobs(); })();
     (async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){} })();
   </script>
