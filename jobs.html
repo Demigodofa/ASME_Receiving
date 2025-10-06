@@ -226,6 +226,98 @@ $('noDel').onclick=()=>$('confirmBox').style.display='none';
 (async()=>{if(!('serviceWorker'in navigator))return;
   try{const r=await navigator.serviceWorker.register('service_worker.js');
   if(r.waiting)r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){}})();
+  <script>
+/* --------- RUNTIME HOT-FIX PATCH FOR CREATE JOB --------- */
+/* Why: some devices lack crypto.randomUUID, or an earlier error stops the handler. */
+
+(function() {
+  const statusId = 'wh_status';
+  if (!document.getElementById(statusId)) {
+    const s = document.createElement('div');
+    s.id = statusId;
+    s.style.position = 'fixed';
+    s.style.bottom = '10px';
+    s.style.right = '10px';
+    s.style.background = '#111827';
+    s.style.border = '1px solid #223046';
+    s.style.color = '#E6EAF0';
+    s.style.padding = '6px 10px';
+    s.style.borderRadius = '10px';
+    s.style.fontSize = '12px';
+    s.style.zIndex = '9999';
+    s.textContent = 'READY';
+    document.body.appendChild(s);
+  }
+  const setStatus = (t) => { const el = document.getElementById(statusId); if (el) el.textContent = t; };
+
+  // Fallback ID generator
+  function randomId() {
+    try { if (crypto && crypto.randomUUID) return crypto.randomUUID(); } catch(_) {}
+    return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8).toUpperCase();
+  }
+
+  // Defensive element lookups
+  const elJob = document.getElementById('jobNo');
+  const elDesc = document.getElementById('desc');
+  const elDate = document.getElementById('startDate');
+  const btnCreate = document.getElementById('createBtn');
+
+  if (!elJob || !elDesc || !elDate || !btnCreate) {
+    setStatus('ERROR: MISSING ELEMENT(S)');
+    console.error('Hot-fix: required element missing', { elJob, elDesc, elDate, btnCreate });
+    return;
+  }
+
+  // Ensure date has a default (today) for devices that don’t auto-fill type=date
+  try {
+    if (!elDate.value) {
+      const iso = new Date().toISOString().slice(0,10);
+      elDate.value = iso;
+    }
+  } catch (e) {
+    console.warn('Hot-fix: date init warning', e);
+  }
+
+  // Remove any previous onclick to avoid double-binding conflicts
+  try { btnCreate.onclick = null; } catch(_) {}
+
+  // Bind robust handler
+  btnCreate.addEventListener('click', function onCreate(ev) {
+    ev.preventDefault();
+    try {
+      const jobNo = (elJob.value || '').trim().toUpperCase();
+      const desc  = (elDesc.value || '').trim().toUpperCase();
+      const start = (elDate.value || new Date().toISOString().slice(0,10));
+
+      if (!jobNo) { alert('JOB NO. REQUIRED'); setStatus('JOB NO. REQUIRED'); return; }
+      if (jobNo.length > 8) { alert('JOB NO. MUST BE ≤ 8'); setStatus('JOB NO TOO LONG'); return; }
+
+      let jobs = [];
+      try { jobs = JSON.parse(localStorage.getItem('wh_jobs_v1') || '[]'); }
+      catch (e) { console.warn('Hot-fix: parse jobs failed, reinit', e); jobs = []; }
+
+      if (jobs.some(j => j.jobNo === jobNo)) { alert('JOB NO. ALREADY EXISTS'); setStatus('DUPLICATE JOB'); return; }
+
+      const now = new Date().toISOString();
+      jobs.unshift({ id: randomId(), jobNo, desc, startDate: start, createdAt: now });
+      localStorage.setItem('wh_jobs_v1', JSON.stringify(jobs));
+
+      // Clear fields + refresh table
+      elJob.value = ''; elDesc.value = ''; elDate.value = new Date().toISOString().slice(0,10);
+      setStatus('JOB CREATED');
+      // Re-render if your render function exists
+      if (typeof renderJobs === 'function') renderJobs();
+    } catch (err) {
+      console.error('Hot-fix: create job failed', err);
+      alert('CREATE JOB FAILED — SEE CONSOLE');
+      setStatus('CREATE FAILED');
+    }
+  });
+
+  setStatus('PATCHED OK');
+})();
+</script>
+
 </script>
 </body>
 </html>
