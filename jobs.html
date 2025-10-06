@@ -290,6 +290,114 @@ function initJobsPage(){
 initJobsPage();
 window.addEventListener('pageshow', initJobsPage);
 window.addEventListener('storage', (e)=>{ if (e.key === 'wh_jobs_v1') renderJobs(); });
+<script>
+/* ====================== STORAGE & SAVE HELPERS ====================== */
+/* Why: PWAs cannot request “device storage permission” like native apps.
+   This asks for Persistent Storage (keeps our IndexedDB/localStorage data),
+   and provides robust saving to Downloads (Android) or Files app (iOS). */
+
+/** Ask browser to persist our storage (prevents eviction). */
+async function askPersistentStorageOnce() {
+  if (!('storage' in navigator && navigator.storage && navigator.storage.persist)) return;
+  try {
+    const key = 'wh_persist_ok';
+    if (localStorage.getItem(key) === '1') return; // only ask once
+    const persisted = await navigator.storage.persisted?.();
+    if (persisted) { localStorage.setItem(key, '1'); return; }
+    const ok = await navigator.storage.persist();
+    if (ok) localStorage.setItem(key, '1');
+  } catch (e) { /* non-fatal */ }
+}
+
+/** Inspect quota/usage for debugging “download failed” scenarios. */
+async function logStorageEstimate() {
+  try {
+    const est = await navigator.storage?.estimate?.();
+    if (est) {
+      const mb = n => (n/1024/1024).toFixed(1);
+      console.log(`[STORAGE] used=${mb(est.usage||0)}MB / quota=${mb(est.quota||0)}MB`);
+    }
+  } catch (e) {}
+}
+
+/** Convert DataURL -> Uint8Array (used by JPEG compression) */
+function dataURLtoU8(dataUrl) {
+  const i = dataUrl.indexOf(',');
+  const bin = atob(dataUrl.slice(i+1));
+  const u8 = new Uint8Array(bin.length);
+  for (let k=0; k<bin.length; k++) u8[k] = bin.charCodeAt(k);
+  return u8;
+}
+
+/** JPEG compress helper (keep small to avoid huge zips) */
+async function compressDataUrlToJpegU8(dataUrl, maxDim=1600, quality=0.82){
+  const img = await new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.src=dataUrl; });
+  const s = Math.min(1, maxDim / Math.max(img.width, img.height));
+  const w = Math.max(1, Math.round(img.width*s)), h = Math.max(1, Math.round(img.height*s));
+  const c = document.createElement('canvas'); c.width=w; c.height=h;
+  c.getContext('2d').drawImage(img,0,0,w,h);
+  return { u8: dataURLtoU8(c.toDataURL('image/jpeg', quality)) };
+}
+
+/* ---------- Save stack: picker → share → anchor ---------- */
+async function saveWithPicker(fileName, blob, mime='application/zip', ext='.zip') {
+  if (!('showSaveFilePicker' in window)) return false;
+  try {
+    const handle = await showSaveFilePicker({
+      suggestedName: fileName,
+      types: [{ description: 'Archive', accept: { [mime]: [ext] } }],
+      excludeAcceptAllOption: false
+    });
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return true;
+  } catch (e) { return false; }
+}
+
+async function shareFile(fileName, blob, mime='application/zip') {
+  try {
+    const file = new File([blob], fileName, { type: mime });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: fileName, text: 'WELDERS HELPER EXPORT' });
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
+function downloadViaAnchor(fileName, blob) {
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+    return true;
+  } catch (e) { return false; }
+}
+
+/** One call from your export handler. */
+async function saveSmartZip(baseName, zipBlob) {
+  const fileName = `${baseName}-DOCS.zip`;
+
+  // 1) Native Save dialog (Chrome/Android & desktop Chrome/Edge)
+  if (await saveWithPicker(fileName, zipBlob)) return;
+
+  // 2) Share sheet (iOS/Android) → “Save to Files”, Mail, Outlook, etc.
+  if (await shareFile(fileName, zipBlob)) return;
+
+  // 3) Classic anchor (Android Chrome → Downloads manager)
+  if (downloadViaAnchor(fileName, zipBlob)) return;
+
+  alert('DOWNLOAD FAILED. TRY IN CHROME (NON-STANDALONE) OR CHECK STORAGE PERMISSIONS.');
+}
+
+/* Call these on page load (jobs.html/receiving.html) */
+askPersistentStorageOnce();
+logStorageEstimate();
+</script>
 
 /* SW auto-update + reload once */
 (async()=>{ 
