@@ -149,12 +149,178 @@ function closeMenu(){ $('overlay').style.display='none'; current=null; }
 $('closeBtn').onclick=closeMenu;
 $('overlay').onclick=(e)=>{ if(e.target===e.currentTarget) closeMenu(); };
 
-/* export (existing implementation is elsewhere in your build) */
 $('exportBtn').onclick = async (ev) => {
   ev.preventDefault();
   if (!current) return;
-  alert('EXPORT: implemented in your latest branch; if missing, we can re-add after PDF fix.');
+
+  // Collect receiving entries for this job
+  const entries = readRecv().filter(r => r.jobNo === current.jobNo);
+  if (!entries.length) { alert('NO RECEIVING ENTRIES FOR THIS JOB'); return; }
+
+  // Render letter portrait pages (612×792 pt) and build a PDF
+  const canvases = await renderReceivingPdfPages(entries);
+  const jpegU8s  = canvases.map(c => dataURLtoU8(c.toDataURL('image/jpeg', 0.92)));
+  const pdfBlob  = buildPdfFromJpegs(jpegU8s, 612, 792);
+  const pdfU8    = await blobToU8(pdfBlob);
+
+  // Add photos (compressed) into a PHOTOS/ folder in the ZIP
+  const base = `${sanitize(current.jobNo)}_${sanitize(current.desc||'')}`.replace(/_$/,'');
+  const files = [{ name:`${base}-REPORTS.pdf`, data: pdfU8 }, { name:'PHOTOS/', dir:true }];
+
+  for (const r of entries) {
+    const title = sanitize(r.title || 'ITEM');
+    for (let i = 0; i < (r.photos || []).length; i++) {
+      const p = r.photos[i];
+      const { u8 } = await compressDataUrlToJpegU8(p.dataUrl, 1600, 0.85);
+      files.push({ name:`PHOTOS/${sanitize(r.jobNo)}-${title} (${i+1}).jpg`, data: u8 });
+    }
+  }
+
+  // ZIP and download
+  const zipBlob = zipStoreCompat(files);
+  saveBlobSmart(`${base}-DOCS.zip`, zipBlob);
 };
+  
+// Render Letter portrait pages for each receiving entry
+async function renderReceivingPdfPages(entries){
+  // 8.5×11 @ 150 dpi canvas (1275×1650), 0.5" margins → 75 px
+  const W=1275, H=1650, M=75;
+  const pages=[];
+  for(const raw of entries){
+    const r = normalizeRec(raw);
+    const c=document.createElement('canvas'); c.width=W; c.height=H;
+    const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,W,H);
+    g.strokeStyle='#000'; g.lineWidth=1;
+
+    // Font helpers
+    const B=(px)=>`bold ${px}px Arial`; const R=(px)=>`${px}px Arial`;
+    const text=(s,x,y,px=14,b=false)=>{ g.font=b?B(px):R(px); g.fillStyle='#000'; g.textBaseline='alphabetic'; g.fillText((s||'').toUpperCase(),x,y); };
+    const box =(x,y,w,h)=>g.strokeRect(x,y,w,h);
+    const hln =(x1,y,x2)=>{ g.beginPath(); g.moveTo(x1,y); g.lineTo(x2,y); g.stroke(); };
+    const vln =(x,y1,y2)=>{ g.beginPath(); g.moveTo(x,y1); g.lineTo(x,y2); g.stroke(); };
+    const wrap=(s,x,y,maxW,lh=18,px=14)=>{ g.font=R(px); let line='',yy=y; (s||'').toUpperCase().split(/\s+/).forEach(w=>{
+      const t=line? line+' '+w:w; if(g.measureText(t).width>maxW){ g.fillText(line,x,yy); yy+=lh; line=w; } else line=t;
+    }); if(line) g.fillText(line,x,yy); };
+
+    // Title
+    text('RECEIVING REPORTS', M, M+22, 22, true);
+    hln(M, M+28, W-M);
+
+    // SECTION: IDENTIFICATION
+    let y=M+40;
+    text('IDENTIFICATION', M+6, y+18, 14, true);
+    const IDH=124;
+    box(M,y+24,W-2*M,IDH);
+    // 3 rows, 2 cols
+    const rw=IDH/3, midX=M+(W-2*M)/2;
+    hln(M, y+24+rw, W-M); hln(M, y+24+2*rw, W-M);
+    vln(midX, y+24, y+24+IDH);
+
+    // Row 1
+    text('JOB NO.',   M+12, y+24+rw-8, 12, true); text(r.jobNo,   M+120, y+24+rw-8);
+    text('DATE',     midX+12, y+24+rw-8, 12, true); text(r.date, midX+100, y+24+rw-8);
+    // Row 2
+    text('TITLE',    M+12, y+24+2*rw-8, 12, true); text(r.title,   M+120, y+24+2*rw-8);
+    text('QUANTITY', midX+12, y+24+2*rw-8, 12, true); text(r.qty,  midX+120, y+24+2*rw-8);
+    // Row 3
+    text('VENDOR',   M+12, y+24+3*rw-8, 12, true); text(r.vendor,  M+120, y+24+3*rw-8);
+    text('PO.',      midX+12, y+24+3*rw-8, 12, true); text(r.po,   midX+100, y+24+3*rw-8);
+
+    // SECTION: SPECIFICATION
+    y += 24+IDH+16;
+    text('SPECIFICATION', M+6, y+18, 14, true);
+    const SPH=92; box(M,y+24,W-2*M,SPH);
+    // 2 rows, 2 cols
+    const spRw=SPH/2; const spMid=midX;
+    hln(M, y+24+spRw, W-M); vln(spMid, y+24, y+24+SPH);
+
+    text('PRODUCT', M+12, y+24+spRw-8, 12, true); text(r.product, M+120, y+24+spRw-8);
+    text('GRADE / TYPE', spMid+12, y+24+spRw-8, 12, true); text(r.grade, spMid+140, y+24+spRw-8);
+
+    text('SPEC', M+12, y+24+2*spRw-8, 12, true); text(`${r.specPrefix} ${r.specCode}`, M+120, y+24+2*spRw-8);
+    text('FITTING', spMid+12, y+24+2*spRw-8, 12, true); text(r.fitting, spMid+120, y+24+2*spRw-8);
+
+    // SECTION: DIMENSIONS
+    y += 24+SPH+16;
+    text('DIMENSIONS', M+6, y+18, 14, true);
+    const DMH=108; box(M,y+24,W-2*M,DMH);
+    // Three rows
+    const dmRw=DMH/3;
+    hln(M, y+24+dmRw, W-M); hln(M, y+24+2*dmRw, W-M);
+
+    // TH (single wide line)
+    text('TH', M+12, y+24+dmRw-8, 12, true);
+    text((r.th||[]).filter(Boolean).join('   '), M+70, y+24+dmRw-8);
+
+    // LENGTH / WIDTH
+    text('LENGTH', M+12, y+24+2*dmRw-8, 12, true); text(r.length, M+120, y+24+2*dmRw-8);
+    text('WIDTH',  midX+12, y+24+2*dmRw-8, 12, true); text(r.width,  midX+100, y+24+2*dmRw-8);
+
+    // DIAMETER / OTHER
+    text('DIAMETER', M+12, y+24+3*dmRw-8, 12, true); text(`${r.diameter} ${r.diaType}`.trim(), M+120, y+24+3*dmRw-8);
+    text('OTHER',    midX+12, y+24+3*dmRw-8, 12, true); text(r.dimOther, midX+100, y+24+3*dmRw-8);
+
+    // SECTION: MARKINGS
+    y += 24+DMH+16;
+    text('MARKINGS', M+6, y+18, 14, true);
+    const MKH=128; box(M,y+24,W-2*M,MKH);
+    const mkRw=MKH/3;
+    hln(M, y+24+mkRw, W-M); hln(M, y+24+2*mkRw, W-M);
+
+    text('ACTUAL MATERIAL MARKING', M+12, y+24+mkRw-10, 12, true);
+    wrap(r.marking, M+12, y+24+mkRw+4, W-2*M-24, 18, 14);
+
+    text('MARKING ACCEPTABLE TO CODE/STANDARD', M+12, y+24+2*mkRw-8, 12, true);
+    text(r.markingCode, M+360, y+24+2*mkRw-8);
+
+    text('MTR/COFC ACCEPTABLE TO SPECIFICATION', M+12, y+24+3*mkRw-8, 12, true);
+    text(r.mtrOk, M+360, y+24+3*mkRw-8);
+
+    // SECTION: ACCEPTABILITY
+    y += 24+MKH+16;
+    text('ACCEPTABILITY', M+6, y+18, 14, true);
+    const ACH=98; box(M,y+24,W-2*M,ACH);
+    const acRw=ACH/2; hln(M, y+24+acRw, W-M);
+
+    text('VISUAL', M+12, y+24+acRw-8, 12, true); text(r.visualOk, M+120, y+24+acRw-8);
+    text('B16 DIMENSIONS', midX+12, y+24+acRw-8, 12, true); text(r.b16Ok, midX+180, y+24+acRw-8);
+
+    // DECISION check boxes
+    text('DECISION', M+12, y+24+2*acRw-8, 12, true);
+    const bxY=y+24+2*acRw-22;
+    box(M+120, bxY, 18, 18); text('ACCEPT', M+146, y+24+2*acRw-8, 12);
+    box(M+240, bxY, 18, 18); text('REJECT', M+266, y+24+2*acRw-8, 12);
+    if((r.decision||'ACCEPT')==='ACCEPT') text('X', M+124, y+24+2*acRw-8, 14, true);
+    else text('X', M+244, y+24+2*acRw-8, 14, true);
+
+    // COMMENTS (line)
+    text('COMMENTS', midX+12, y+24+2*acRw-8, 12, true);
+    wrap(r.comments, midX+120, y+24+2*acRw-22, (W-2*M)-(midX-M)-20, 18, 14);
+
+    // FOOTER approval line
+    y += 24+ACH+16;
+    box(M,y,W-2*M,44);
+    text('MATERIAL APPROVAL  APPROVED', M+12, y+28, 12, true);
+    text('QC MANAGER  INITIALS / DATE', midX+12, y+28, 12, true);
+
+    pages.push(c);
+  }
+  return pages;
+
+  function normalizeRec(r){
+    return {
+      jobNo:(r.jobNo||''), date:(r.date||''), title:(r.title||''), qty:(r.qty||''),
+      vendor:(r.vendor||''), po:(r.po||''), product:(r.product||''), grade:(r.grade||''),
+      specPrefix:(r.specPrefix||''), specCode:(r.specCode||''), fitting:(r.fitting||''),
+      th:(r.th||[]), length:(r.length||''), width:(r.width||''), diameter:(r.diameter||''),
+      dimOther:(r.dimOther||''), diaType:(r.diaType||''), marking:(r.marking||''),
+      markingCode:(r.markingCode||''), mtrOk:(r.mtrOk||''), visualOk:(r.visualOk||''),
+      b16Ok:(r.b16Ok||''), decision:(r.decision||'ACCEPT'), comments:(r.comments||''),
+      photos:(r.photos||[])
+    };
+  }
+}
+
 
 /* ========== init, live updates, and SW register ========== */
 function initJobsPage(){
