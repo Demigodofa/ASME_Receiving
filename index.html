@@ -50,15 +50,27 @@
   </main>
 
   <script>
-    // SW register (kept tiny & robust)
+    // SW auto-update + one-time reload when new SW takes control
     (async () => {
       if (!('serviceWorker' in navigator)) return;
       try {
         const reg = await navigator.serviceWorker.register('service_worker.js');
-        if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+
+        // Ask for an immediate update check
+        if (reg.update) reg.update();
+
+        // Reload once when the updated SW activates
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!window.__reloadedOnce) {
+            window.__reloadedOnce = true;    // prevent loops
+            location.reload();
+          }
+        });
+
         document.getElementById('status').textContent = 'Offline ready.';
       } catch (e) {
-        document.getElementById('status').textContent = 'Failed to register service worker.'; console.error(e);
+        document.getElementById('status').textContent = 'Failed to register service worker.';
+        console.error(e);
       }
     })();
 
@@ -69,22 +81,33 @@
     });
     document.getElementById('installBtn').addEventListener('click', async () => {
       document.getElementById('installBtn').hidden=true;
-      if (!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice;
-      localStorage.setItem('installed','1'); hideInstructionsIfInstalled(); deferredPrompt=null;
+      if (!deferredPrompt) return;
+      await deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      localStorage.setItem('installed','1');
+      hideInstructionsIfInstalled();
+      deferredPrompt=null;
     });
 
     // iOS standalone or previously installed → hide instructions
     function hideInstructionsIfInstalled() {
       const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
       const flag = localStorage.getItem('installed') === '1';
-      if (standalone || flag) { const el = document.getElementById('instructions'); if (el) el.classList.add('hidden'); }
+      if (standalone || flag) {
+        const el = document.getElementById('instructions');
+        if (el) el.classList.add('hidden');
+      }
     }
     hideInstructionsIfInstalled();
 
     // Offline check
     document.getElementById('checkBtn').addEventListener('click', async () => {
-      const res = await caches.match(new Request('index.html', { cache: 'reload' }));
-      document.getElementById('status').textContent = res ? '✅ Cached. Offline OK.' : '⚠️ Not cached yet.';
+      try {
+        const res = await caches.match(new Request('index.html', { cache: 'reload' }));
+        document.getElementById('status').textContent = res ? '✅ Cached. Offline OK.' : '⚠️ Not cached yet.';
+      } catch {
+        document.getElementById('status').textContent = '⚠️ Not cached yet.';
+      }
     });
   </script>
 </body>

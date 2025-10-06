@@ -1,3 +1,6 @@
+<!-- =================================================================== -->
+<!-- /receiving.html — RECEIVING (unchanged UX + SW auto-update)         -->
+<!-- =================================================================== -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -147,7 +150,7 @@
   </main>
 
   <script>
-    /* ===== Storage & utils ===== */
+    /* Storage & utils */
     const RECV_KEY='wh_receiving_v1';
     const readAll=()=>JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
     const writeAll=(rows)=>localStorage.setItem(RECV_KEY,JSON.stringify(rows));
@@ -156,13 +159,13 @@
     const today=()=>new Date().toISOString().slice(0,10);
     const up=s=>(s||'').trim().toUpperCase();
 
-    /* ===== Decision toggle ===== */
+    /* Decision toggle */
     let decision='ACCEPT';
     function renderDecision(){ $('boxAccept').textContent=decision==='ACCEPT'?'X':' '; $('boxReject').textContent=decision==='REJECT'?'X':' '; }
     $('btnAccept').onclick=()=>{decision='ACCEPT';renderDecision();};
     $('btnReject').onclick =()=>{decision='REJECT'; renderDecision();};
 
-    /* ===== Photos ===== */
+    /* Photos */
     let photos=[];
     function renderPhotos(){
       const wrap=$('photoStrip'); wrap.innerHTML='';
@@ -177,17 +180,14 @@
     $('photoInput').onchange=async (e)=>{
       const files=[...e.target.files].slice(0,5-photos.length);
       for (const f of files){
-        const dataUrl=await fileToDataURL(f);
+        const dataUrl=await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f); });
         const baseTitle=up($('title').value)||'ITEM';
         photos.push({name:`${baseTitle} (${photos.length+1}).jpg`, dataUrl});
       }
       e.target.value=''; renderPhotos();
     };
-    function fileToDataURL(file){
-      return new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(file); });
-    }
 
-    /* ===== Record <-> Form ===== */
+    /* Record <-> Form */
     let editingId=null;
     function getForm(id=null){
       const suffix=up($('b16Override').value)||$('b16Suffix').value||'';
@@ -236,7 +236,7 @@
       $('comments').value=r.comments||''; photos=r.photos||[]; renderPhotos();
     }
 
-    /* ===== List (job-filtered) ===== */
+    /* List (job-filtered live) */
     function renderList(){
       const job=up($('jobNo').value);
       const tb=$('listBody'); tb.innerHTML='';
@@ -266,7 +266,7 @@
       }
     };
 
-    /* ===== Save / reset ===== */
+    /* Save / reset */
     function saveCore(nextMode){
       const rec=getForm(editingId);
       if(!rec.jobNo) return alert('JOB NO. REQUIRED');
@@ -276,7 +276,6 @@
       if(idx>=0) rows[idx]=rec; else rows.unshift(rec);
       writeAll(rows);
       editingId=null;
-      // Keep job filter; reset form for new entry
       setForm({jobNo:rec.jobNo,date:today(),photos:[]});
       renderList();
       if(nextMode==='another'){ window.scrollTo({top:0,behavior:'smooth'}); }
@@ -288,22 +287,24 @@
     $('doneBtn').onclick    =()=>saveCore('done');
     $('resetBtn').onclick   =()=>{ editingId=null; setForm({jobNo:$('jobNo').value,date:today(),photos:[]}); };
 
-    /* ===== Init & SW ===== */
+    /* Init + live filter + SW auto-update */
     (function init(){
       $('date').value=today();
       const job=(qs('job')||'').toUpperCase();
       $('jobNo').value=job;
       renderDecision(); renderPhotos(); renderList();
-      // Update list whenever JOB changes (so user can type a filter)
       $('jobNo').addEventListener('input', renderList);
     })();
 
     (async()=>{ 
-      if(!('serviceWorker'in navigator))return; 
-      try{
-        const r=await navigator.serviceWorker.register('service_worker.js'); 
-        if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});
-      }catch(e){}
+      if (!('serviceWorker' in navigator)) return; 
+      try {
+        const reg = await navigator.serviceWorker.register('service_worker.js');
+        reg.update?.();
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!window.__swReloadOnce) { window.__swReloadOnce = true; location.reload(); }
+        });
+      } catch(e){}
     })();
   </script>
 </body>

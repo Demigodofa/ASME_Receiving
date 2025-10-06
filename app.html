@@ -1,4 +1,6 @@
-<!-- /app.html  — HOME MENU (clean, ALL CAPS, adds JOBS tile) -->
+<!-- =================================================================== -->
+<!-- /app.html  — HOME MENU (with SW auto-update register)               -->
+<!-- =================================================================== -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -37,35 +39,34 @@
 
   <main>
     <div class="grid">
-      <!-- Primary flow -->
-      <a class="tile" href="jobs.html">Jobs
-        <span class="sub">Create • Open • Export per job</span>
+      <a class="tile" href="jobs.html">JOBS
+        <span class="sub">CREATE • OPEN • EXPORT PER JOB</span>
       </a>
-
-      <!-- Optional: keep Receiving for quick direct access; recommend using Jobs -->
-      <!-- Remove this tile if you want to force job-first flow -->
-      <!-- <a class="tile" href="receiving.html">Receiving Reports
-        <span class="sub">Direct access (use Jobs for per-job)</span>
+      <!-- Keep if you want direct access; Jobs is recommended entry -->
+      <!-- <a class="tile" href="receiving.html">RECEIVING REPORTS
+        <span class="sub">DIRECT ACCESS (USE JOBS FOR PER-JOB)</span>
       </a> -->
-
-      <a class="tile" href="lookup.html">P# Lookup
-        <span class="sub">Coming soon</span>
+      <a class="tile" href="lookup.html">P# LOOKUP
+        <span class="sub">COMING SOON</span>
       </a>
-
-      <a class="tile" href="#" onclick="alert('Inventory — coming soon');return false;">Inventory</a>
-      <a class="tile" href="#" onclick="alert('Weld Maps — coming soon');return false;">Weld Maps</a>
-      <a class="tile" href="#" onclick="alert('Settings — coming soon');return false;">Settings</a>
+      <a class="tile" href="#" onclick="alert('INVENTORY — COMING SOON');return false;">INVENTORY</a>
+      <a class="tile" href="#" onclick="alert('WELD MAPS — COMING SOON');return false;">WELD MAPS</a>
+      <a class="tile" href="#" onclick="alert('SETTINGS — COMING SOON');return false;">SETTINGS</a>
     </div>
   </main>
 
   <script>
-    (async () => {
-      if (!('serviceWorker' in navigator)) return;
-      try {
-        const reg = await navigator.serviceWorker.register('service_worker.js');
-        if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-      } catch (e) { console.error(e); }
-    })();
+  // SW auto-update + one-time reload (prevents stale bundles)
+  (async () => {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      const reg = await navigator.serviceWorker.register('service_worker.js');
+      reg.update?.();
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!window.__swReloadOnce) { window.__swReloadOnce = true; location.reload(); }
+      });
+    } catch (e) { console.error('SW registration failed', e); }
+  })();
   </script>
 </body>
 </html>
