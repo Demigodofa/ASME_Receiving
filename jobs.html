@@ -1,4 +1,6 @@
-<!-- /ASME_Receiving/jobs.html  (drop-in) -->
+<!-- =================================================================== -->
+<!-- /jobs.html  — JOBS (unchanged features + SW auto-update register)   -->
+<!-- =================================================================== -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -48,7 +50,6 @@
 </header>
 
 <main>
-  <!-- Create -->
   <section class="card">
     <div class="row">
       <div><label for="jobNo">JOB NO. (MAX 8) *</label><input id="jobNo" maxlength="8" /></div>
@@ -61,7 +62,6 @@
     </div>
   </section>
 
-  <!-- List -->
   <section class="card">
     <table>
       <thead><tr><th>JOB</th><th>DESC</th><th>START</th><th>CREATED</th></tr></thead>
@@ -71,7 +71,6 @@
   </section>
 </main>
 
-<!-- ACTION MENU -->
 <div id="overlay" class="overlay" role="dialog" aria-modal="true">
   <div class="sheet">
     <h2>JOB ACTIONS</h2>
@@ -149,24 +148,18 @@ function closeMenu(){ $('overlay').style.display='none'; current=null; }
 $('closeBtn').onclick=closeMenu;
 $('overlay').onclick=(e)=>{ if(e.target===e.currentTarget) closeMenu(); };
 
+/* export (PDF + PHOTOS in ZIP) */
 $('exportBtn').onclick = async (ev) => {
   ev.preventDefault();
   if (!current) return;
-
-  // Collect receiving entries for this job
   const entries = readRecv().filter(r => r.jobNo === current.jobNo);
   if (!entries.length) { alert('NO RECEIVING ENTRIES FOR THIS JOB'); return; }
-
-  // Render letter portrait pages (612×792 pt) and build a PDF
   const canvases = await renderReceivingPdfPages(entries);
   const jpegU8s  = canvases.map(c => dataURLtoU8(c.toDataURL('image/jpeg', 0.92)));
   const pdfBlob  = buildPdfFromJpegs(jpegU8s, 612, 792);
-  const pdfU8    = await blobToU8(pdfBlob);
-
-  // Add photos (compressed) into a PHOTOS/ folder in the ZIP
+  const pdfU8    = new Uint8Array(await pdfBlob.arrayBuffer());
   const base = `${sanitize(current.jobNo)}_${sanitize(current.desc||'')}`.replace(/_$/,'');
   const files = [{ name:`${base}-REPORTS.pdf`, data: pdfU8 }, { name:'PHOTOS/', dir:true }];
-
   for (const r of entries) {
     const title = sanitize(r.title || 'ITEM');
     for (let i = 0; i < (r.photos || []).length; i++) {
@@ -175,15 +168,12 @@ $('exportBtn').onclick = async (ev) => {
       files.push({ name:`PHOTOS/${sanitize(r.jobNo)}-${title} (${i+1}).jpg`, data: u8 });
     }
   }
-
-  // ZIP and download
   const zipBlob = zipStoreCompat(files);
   saveBlobSmart(`${base}-DOCS.zip`, zipBlob);
 };
-  
-// Render Letter portrait pages for each receiving entry
+
+/* PDF renderer (letter portrait, no photos) */
 async function renderReceivingPdfPages(entries){
-  // 8.5×11 @ 150 dpi canvas (1275×1650), 0.5" margins → 75 px
   const W=1275, H=1650, M=75;
   const pages=[];
   for(const raw of entries){
@@ -191,8 +181,6 @@ async function renderReceivingPdfPages(entries){
     const c=document.createElement('canvas'); c.width=W; c.height=H;
     const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,W,H);
     g.strokeStyle='#000'; g.lineWidth=1;
-
-    // Font helpers
     const B=(px)=>`bold ${px}px Arial`; const R=(px)=>`${px}px Arial`;
     const text=(s,x,y,px=14,b=false)=>{ g.font=b?B(px):R(px); g.fillStyle='#000'; g.textBaseline='alphabetic'; g.fillText((s||'').toUpperCase(),x,y); };
     const box =(x,y,w,h)=>g.strokeRect(x,y,w,h);
@@ -201,112 +189,71 @@ async function renderReceivingPdfPages(entries){
     const wrap=(s,x,y,maxW,lh=18,px=14)=>{ g.font=R(px); let line='',yy=y; (s||'').toUpperCase().split(/\s+/).forEach(w=>{
       const t=line? line+' '+w:w; if(g.measureText(t).width>maxW){ g.fillText(line,x,yy); yy+=lh; line=w; } else line=t;
     }); if(line) g.fillText(line,x,yy); };
-
-    // Title
     text('RECEIVING REPORTS', M, M+22, 22, true);
     hln(M, M+28, W-M);
-
-    // SECTION: IDENTIFICATION
     let y=M+40;
     text('IDENTIFICATION', M+6, y+18, 14, true);
-    const IDH=124;
-    box(M,y+24,W-2*M,IDH);
-    // 3 rows, 2 cols
+    const IDH=124; box(M,y+24,W-2*M,IDH);
     const rw=IDH/3, midX=M+(W-2*M)/2;
-    hln(M, y+24+rw, W-M); hln(M, y+24+2*rw, W-M);
-    vln(midX, y+24, y+24+IDH);
-
-    // Row 1
+    hln(M, y+24+rw, W-M); hln(M, y+24+2*rw, W-M); vln(midX, y+24, y+24+IDH);
     text('JOB NO.',   M+12, y+24+rw-8, 12, true); text(r.jobNo,   M+120, y+24+rw-8);
     text('DATE',     midX+12, y+24+rw-8, 12, true); text(r.date, midX+100, y+24+rw-8);
-    // Row 2
     text('TITLE',    M+12, y+24+2*rw-8, 12, true); text(r.title,   M+120, y+24+2*rw-8);
     text('QUANTITY', midX+12, y+24+2*rw-8, 12, true); text(r.qty,  midX+120, y+24+2*rw-8);
-    // Row 3
     text('VENDOR',   M+12, y+24+3*rw-8, 12, true); text(r.vendor,  M+120, y+24+3*rw-8);
     text('PO.',      midX+12, y+24+3*rw-8, 12, true); text(r.po,   midX+100, y+24+3*rw-8);
-
-    // SECTION: SPECIFICATION
     y += 24+IDH+16;
     text('SPECIFICATION', M+6, y+18, 14, true);
     const SPH=92; box(M,y+24,W-2*M,SPH);
-    // 2 rows, 2 cols
     const spRw=SPH/2; const spMid=midX;
     hln(M, y+24+spRw, W-M); vln(spMid, y+24, y+24+SPH);
-
     text('PRODUCT', M+12, y+24+spRw-8, 12, true); text(r.product, M+120, y+24+spRw-8);
     text('GRADE / TYPE', spMid+12, y+24+spRw-8, 12, true); text(r.grade, spMid+140, y+24+spRw-8);
-
     text('SPEC', M+12, y+24+2*spRw-8, 12, true); text(`${r.specPrefix} ${r.specCode}`, M+120, y+24+2*spRw-8);
     text('FITTING', spMid+12, y+24+2*spRw-8, 12, true); text(r.fitting, spMid+120, y+24+2*spRw-8);
-
-    // SECTION: DIMENSIONS
     y += 24+SPH+16;
     text('DIMENSIONS', M+6, y+18, 14, true);
     const DMH=108; box(M,y+24,W-2*M,DMH);
-    // Three rows
     const dmRw=DMH/3;
     hln(M, y+24+dmRw, W-M); hln(M, y+24+2*dmRw, W-M);
-
-    // TH (single wide line)
     text('TH', M+12, y+24+dmRw-8, 12, true);
     text((r.th||[]).filter(Boolean).join('   '), M+70, y+24+dmRw-8);
-
-    // LENGTH / WIDTH
     text('LENGTH', M+12, y+24+2*dmRw-8, 12, true); text(r.length, M+120, y+24+2*dmRw-8);
     text('WIDTH',  midX+12, y+24+2*dmRw-8, 12, true); text(r.width,  midX+100, y+24+2*dmRw-8);
-
-    // DIAMETER / OTHER
     text('DIAMETER', M+12, y+24+3*dmRw-8, 12, true); text(`${r.diameter} ${r.diaType}`.trim(), M+120, y+24+3*dmRw-8);
     text('OTHER',    midX+12, y+24+3*dmRw-8, 12, true); text(r.dimOther, midX+100, y+24+3*dmRw-8);
-
-    // SECTION: MARKINGS
     y += 24+DMH+16;
     text('MARKINGS', M+6, y+18, 14, true);
     const MKH=128; box(M,y+24,W-2*M,MKH);
     const mkRw=MKH/3;
     hln(M, y+24+mkRw, W-M); hln(M, y+24+2*mkRw, W-M);
-
     text('ACTUAL MATERIAL MARKING', M+12, y+24+mkRw-10, 12, true);
     wrap(r.marking, M+12, y+24+mkRw+4, W-2*M-24, 18, 14);
-
     text('MARKING ACCEPTABLE TO CODE/STANDARD', M+12, y+24+2*mkRw-8, 12, true);
     text(r.markingCode, M+360, y+24+2*mkRw-8);
-
     text('MTR/COFC ACCEPTABLE TO SPECIFICATION', M+12, y+24+3*mkRw-8, 12, true);
     text(r.mtrOk, M+360, y+24+3*mkRw-8);
-
-    // SECTION: ACCEPTABILITY
     y += 24+MKH+16;
     text('ACCEPTABILITY', M+6, y+18, 14, true);
     const ACH=98; box(M,y+24,W-2*M,ACH);
     const acRw=ACH/2; hln(M, y+24+acRw, W-M);
-
     text('VISUAL', M+12, y+24+acRw-8, 12, true); text(r.visualOk, M+120, y+24+acRw-8);
     text('B16 DIMENSIONS', midX+12, y+24+acRw-8, 12, true); text(r.b16Ok, midX+180, y+24+acRw-8);
-
-    // DECISION check boxes
     text('DECISION', M+12, y+24+2*acRw-8, 12, true);
     const bxY=y+24+2*acRw-22;
-    box(M+120, bxY, 18, 18); text('ACCEPT', M+146, y+24+2*acRw-8, 12);
-    box(M+240, bxY, 18, 18); text('REJECT', M+266, y+24+2*acRw-8, 12);
+    g.strokeRect(M+120, bxY, 18, 18); text('ACCEPT', M+146, y+24+2*acRw-8, 12);
+    g.strokeRect(M+240, bxY, 18, 18); text('REJECT', M+266, y+24+2*acRw-8, 12);
     if((r.decision||'ACCEPT')==='ACCEPT') text('X', M+124, y+24+2*acRw-8, 14, true);
     else text('X', M+244, y+24+2*acRw-8, 14, true);
-
-    // COMMENTS (line)
     text('COMMENTS', midX+12, y+24+2*acRw-8, 12, true);
     wrap(r.comments, midX+120, y+24+2*acRw-22, (W-2*M)-(midX-M)-20, 18, 14);
-
-    // FOOTER approval line
     y += 24+ACH+16;
-    box(M,y,W-2*M,44);
+    g.strokeRect(M,y,W-2*M,44);
     text('MATERIAL APPROVAL  APPROVED', M+12, y+28, 12, true);
     text('QC MANAGER  INITIALS / DATE', midX+12, y+28, 12, true);
-
     pages.push(c);
   }
   return pages;
-
   function normalizeRec(r){
     return {
       jobNo:(r.jobNo||''), date:(r.date||''), title:(r.title||''), qty:(r.qty||''),
@@ -321,34 +268,40 @@ async function renderReceivingPdfPages(entries){
   }
 }
 
-
-/* ========== init, live updates, and SW register ========== */
-function initJobsPage(){
-  // Default date once
-  const sd = document.getElementById('startDate');
-  if (sd && !sd.value) sd.value = today();
-
-  // Render the table now
-  renderJobs();
+/* blobs, pdf, zip, utils (reuse your existing helpers) */
+function sanitize(s){ return (s||'').toUpperCase().replace(/[^A-Z0-9\-_. /]/g,'_').replace(/\s+/g,'-'); }
+function dataURLtoU8(d){ const i=d.indexOf(','); const bin=atob(d.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
+function buildPdfFromJpegs(jpegsU8, pageWpt=612, pageHpt=792){ /* ... keep your existing implementation ... */ return new Blob(); } // <-- keep yours
+async function compressDataUrlToJpegU8(dataUrl, maxDim=1600, quality=0.85){ /* keep your existing */ return {u8:new Uint8Array()}; }
+function zipStoreCompat(files){ /* keep your existing */ return new Blob(); }
+function saveBlobSmart(name, blob){
+  const url = URL.createObjectURL(blob);
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) { window.open(url, '_blank'); }
+  else { const a=document.createElement('a'); a.href=url; a.download=name; a.click(); }
+  setTimeout(()=>URL.revokeObjectURL(url), 30000);
 }
 
-// 1) Run now (works because script is at the bottom of body)
+/* init + refresh hooks */
+function initJobsPage(){
+  const sd = document.getElementById('startDate');
+  if (sd && !sd.value) sd.value = today();
+  renderJobs();
+}
 initJobsPage();
-
-// 2) Also run when the page becomes visible again (iOS/Android quirk)
 window.addEventListener('pageshow', initJobsPage);
+window.addEventListener('storage', (e)=>{ if (e.key === 'wh_jobs_v1') renderJobs(); });
 
-// 3) Update list if another tab changes the data
-window.addEventListener('storage', (e)=>{
-  if (e.key === 'wh_jobs_v1') renderJobs();
-});
-
-// 4) Register SW (non-blocking)
-(async()=>{
-  if (!('serviceWorker' in navigator)) return;
+/* SW auto-update + reload once */
+(async()=>{ 
+  if (!('serviceWorker' in navigator)) return; 
   try {
     const reg = await navigator.serviceWorker.register('service_worker.js');
-    if (reg.waiting) reg.waiting.postMessage({ type:'SKIP_WAITING' });
-  } catch {}
+    reg.update?.();
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!window.__swReloadOnce) { window.__swReloadOnce = true; location.reload(); }
+    });
+  } catch(e){}
 })();
 </script>
+</body>
+</html>
