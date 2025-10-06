@@ -1,5 +1,5 @@
 <!-- =================================================================== -->
-<!-- /jobs.html  — JOBS (unchanged features + SW auto-update register)   -->
+<!-- /jobs.html  — JOBS + working EXPORT (PDF+PHOTOS ZIP)                -->
 <!-- =================================================================== -->
 <!doctype html>
 <html lang="en">
@@ -50,6 +50,7 @@
 </header>
 
 <main>
+  <!-- Create -->
   <section class="card">
     <div class="row">
       <div><label for="jobNo">JOB NO. (MAX 8) *</label><input id="jobNo" maxlength="8" /></div>
@@ -62,6 +63,7 @@
     </div>
   </section>
 
+  <!-- List -->
   <section class="card">
     <table>
       <thead><tr><th>JOB</th><th>DESC</th><th>START</th><th>CREATED</th></tr></thead>
@@ -71,6 +73,7 @@
   </section>
 </main>
 
+<!-- ACTION MENU -->
 <div id="overlay" class="overlay" role="dialog" aria-modal="true">
   <div class="sheet">
     <h2>JOB ACTIONS</h2>
@@ -93,17 +96,18 @@
 </div>
 
 <script>
-/* storage (safe) */
+/* ============================ STORAGE ============================ */
 const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
 const $=id=>document.getElementById(id);
-const safeRead=(k)=>{ try{ const s=localStorage.getItem(k); return s?JSON.parse(s):[]; } catch(e){ console.warn('storage parse failed',k,e); return []; } };
-const safeWrite=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); } catch(e){ console.warn('storage write failed',k,e); } };
+const safeRead=(k)=>{ try{const s=localStorage.getItem(k);return s?JSON.parse(s):[]}catch(e){console.warn('parse',k,e);return[]} };
+const safeWrite=(k,v)=>{ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){console.warn('write',k,e);} };
 const readJobs=()=>safeRead(JOBS_KEY);
 const writeJobs=(a)=>safeWrite(JOBS_KEY,a);
 const readRecv=()=>safeRead(RECV_KEY);
 const today=()=>new Date().toISOString().slice(0,10);
+const sanitize=s=>(s||'').toUpperCase().replace(/[^A-Z0-9\-_. /]/g,'_').replace(/\s+/g,'-');
 
-/* list */
+/* ============================ UI: LIST =========================== */
 function renderJobs(){
   const rows=readJobs().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
   const tb=$('jobsBody'); tb.innerHTML='';
@@ -119,7 +123,7 @@ function renderJobs(){
 }
 $('jobsBody').onclick=(e)=>{const tr=e.target.closest('tr.jobrow'); if(tr) openMenu(tr.dataset.job);};
 
-/* create */
+/* ============================ CREATE ============================ */
 $('createBtn').onclick=()=>{
   const jobNo=$('jobNo').value.trim().toUpperCase();
   const desc=$('desc').value.trim().toUpperCase();
@@ -135,7 +139,7 @@ $('createBtn').onclick=()=>{
 };
 $('clearBtn').onclick=()=>{$('jobNo').value='';$('desc').value='';};
 
-/* actions */
+/* ============================ ACTIONS =========================== */
 let current=null;
 function openMenu(jobNo){
   const job=readJobs().find(j=>j.jobNo===jobNo); if(!job) return;
@@ -148,18 +152,24 @@ function closeMenu(){ $('overlay').style.display='none'; current=null; }
 $('closeBtn').onclick=closeMenu;
 $('overlay').onclick=(e)=>{ if(e.target===e.currentTarget) closeMenu(); };
 
-/* export (PDF + PHOTOS in ZIP) */
+/* ============================ EXPORT ============================ */
 $('exportBtn').onclick = async (ev) => {
   ev.preventDefault();
   if (!current) return;
+
   const entries = readRecv().filter(r => r.jobNo === current.jobNo);
   if (!entries.length) { alert('NO RECEIVING ENTRIES FOR THIS JOB'); return; }
+
+  // Render: one portrait Letter page per entry
   const canvases = await renderReceivingPdfPages(entries);
   const jpegU8s  = canvases.map(c => dataURLtoU8(c.toDataURL('image/jpeg', 0.92)));
   const pdfBlob  = buildPdfFromJpegs(jpegU8s, 612, 792);
   const pdfU8    = new Uint8Array(await pdfBlob.arrayBuffer());
+
   const base = `${sanitize(current.jobNo)}_${sanitize(current.desc||'')}`.replace(/_$/,'');
   const files = [{ name:`${base}-REPORTS.pdf`, data: pdfU8 }, { name:'PHOTOS/', dir:true }];
+
+  // Photos → PHOTOS/
   for (const r of entries) {
     const title = sanitize(r.title || 'ITEM');
     for (let i = 0; i < (r.photos || []).length; i++) {
@@ -168,19 +178,24 @@ $('exportBtn').onclick = async (ev) => {
       files.push({ name:`PHOTOS/${sanitize(r.jobNo)}-${title} (${i+1}).jpg`, data: u8 });
     }
   }
+
+  // Build ZIP and save smartly
   const zipBlob = zipStoreCompat(files);
-  saveBlobSmart(`${base}-DOCS.zip`, zipBlob);
+  await askPersistentStorageOnce(); // reduce eviction risk
+  const ok = await saveSmartZip(base, zipBlob);
+  $('zipNote').textContent = ok ? 'EXPORTED. CHECK DOWNLOADS / FILES.' : 'EXPORT FAILED';
 };
 
-/* PDF renderer (letter portrait, no photos) */
+/* ---------- PDF RENDER (Letter portrait, 0.5" margins) ---------- */
 async function renderReceivingPdfPages(entries){
-  const W=1275, H=1650, M=75;
+  const W=1275, H=1650, M=75; // 150dpi
   const pages=[];
   for(const raw of entries){
-    const r = normalizeRec(raw);
+    const r = norm(raw);
     const c=document.createElement('canvas'); c.width=W; c.height=H;
     const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,W,H);
     g.strokeStyle='#000'; g.lineWidth=1;
+
     const B=(px)=>`bold ${px}px Arial`; const R=(px)=>`${px}px Arial`;
     const text=(s,x,y,px=14,b=false)=>{ g.font=b?B(px):R(px); g.fillStyle='#000'; g.textBaseline='alphabetic'; g.fillText((s||'').toUpperCase(),x,y); };
     const box =(x,y,w,h)=>g.strokeRect(x,y,w,h);
@@ -189,8 +204,12 @@ async function renderReceivingPdfPages(entries){
     const wrap=(s,x,y,maxW,lh=18,px=14)=>{ g.font=R(px); let line='',yy=y; (s||'').toUpperCase().split(/\s+/).forEach(w=>{
       const t=line? line+' '+w:w; if(g.measureText(t).width>maxW){ g.fillText(line,x,yy); yy+=lh; line=w; } else line=t;
     }); if(line) g.fillText(line,x,yy); };
+
+    // Title
     text('RECEIVING REPORTS', M, M+22, 22, true);
     hln(M, M+28, W-M);
+
+    // IDENTIFICATION
     let y=M+40;
     text('IDENTIFICATION', M+6, y+18, 14, true);
     const IDH=124; box(M,y+24,W-2*M,IDH);
@@ -202,6 +221,8 @@ async function renderReceivingPdfPages(entries){
     text('QUANTITY', midX+12, y+24+2*rw-8, 12, true); text(r.qty,  midX+120, y+24+2*rw-8);
     text('VENDOR',   M+12, y+24+3*rw-8, 12, true); text(r.vendor,  M+120, y+24+3*rw-8);
     text('PO.',      midX+12, y+24+3*rw-8, 12, true); text(r.po,   midX+100, y+24+3*rw-8);
+
+    // SPECIFICATION
     y += 24+IDH+16;
     text('SPECIFICATION', M+6, y+18, 14, true);
     const SPH=92; box(M,y+24,W-2*M,SPH);
@@ -211,6 +232,8 @@ async function renderReceivingPdfPages(entries){
     text('GRADE / TYPE', spMid+12, y+24+spRw-8, 12, true); text(r.grade, spMid+140, y+24+spRw-8);
     text('SPEC', M+12, y+24+2*spRw-8, 12, true); text(`${r.specPrefix} ${r.specCode}`, M+120, y+24+2*spRw-8);
     text('FITTING', spMid+12, y+24+2*spRw-8, 12, true); text(r.fitting, spMid+120, y+24+2*spRw-8);
+
+    // DIMENSIONS
     y += 24+SPH+16;
     text('DIMENSIONS', M+6, y+18, 14, true);
     const DMH=108; box(M,y+24,W-2*M,DMH);
@@ -222,6 +245,8 @@ async function renderReceivingPdfPages(entries){
     text('WIDTH',  midX+12, y+24+2*dmRw-8, 12, true); text(r.width,  midX+100, y+24+2*dmRw-8);
     text('DIAMETER', M+12, y+24+3*dmRw-8, 12, true); text(`${r.diameter} ${r.diaType}`.trim(), M+120, y+24+3*dmRw-8);
     text('OTHER',    midX+12, y+24+3*dmRw-8, 12, true); text(r.dimOther, midX+100, y+24+3*dmRw-8);
+
+    // MARKINGS
     y += 24+DMH+16;
     text('MARKINGS', M+6, y+18, 14, true);
     const MKH=128; box(M,y+24,W-2*M,MKH);
@@ -233,28 +258,38 @@ async function renderReceivingPdfPages(entries){
     text(r.markingCode, M+360, y+24+2*mkRw-8);
     text('MTR/COFC ACCEPTABLE TO SPECIFICATION', M+12, y+24+3*mkRw-8, 12, true);
     text(r.mtrOk, M+360, y+24+3*mkRw-8);
+
+    // ACCEPTABILITY
     y += 24+MKH+16;
     text('ACCEPTABILITY', M+6, y+18, 14, true);
     const ACH=98; box(M,y+24,W-2*M,ACH);
     const acRw=ACH/2; hln(M, y+24+acRw, W-M);
     text('VISUAL', M+12, y+24+acRw-8, 12, true); text(r.visualOk, M+120, y+24+acRw-8);
     text('B16 DIMENSIONS', midX+12, y+24+acRw-8, 12, true); text(r.b16Ok, midX+180, y+24+acRw-8);
+
+    // DECISION boxes
     text('DECISION', M+12, y+24+2*acRw-8, 12, true);
     const bxY=y+24+2*acRw-22;
     g.strokeRect(M+120, bxY, 18, 18); text('ACCEPT', M+146, y+24+2*acRw-8, 12);
     g.strokeRect(M+240, bxY, 18, 18); text('REJECT', M+266, y+24+2*acRw-8, 12);
     if((r.decision||'ACCEPT')==='ACCEPT') text('X', M+124, y+24+2*acRw-8, 14, true);
     else text('X', M+244, y+24+2*acRw-8, 14, true);
+
+    // COMMENTS
     text('COMMENTS', midX+12, y+24+2*acRw-8, 12, true);
     wrap(r.comments, midX+120, y+24+2*acRw-22, (W-2*M)-(midX-M)-20, 18, 14);
+
+    // FOOTER
     y += 24+ACH+16;
     g.strokeRect(M,y,W-2*M,44);
     text('MATERIAL APPROVAL  APPROVED', M+12, y+28, 12, true);
     text('QC MANAGER  INITIALS / DATE', midX+12, y+28, 12, true);
+
     pages.push(c);
   }
   return pages;
-  function normalizeRec(r){
+
+  function norm(r){
     return {
       jobNo:(r.jobNo||''), date:(r.date||''), title:(r.title||''), qty:(r.qty||''),
       vendor:(r.vendor||''), po:(r.po||''), product:(r.product||''), grade:(r.grade||''),
@@ -268,78 +303,72 @@ async function renderReceivingPdfPages(entries){
   }
 }
 
-/* blobs, pdf, zip, utils (reuse your existing helpers) */
-function sanitize(s){ return (s||'').toUpperCase().replace(/[^A-Z0-9\-_. /]/g,'_').replace(/\s+/g,'-'); }
+/* ---------------------- BINARY / PDF / ZIP ----------------------- */
 function dataURLtoU8(d){ const i=d.indexOf(','); const bin=atob(d.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
-function buildPdfFromJpegs(jpegsU8, pageWpt=612, pageHpt=792){ /* ... keep your existing implementation ... */ return new Blob(); } // <-- keep yours
-async function compressDataUrlToJpegU8(dataUrl, maxDim=1600, quality=0.85){ /* keep your existing */ return {u8:new Uint8Array()}; }
-function zipStoreCompat(files){ /* keep your existing */ return new Blob(); }
-function saveBlobSmart(name, blob){
-  const url = URL.createObjectURL(blob);
-  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) { window.open(url, '_blank'); }
-  else { const a=document.createElement('a'); a.href=url; a.download=name; a.click(); }
-  setTimeout(()=>URL.revokeObjectURL(url), 30000);
+function blobToU8(blob){ return blob.arrayBuffer().then(buf=>new Uint8Array(buf)); }
+
+function buildPdfFromJpegs(jpegsU8, pageWpt=612, pageHpt=792){
+  const parts=[], xref=[null]; let off=0; const enc=new TextEncoder();
+  const pushU8=u8=>{parts.push(u8); off+=u8.length;}; const push=s=>pushU8(enc.encode(s));
+  push('%PDF-1.4\n'); const CAT=1,PAGES=2;
+  xref[CAT]=off; push(`${CAT} 0 obj\n<< /Type /Catalog /Pages ${PAGES} 0 R >>\nendobj\n`);
+  xref[PAGES]=off; push(`${PAGES} 0 obj\n<< /Type /Pages /Count ${jpegsU8.length} /Kids [ `);
+  let id=3; const kids=[]; for(let i=0;i<jpegsU8.length;i++){ kids.push(id+2); id+=3; }
+  push(kids.map(k=>`${k} 0 R `).join('')); push(`] >>\nendobj\n`); id=3;
+  for(let i=0;i<jpegsU8.length;i++){
+    const imgId=id++, contId=id++, pageId=id++; const img=jpegsU8[i];
+    xref[imgId]=off; push(`${imgId} 0 obj\n<< /Type /XObject /Subtype /Image /Filter /DCTDecode /ColorSpace /DeviceRGB /BitsPerComponent 8 /Width ${pageWpt} /Height ${pageHpt} /Length ${img.length} >>\nstream\n`); pushU8(img); push(`\nendstream\nendobj\n`);
+    const content=`q\n${pageWpt} 0 0 ${pageHpt} 0 0 cm\n/Im${i} Do\nQ\n`;
+    xref[contId]=off; push(`${contId} 0 obj\n<< /Length ${content.length} >>\nstream\n${content}\nendstream\nendobj\n`);
+    xref[pageId]=off; push(`${pageId} 0 obj\n<< /Type /Page /Parent ${PAGES} 0 R /MediaBox [0 0 ${pageWpt} ${pageHpt}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${contId} 0 R >>\nendobj\n`);
+  }
+  const x=off; push(`xref\n0 ${xref.length}\n0000000000 65535 f \n`); for(let i=1;i<xref.length;i++){ push(String(xref[i]).padStart(10,'0')+' 00000 n \n'); }
+  push(`trailer\n<< /Size ${xref.length} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF`); 
+  return new Blob(parts,{type:'application/pdf'});
 }
 
-/* init + refresh hooks */
-function initJobsPage(){
-  const sd = document.getElementById('startDate');
-  if (sd && !sd.value) sd.value = today();
-  renderJobs();
+async function compressDataUrlToJpegU8(dataUrl, maxDim=1600, quality=0.85){
+  const img = await new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.src=dataUrl; });
+  const s = Math.min(1, maxDim/Math.max(img.width,img.height));
+  const w = Math.max(1, Math.round(img.width*s)), h = Math.max(1, Math.round(img.height*s));
+  const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
+  return {u8:dataURLtoU8(c.toDataURL('image/jpeg', quality))};
 }
-initJobsPage();
-window.addEventListener('pageshow', initJobsPage);
-window.addEventListener('storage', (e)=>{ if (e.key === 'wh_jobs_v1') renderJobs(); });
-<script>
-/* ====================== STORAGE & SAVE HELPERS ====================== */
-/* Why: PWAs cannot request “device storage permission” like native apps.
-   This asks for Persistent Storage (keeps our IndexedDB/localStorage data),
-   and provides robust saving to Downloads (Android) or Files app (iOS). */
 
-/** Ask browser to persist our storage (prevents eviction). */
+/* ZIP (store) */
+function zipStoreCompat(files) {
+  const enc = new TextEncoder(), LE2=n=>new Uint8Array([n&255,(n>>>8)&255]), LE4=n=>new Uint8Array([n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]);
+  const join = arrs => { let L=0; for(const a of arrs) L+=a.length; const out=new Uint8Array(L); let o=0; for(const a of arrs){ out.set(a,o); o+=a.length; } return out; };
+  const crc32=u8=>{ let c=~0>>>0; for(let i=0;i<u8.length;i++){ c^=u8[i]; for(let k=0;k<8;k++) c=(c>>>1)^(0xEDB88320&-(c&1)); } return (~c)>>>0; };
+  const now=new Date(); const dosTime=((now.getHours()&31)<<11)|((now.getMinutes()&63)<<5)|((now.getSeconds()/2)&31);
+  const dosDate=(((now.getFullYear()-1980)&127)<<9)|(((now.getMonth()+1)&15)<<5)|(now.getDate()&31);
+  const norm = files.map(f=>({ name:sanitize((f.name||'').replace(/\\/g,'/')), dir:!!f.dir, data:f.data? (f.data instanceof Uint8Array?f.data:new Uint8Array(f.data)):new Uint8Array() }));
+  const locals=[], centrals=[]; let offset=0;
+  for(const f of norm){
+    const name=enc.encode(f.name), isDir=f.dir||f.name.endsWith('/'), data=isDir?new Uint8Array():f.data, crc=isDir?0:crc32(data), size=data.length;
+    const local=join([enc.encode('PK\x03\x04'),LE2(20),LE2(0),LE2(0),LE2(dosTime),LE2(dosDate),LE4(crc),LE4(size),LE4(size),LE2(name.length),LE2(0),name]);
+    locals.push(local,data);
+    const central=join([enc.encode('PK\x01\x02'),LE2(20),LE2(20),LE2(0),LE2(0),LE2(dosTime),LE2(dosDate),LE4(crc),LE4(size),LE4(size),LE2(name.length),LE2(0),LE2(0),LE2(isDir?0x10:0),LE2(0),LE4(isDir?0x10:0),LE4(offset),name]);
+    centrals.push(central); offset += local.length + data.length;
+  }
+  const localsAll=join(locals), centralsAll=join(centrals);
+  const end=join([enc.encode('PK\x05\x06'),LE2(0),LE2(0),LE2(norm.length),LE2(norm.length),LE4(centralsAll.length),LE4(localsAll.length),LE2(0)]);
+  return new Blob([localsAll, centralsAll, end], {type:'application/zip'});
+}
+
+/* ---------------------- SAVE / SHARE STACK ---------------------- */
 async function askPersistentStorageOnce() {
   if (!('storage' in navigator && navigator.storage && navigator.storage.persist)) return;
   try {
     const key = 'wh_persist_ok';
-    if (localStorage.getItem(key) === '1') return; // only ask once
+    if (localStorage.getItem(key) === '1') return;
     const persisted = await navigator.storage.persisted?.();
     if (persisted) { localStorage.setItem(key, '1'); return; }
     const ok = await navigator.storage.persist();
     if (ok) localStorage.setItem(key, '1');
-  } catch (e) { /* non-fatal */ }
+  } catch {}
 }
 
-/** Inspect quota/usage for debugging “download failed” scenarios. */
-async function logStorageEstimate() {
-  try {
-    const est = await navigator.storage?.estimate?.();
-    if (est) {
-      const mb = n => (n/1024/1024).toFixed(1);
-      console.log(`[STORAGE] used=${mb(est.usage||0)}MB / quota=${mb(est.quota||0)}MB`);
-    }
-  } catch (e) {}
-}
-
-/** Convert DataURL -> Uint8Array (used by JPEG compression) */
-function dataURLtoU8(dataUrl) {
-  const i = dataUrl.indexOf(',');
-  const bin = atob(dataUrl.slice(i+1));
-  const u8 = new Uint8Array(bin.length);
-  for (let k=0; k<bin.length; k++) u8[k] = bin.charCodeAt(k);
-  return u8;
-}
-
-/** JPEG compress helper (keep small to avoid huge zips) */
-async function compressDataUrlToJpegU8(dataUrl, maxDim=1600, quality=0.82){
-  const img = await new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.src=dataUrl; });
-  const s = Math.min(1, maxDim / Math.max(img.width, img.height));
-  const w = Math.max(1, Math.round(img.width*s)), h = Math.max(1, Math.round(img.height*s));
-  const c = document.createElement('canvas'); c.width=w; c.height=h;
-  c.getContext('2d').drawImage(img,0,0,w,h);
-  return { u8: dataURLtoU8(c.toDataURL('image/jpeg', quality)) };
-}
-
-/* ---------- Save stack: picker → share → anchor ---------- */
 async function saveWithPicker(fileName, blob, mime='application/zip', ext='.zip') {
   if (!('showSaveFilePicker' in window)) return false;
   try {
@@ -348,67 +377,51 @@ async function saveWithPicker(fileName, blob, mime='application/zip', ext='.zip'
       types: [{ description: 'Archive', accept: { [mime]: [ext] } }],
       excludeAcceptAllOption: false
     });
-    const writable = await handle.createWritable();
-    await writable.write(blob);
-    await writable.close();
-    return true;
-  } catch (e) { return false; }
+    const w = await handle.createWritable(); await w.write(blob); await w.close(); return true;
+  } catch { return false; }
 }
-
 async function shareFile(fileName, blob, mime='application/zip') {
-  try {
-    const file = new File([blob], fileName, { type: mime });
+  try { const file = new File([blob], fileName, { type: mime });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: fileName, text: 'WELDERS HELPER EXPORT' });
-      return true;
+      await navigator.share({ files: [file], title: fileName, text: 'WELDERS HELPER EXPORT' }); return true;
     }
-  } catch (e) {}
+  } catch {}
   return false;
 }
-
 function downloadViaAnchor(fileName, blob) {
-  try {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
-    return true;
-  } catch (e) { return false; }
+  try { const url = URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download=fileName; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500); return true;
+  } catch { return false; }
 }
-
-/** One call from your export handler. */
 async function saveSmartZip(baseName, zipBlob) {
   const fileName = `${baseName}-DOCS.zip`;
-
-  // 1) Native Save dialog (Chrome/Android & desktop Chrome/Edge)
-  if (await saveWithPicker(fileName, zipBlob)) return;
-
-  // 2) Share sheet (iOS/Android) → “Save to Files”, Mail, Outlook, etc.
-  if (await shareFile(fileName, zipBlob)) return;
-
-  // 3) Classic anchor (Android Chrome → Downloads manager)
-  if (downloadViaAnchor(fileName, zipBlob)) return;
-
-  alert('DOWNLOAD FAILED. TRY IN CHROME (NON-STANDALONE) OR CHECK STORAGE PERMISSIONS.');
+  if (await saveWithPicker(fileName, zipBlob)) return true;
+  if (await shareFile(fileName, zipBlob)) return true;
+  if (downloadViaAnchor(fileName, zipBlob)) return true;
+  alert('DOWNLOAD FAILED. TRY IN CHROME OR SHARE → SAVE TO FILES.'); return false;
 }
 
-/* Call these on page load (jobs.html/receiving.html) */
-askPersistentStorageOnce();
-logStorageEstimate();
-</script>
+/* ============================ INIT ============================== */
+function initJobsPage(){
+  const sd = document.getElementById('startDate');
+  if (sd && !sd.value) sd.value = today();
+  renderJobs();
+}
+initJobsPage();
+window.addEventListener('pageshow', initJobsPage);
+window.addEventListener('storage', (e)=>{ if (e.key === JOBS_KEY) renderJobs(); });
 
-/* SW auto-update + reload once */
-(async()=>{ 
-  if (!('serviceWorker' in navigator)) return; 
+/* -------- Service Worker: update now + reload once on upgrade ---- */
+(async () => {
+  if (!('serviceWorker' in navigator)) return;
   try {
     const reg = await navigator.serviceWorker.register('service_worker.js');
     reg.update?.();
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (!window.__swReloadOnce) { window.__swReloadOnce = true; location.reload(); }
     });
-  } catch(e){}
+  } catch (e) { console.error('SW registration failed', e); }
 })();
 </script>
 </body>
