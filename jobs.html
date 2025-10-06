@@ -156,19 +156,33 @@ $('exportBtn').onclick = async (ev) => {
   alert('EXPORT: implemented in your latest branch; if missing, we can re-add after PDF fix.');
 };
 
-/* init — ensure jobs render on first open and when returning to the tab */
-function init(){
-  if(!$('startDate').value) $('startDate').value=today();
+/* ========== init, live updates, and SW register ========== */
+function initJobsPage(){
+  // Default date once
+  const sd = document.getElementById('startDate');
+  if (sd && !sd.value) sd.value = today();
+
+  // Render the table now
   renderJobs();
 }
-document.addEventListener('DOMContentLoaded', init);      // first load
-window.addEventListener('pageshow', init);                // iOS bfcache restore
-window.addEventListener('storage', (e)=>{                 // changes from other tabs
-  if(e.key===JOBS_KEY || e.key===RECV_KEY) renderJobs();
+
+// 1) Run now (works because script is at the bottom of body)
+initJobsPage();
+
+// 2) Also run when the page becomes visible again (iOS/Android quirk)
+window.addEventListener('pageshow', initJobsPage);
+
+// 3) Update list if another tab changes the data
+window.addEventListener('storage', (e)=>{
+  if (e.key === 'wh_jobs_v1') renderJobs();
 });
 
-/* SW keep-alive (optional) */
-(async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){} })();
+// 4) Register SW (non-blocking)
+(async()=>{
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register('service_worker.js');
+    if (reg.waiting) reg.waiting.postMessage({ type:'SKIP_WAITING' });
+  } catch {}
+})();
 </script>
-</body>
-</html>
