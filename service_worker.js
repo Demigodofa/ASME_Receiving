@@ -1,91 +1,107 @@
-/* Why: bump forces browsers to fetch fresh files after deploy. */
-const CACHE_VERSION = 'wh-v27';
-const CACHE_NAME = `welders-helper-${CACHE_VERSION}`;
+/* -------- Welder's Helper SW (robust update) -------- */
+const CACHE_VERSION = 'wh-v28';                 // <- bump every release
+const CACHE_NAME    = `welders-helper-${CACHE_VERSION}`;
+
+// Tip: add a short token to bust cache on core files if needed
+const V = CACHE_VERSION;
 
 const CORE_ASSETS = [
-  './',
-  './index.html',
-  './app.html',
-  './jobs.html',
-  './job.html',
-  './receiving.html',
-  './hydro.html',
-  './lookup.html',
-  './manifest.webmanifest'
+  `./index.html?${V}`,
+  `./app.html?${V}`,
+  `./jobs.html?${V}`,
+  `./receiving.html?${V}`,
+  './assets/icon-192.png',
+  './assets/icon-512.png',
+  './manifest.webmanifest',
+  './service_worker.js',
 ];
 
 const OPTIONAL_ASSETS = [
-  './assets/icons/icon-192.png',
-  './assets/icons/icon-512.png',
-  './assets/icons/icon-180.png',
-  './assets/icons/icon-32.png'
+  // add CSS/JS/fonts/images you’d like pre-cached but not blocking install
 ];
 
+/* Install: precache core and take over ASAP */
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
-    const c = await caches.open(CACHE_NAME);
-    await c.addAll(CORE_ASSETS);
-    await Promise.all(OPTIONAL_ASSETS.map(async (u)=>{ try{ const r=await fetch(u,{cache:'no-cache'}); if(r.ok) await c.put(u,r.clone()); }catch{} }));
+    const cache = await caches.open(CACHE_NAME);
+
+    // ensure we fetch FRESH copies of core pages
+    for (const url of CORE_ASSETS) {
+      try {
+        const req = new Request(url, { cache: 'reload' });
+        const res = await fetch(req);
+        if (res.ok) await cache.put(url, res.clone());
+      } catch (e) {
+        // fall back to whatever is already there if offline
+      }
+    }
+
+    // optional assets: best-effort
+    await Promise.all(OPTIONAL_ASSETS.map(async (u) => {
+      try {
+        const res = await fetch(new Request(u, { cache: 'no-cache' }));
+        if (res.ok) {
+          await cache.put(u, res.clone());
+        }
+      } catch {}
+    }));
   })());
-  self.skipWaiting();
+  self.skipWaiting(); // new SW ready immediately
 });
 
+/* Activate: remove old caches + control all clients */
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k.startsWith('welders-helper-') && k !== CACHE_NAME).map(k => caches.delete(k)));
+    await Promise.all(
+      keys
+        .filter(k => k !== CACHE_NAME)
+        .map(k => caches.delete(k))
+    );
     await self.clients.claim();
   })());
 });
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
-});
-
+/* Fetch strategy:
+   - HTML/doc pages: network-first (fresh) with cache fallback
+   - Everything else: cache-first with network fallback
+*/
 self.addEventListener('fetch', (event) => {
   const req = event.request;
+
+  // Only handle GET
+  if (req.method !== 'GET') return;
+
   const accept = req.headers.get('accept') || '';
-  if (req.mode === 'navigate' || accept.includes('text/html')) {
-    event.respondWith(networkThenCache(req));
-  } else {
-    event.respondWith(cacheThenNetwork(req));
+  const isHTML = accept.includes('text/html');
+
+  if (isHTML) {
+    // Network-first for pages
+    event.respondWith((async () => {
+      try {
+        const fresh = await fetch(new Request(req.url, { cache: 'reload' }));
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(req.url, fresh.clone());
+        return fresh;
+      } catch {
+        const cached = await caches.match(req, { ignoreSearch: true });
+        return cached || new Response('Offline', { status: 503 });
+      }
+    })());
+    return;
   }
+
+  // Cache-first for static assets (css/js/img)
+  event.respondWith((async () => {
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    try {
+      const res = await fetch(req);
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(req, res.clone());
+      return res;
+    } catch {
+      return new Response('', { status: 504 });
+    }
+  })());
 });
-
-async function cacheThenNetwork(request) {
-  const cached = await caches.match(request);
-  if (cached) return cached;
-  try {
-    const res = await fetch(request);
-    const c = await caches.open(CACHE_NAME);
-    c.put(request, res.clone());
-    return res;
-  } catch { return cached || new Response('', { status: 504, statusText: 'Offline' }); }
-}
-
-async function networkThenCache(request) {
-  try {
-    const res = await fetch(request, { cache: 'no-store' });
-    const c = await caches.open(CACHE_NAME);
-    const p = new URL(request.url).pathname;
-    if (p.endsWith('/index.html')) c.put('./index.html', res.clone());
-    if (p.endsWith('/app.html')) c.put('./app.html', res.clone());
-    if (p.endsWith('/jobs.html')) c.put('./jobs.html', res.clone());
-    if (p.endsWith('/job.html')) c.put('./job.html', res.clone());
-    if (p.endsWith('/receiving.html')) c.put('./receiving.html', res.clone());
-    if (p.endsWith('/hydro.html')) c.put('./hydro.html', res.clone());
-    if (p.endsWith('/lookup.html')) c.put('./lookup.html', res.clone());
-    return res;
-  } catch {
-    const p = new URL(request.url).pathname;
-    const fallback = p.endsWith('/app.html') ? './app.html'
-                  : p.endsWith('/jobs.html') ? './jobs.html'
-                  : p.endsWith('/job.html') ? './job.html'
-                  : p.endsWith('/receiving.html') ? './receiving.html'
-                  : p.endsWith('/hydro.html') ? './hydro.html'
-                  : p.endsWith('/lookup.html') ? './lookup.html'
-                  : './index.html';
-    const cached = await caches.match(fallback);
-    return cached || new Response('<h1>Offline</h1>', { headers: { 'Content-Type': 'text/html' } });
-  }
-}
