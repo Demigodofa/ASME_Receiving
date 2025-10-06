@@ -1,423 +1,336 @@
-<!-- /ASME_Receiving/jobs.html -->
+<!-- /ASME_Receiving/jobs.html  (REPLACE THE WHOLE FILE WITH THIS) -->
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>WELDERS HELPER — JOBS</title>
-<meta name="theme-color" content="#0A0F1A" />
-<link rel="manifest" href="manifest.webmanifest" />
-<style>
-  :root{--bg:#0A0F1A;--panel:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C;--danger:#FF5A5F;--focus:#8AB4F8}
-  *{box-sizing:border-box} html,body{height:100%;margin:0}
-  body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;letter-spacing:.02em}
-  header{position:sticky;top:0;background:#0C1320CC;backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
-  .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1120px;margin:0 auto}
-  .brand{font-weight:900}
-  .btn{border:1px solid var(--border);background:#0F172A;color:#E6EAF0;padding:10px 14px;border-radius:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;text-decoration:none}
-  .btn.primary{background:var(--accent);color:#052e16;border-color:#1B9E64}
-  .btn.danger{background:var(--danger);border-color:#D83A3F}
-  .btn:focus{outline:3px solid var(--focus);outline-offset:2px}
-  main{max-width:1120px;margin:24px auto;padding:0 16px}
-  .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
-  label{font-size:12px;color:var(--muted);font-weight:800;display:block;margin-bottom:6px}
-  input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid var(--border);background:#0D1424;color:#E6EAF0;text-transform:uppercase;font-weight:800}
-  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-  .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#0F172A;border:1px solid var(--border);font-size:12px;font-weight:800}
-  table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--border);padding:14px 10px} th{font-size:11px;color:#8FA3BD;text-transform:uppercase;letter-spacing:.06em}
-  .empty{color:var(--muted);text-align:center;padding:18px;text-transform:uppercase}
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50}
-  .sheet{width:min(620px,92%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
-  .sheet h2{margin:0 0 6px 0;font-size:20px;text-transform:uppercase}
-  .meta{color:#E6EAF0;font-size:20px;font-weight:900;letter-spacing:.06em;margin:2px 0 12px 0}
-  .stack{display:flex;flex-direction:column;gap:10px;align-items:center}
-  .wide{width:100%;text-align:center}
-  .confirm{display:none;margin-top:10px;text-align:center}
-  .confirm .rowc{display:flex;gap:10px;justify-content:center;margin-top:10px}
-  .small{font-size:12px;color:var(--muted)}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>WELDERS HELPER — JOBS</title>
+  <meta name="theme-color" content="#0A0F1A" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    :root{--bg:#0A0F1A;--panel:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C;--danger:#FF5A5F;--focus:#8AB4F8}
+    *{box-sizing:border-box} html,body{height:100%;margin:0}
+    body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;letter-spacing:.02em}
+    header{position:sticky;top:0;background:#0C1320CC;backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+    .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1120px;margin:0 auto}
+    .brand{font-weight:900}
+    .btn{border:1px solid var(--border);background:#0F172A;color:#E6EAF0;padding:10px 14px;border-radius:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;text-decoration:none}
+    .btn.primary{background:var(--accent);color:#052e16;border-color:#1B9E64}
+    .btn.danger{background:var(--danger);border-color:#D83A3F}
+    .btn:focus{outline:3px solid var(--focus);outline-offset:2px}
+    main{max-width:1120px;margin:24px auto;padding:0 16px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
+    label{font-size:12px;color:var(--muted);font-weight:800;display:block;margin-bottom:6px}
+    input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid var(--border);background:#0D1424;color:#E6EAF0;text-transform:uppercase;font-weight:800}
+    .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#0F172A;border:1px solid var(--border);font-size:12px;font-weight:800}
+    table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--border);padding:14px 10px} th{font-size:11px;color:#8FA3BD;text-transform:uppercase;letter-spacing:.06em}
+    .empty{color:var(--muted);text-align:center;padding:18px;text-transform:uppercase}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50}
+    .sheet{width:min(620px,92%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+    .sheet h2{margin:0 0 6px 0;font-size:20px;text-transform:uppercase}
+    .meta{color:#E6EAF0;font-size:20px;font-weight:900;letter-spacing:.06em;margin:2px 0 12px 0}
+    .stack{display:flex;flex-direction:column;gap:10px;align-items:center}
+    .wide{width:100%;text-align:center}
+    .confirm{display:none;margin-top:10px;text-align:center}
+    .confirm .rowc{display:flex;gap:10px;justify-content:center;margin-top:10px}
+    .small{font-size:12px;color:var(--muted)}
+  </style>
 </head>
 <body>
-<header>
-  <nav class="nav">
-    <a class="btn" href="app.html">← APP</a>
-    <div class="brand">JOBS</div>
-    <div style="flex:1"></div>
-    <span class="pill">OFFLINE READY</span>
-  </nav>
-</header>
+  <header>
+    <nav class="nav">
+      <a class="btn" href="app.html">← APP</a>
+      <div class="brand">JOBS</div>
+      <div style="flex:1"></div>
+      <span class="pill">OFFLINE READY</span>
+    </nav>
+  </header>
 
-<main>
-  <!-- Create -->
-  <section class="card">
-    <div class="row">
-      <div><label for="jobNo">JOB NO. (MAX 8) *</label><input id="jobNo" maxlength="8" /></div>
-      <div><label for="desc">DESC. (MAX 12)</label><input id="desc" maxlength="12" /></div>
-      <div><label for="startDate">START DATE</label><input id="startDate" type="date" /></div>
-    </div>
-    <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
-      <button id="createBtn" class="btn primary">CREATE JOB</button>
-      <button id="clearBtn" class="btn">CLEAR</button>
-    </div>
-  </section>
-
-  <!-- List -->
-  <section class="card">
-    <table>
-      <thead><tr><th>JOB</th><th>DESC</th><th>START</th><th>CREATED</th></tr></thead>
-      <tbody id="jobsBody"><tr><td colspan="4" class="empty">NO JOBS YET</td></tr></tbody>
-    </table>
-    <div class="small">TIP: TAP A ROW FOR ACTIONS</div>
-  </section>
-</main>
-
-<!-- ACTION MENU -->
-<div id="overlay" class="overlay" role="dialog" aria-modal="true">
-  <div class="sheet">
-    <h2>JOB ACTIONS</h2>
-    <div id="dlgMeta" class="meta">JOB — DESC</div>
-    <div class="stack">
-      <a id="viewBtn" class="btn primary wide" href="#">VIEW JOB</a>
-      <button id="exportBtn" class="btn wide">EXPORT REPORTS</button>
-      <button id="deleteBtn" class="btn danger wide">DELETE JOB</button>
-      <button id="closeBtn" class="btn wide">CLOSE</button>
-      <div id="confirmBox" class="confirm">
-        <div>ARE YOU SURE YOU WANT TO DELETE THIS JOB?</div>
-        <div class="rowc">
-          <button id="yesDel" class="btn danger">YES</button>
-          <button id="noDel" class="btn">NO</button>
-        </div>
+  <main>
+    <!-- Create -->
+    <section class="card">
+      <div class="row">
+        <div><label for="jobNo">JOB NO. (MAX 8) *</label><input id="jobNo" maxlength="8" /></div>
+        <div><label for="desc">DESC. (MAX 12)</label><input id="desc" maxlength="12" /></div>
+        <div><label for="startDate">START DATE</label><input id="startDate" type="date" /></div>
       </div>
-      <div id="zipNote" class="small"></div>
+      <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+        <button id="createBtn" class="btn primary">CREATE JOB</button>
+        <button id="clearBtn" class="btn">CLEAR</button>
+      </div>
+    </section>
+
+    <!-- List -->
+    <section class="card">
+      <table>
+        <thead><tr><th>JOB</th><th>DESC</th><th>START</th><th>CREATED</th></tr></thead>
+        <tbody id="jobsBody"><tr><td colspan="4" class="empty">NO JOBS YET</td></tr></tbody>
+      </table>
+      <div class="small">TIP: TAP A ROW FOR ACTIONS</div>
+    </section>
+  </main>
+
+  <!-- ACTION MENU -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
+    <div class="sheet">
+      <h2>JOB ACTIONS</h2>
+      <div id="dlgMeta" class="meta">JOB — DESC</div>
+      <div class="stack">
+        <a id="viewBtn" class="btn primary wide" href="#">VIEW JOB</a>
+        <button id="exportBtn" class="btn wide">EXPORT REPORTS</button>
+        <button id="deleteBtn" class="btn danger wide">DELETE JOB</button>
+        <button id="closeBtn" class="btn wide">CLOSE</button>
+        <div id="confirmBox" class="confirm">
+          <div>ARE YOU SURE YOU WANT TO DELETE THIS JOB?</div>
+          <div class="rowc">
+            <button id="yesDel" class="btn danger">YES</button>
+            <button id="noDel" class="btn">NO</button>
+          </div>
+        </div>
+        <div id="zipNote" class="small"></div>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-/* ===== Storage ===== */
-const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
-const $=id=>document.getElementById(id);
-const readJobs=()=>JSON.parse(localStorage.getItem(JOBS_KEY)||'[]');
-const writeJobs=a=>localStorage.setItem(JOBS_KEY,JSON.stringify(a));
-const readRecv=()=>JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
-function today(){return new Date().toISOString().slice(0,10);}
+  <script>
+    /* -------- storage -------- */
+    const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
+    const $=id=>document.getElementById(id);
+    const readJobs=()=>JSON.parse(localStorage.getItem(JOBS_KEY)||'[]');
+    const writeJobs=a=>localStorage.setItem(JOBS_KEY,JSON.stringify(a));
+    const readRecv=()=>JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
+    const today=()=>new Date().toISOString().slice(0,10);
 
-/* ===== UI: list ===== */
-function renderJobs(){
-  const rows=readJobs().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
-  const tb=$('jobsBody'); tb.innerHTML='';
-  if(!rows.length){tb.innerHTML='<tr><td colspan="4" class="empty">NO JOBS YET</td></tr>';return;}
-  for(const j of rows){
-    const tr=document.createElement('tr'); tr.className='jobrow'; tr.dataset.job=j.jobNo;
-    tr.innerHTML=`<td><span class="pill">${j.jobNo}</span></td>
-      <td>${(j.desc||'').toUpperCase()}</td>
-      <td>${j.startDate||''}</td>
-      <td>${new Date(j.createdAt).toLocaleString().toUpperCase()}</td>`;
-    tb.appendChild(tr);
-  }
-}
-$('jobsBody').onclick=(e)=>{const tr=e.target.closest('tr.jobrow'); if(tr) openMenu(tr.dataset.job);};
-
-/* ===== Create ===== */
-$('createBtn').onclick=()=>{
-  const jobNo=$('jobNo').value.trim().toUpperCase();
-  const desc=$('desc').value.trim().toUpperCase();
-  const start=$('startDate').value || today();
-  if(!jobNo) return alert('JOB NO. REQUIRED');
-  if(jobNo.length>8) return alert('JOB NO. MUST BE ≤ 8');
-  if(readJobs().some(j=>j.jobNo===jobNo)) return alert('JOB NO. ALREADY EXISTS');
-  const now=new Date().toISOString();
-  const id=(crypto.randomUUID&&crypto.randomUUID())||Math.random().toString(36).slice(2);
-  const jobs=readJobs(); jobs.unshift({id,jobNo,desc,startDate:start,createdAt:now}); writeJobs(jobs);
-  $('jobNo').value=''; $('desc').value=''; $('startDate').value=today(); renderJobs();
-};
-$('clearBtn').onclick=()=>{$('jobNo').value='';$('desc').value='';};
-
-/* ===== Menu ===== */
-let current=null;
-function openMenu(jobNo){
-  const job=readJobs().find(j=>j.jobNo===jobNo); if(!job) return;
-  current=job; $('dlgMeta').textContent=`${job.jobNo} — ${(job.desc||'')}`;
-  $('viewBtn').href=`job.html?job=${encodeURIComponent(job.jobNo)}`;
-  $('confirmBox').style.display='none'; $('zipNote').textContent='';
-  $('overlay').style.display='flex'; $('closeBtn').focus();
-}
-function closeMenu(){ $('overlay').style.display='none'; current=null; }
-$('closeBtn').onclick=closeMenu;
-$('overlay').onclick=(e)=>{ if(e.target===e.currentTarget) closeMenu(); };
-
-/* ===== Export (single button) ===== */
-/* IMPORTANT: Add your scanned template at:
-   assets/templates/rir-3up-3300x2550.png  (Letter landscape, EXACT form) */
-const TEMPLATE_SRC = 'assets/templates/rir-3up-3300x2550.png';
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-function sanitizeName(s){ return (s||'').toUpperCase().replace(/[^A-Z0-9\-_. ]/g,'_').replace(/\s+/g,'-'); }
-function saveBlobSmart(name, blob){
-  const url = URL.createObjectURL(blob);
-  if(isIOS){ window.open(url, '_blank'); setTimeout(()=>URL.revokeObjectURL(url), 30000); }
-  else { const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url), 10000); }
-}
-
-$('exportBtn').onclick=async ()=>{
-  if(!current) return;
-  const rows=readRecv().filter(r=>r.jobNo===current.jobNo);
-  if(!rows.length) return alert('NO RECEIVING ENTRIES FOR THIS JOB');
-
-  // 1) Build the multi-page PDF using the exact 3-up template as background
-  const canvases = await renderPagesOnTemplate(rows);
-  const jpegU8s = canvases.map(c => dataUrlToU8(c.toDataURL('image/jpeg', 0.92)));
-  const pdfBlob = buildPdfFromJpegs(jpegU8s, 792, 612);
-  const pdfU8 = await blobToU8(pdfBlob);
-
-  // 2) Collect photos (auto-name: JOBNO-TITLE (N).jpg)
-  let quality=0.8, maxDim=1600;
-  const photoItems=[];
-  rows.forEach((r,idx)=> (r.photos||[]).forEach((p,i)=> photoItems.push({
-    path: `${sanitizeName(current.jobNo)}_${sanitizeName(current.desc||'')}/PHOTOS/${sanitizeName(r.jobNo)}-${sanitizeName(r.title||'ITEM')} (${i+1}).jpg`,
-    dataUrl: p.dataUrl
-  })));
-
-  // 3) ZIP = PDF + photos
-  const base = `${sanitizeName(current.jobNo)}_${sanitizeName(current.desc||'')}`.replace(/_$/,'');
-  const files=[{name:`${base}/${base}-REPORT.pdf`, data: pdfU8}];
-  for(const ph of photoItems){ const {u8}=await compressDataUrlToJpegU8(ph.dataUrl, maxDim, quality); files.push({name:ph.path, data:u8}); }
-  let zipBlob = zipStore(files);
-
-  // optional size guard (20 MB)
-  const ZIP_CAP_BYTES = 20 * 1024 * 1024;
-  if(zipBlob.size > ZIP_CAP_BYTES){
-    $('zipNote').textContent=`Optimizing ZIP size… (${Math.round(zipBlob.size/1024/1024)} MB)`;
-    for(const q of [0.7,0.6,0.5,0.4]){
-      const smaller=[files[0]];
-      for(const ph of photoItems){ const {u8}=await compressDataUrlToJpegU8(ph.dataUrl, maxDim, q); smaller.push({name:ph.path, data:u8}); }
-      zipBlob=zipStore(smaller);
-      if(zipBlob.size<=ZIP_CAP_BYTES) break;
-    }
-    $('zipNote').textContent=`ZIP size: ${Math.round(zipBlob.size/1024/1024)} MB`;
-  }
-
-  // 4) Download ZIP to phone documents/downloads
-  saveBlobSmart(`${base}-DOCS.zip`, zipBlob);
-};
-
-/* ===== EXACT LAYOUT RENDERING ON TEMPLATE =====
-   Canvas size: 3300 x 2550 (Letter landscape @ ~300dpi)
-   We draw template image full-bleed, then place values into each of the 3 slots.
-   Fine-tune offsets below (OX/OY per slot) to pixel-perfect match.
-*/
-async function renderPagesOnTemplate(records){
-  const tpl = await loadImage(TEMPLATE_SRC);
-  const W=3300, H=2550; // template native size (must match image)
-  const SLOT_H = Math.floor((H - 230) / 3); // estimated per the scanned form
-  const SLOT_TOPS = [90, 90 + SLOT_H + 25, 90 + 2*(SLOT_H + 25)]; // tweak as needed
-
-  // Field coordinates inside ONE slot (top-left origin of slot)
-  // These were taken from your PDF text; adjust +/− 5–10px if needed.
-  const F = {
-    TITLE:           [  80,  40], // "RECEIVING INSPECTION REPORT" is on template; we don't draw it.
-    JOB_NO:          [ 120, 100],
-    VENDOR:          [ 680, 100],
-    PO:              [ 120, 135],
-    DATE:            [ 680, 135],
-    QTY:             [ 220, 170],
-
-    PRODUCT:         [ 180, 240],
-    GRADE:           [ 820, 240],
-    SPEC:            [ 300, 275], // e.g., "SA - 182"
-    FITTING:         [ 820, 275], // e.g., "B16.5"
-
-    TH:              [ 380, 315], // "Th ..." combined line
-    WIDTH:           [ 160, 345],
-    LENGTH:          [ 520, 345],
-    DIAMETER:        [ 880, 345],
-    OTHER:           [ 1180,345],
-
-    VISUAL_OK:       [ 350, 380], // YES/NO/N/A
-    B16_OK:          [ 980, 380],
-
-    MARKING:         [ 380, 415], // multiline
-    MARKING_CODE:    [ 510, 470], // YES/NO/N/A
-    MTR_OK:          [1020, 470], // YES/NO/N/A
-
-    DECISION_ACCEPT: [ 330, 505], // draw X if accept
-    DECISION_REJECT: [ 520, 505],
-    COMMENTS:        [ 690, 505]  // short text
-  };
-
-  const pages=[];
-  for(let i=0;i<records.length;i+=3){
-    const c=document.createElement('canvas'); c.width=W; c.height=H; const g=c.getContext('2d');
-    // Template
-    g.drawImage(tpl, 0, 0, W, H);
-
-    // Text style
-    const draw=(txt,x,y,sz=36,weight='400')=>{
-      g.font=`${weight} ${sz}px Arial`; g.fillStyle='#000'; g.textBaseline='top'; g.fillText((txt||'').toString().toUpperCase(), x, y);
-    };
-    const drawWrap=(txt,x,y,maxW,lh=34,sz=32)=>{
-      g.font=`400 ${sz}px Arial`; g.fillStyle='#000'; g.textBaseline='top';
-      const words=(txt||'').toString().toUpperCase().split(/\s+/); let line=''; let yy=y;
-      for(const w of words){
-        const test=line? line+' '+w : w;
-        if(g.measureText(test).width>maxW){ g.fillText(line,x,yy); line=w; yy+=lh; } else { line=test; }
+    /* -------- list -------- */
+    function renderJobs(){
+      const rows=readJobs().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+      const tb=$('jobsBody'); tb.innerHTML='';
+      if(!rows.length){tb.innerHTML='<tr><td colspan="4" class="empty">NO JOBS YET</td></tr>';return;}
+      for(const j of rows){
+        const tr=document.createElement('tr'); tr.className='jobrow'; tr.dataset.job=j.jobNo;
+        tr.innerHTML=`<td><span class="pill">${j.jobNo}</span></td>
+          <td>${(j.desc||'').toUpperCase()}</td>
+          <td>${j.startDate||''}</td>
+          <td>${new Date(j.createdAt).toLocaleString().toUpperCase()}</td>`;
+        tb.appendChild(tr);
       }
-      if(line) g.fillText(line,x,yy);
+    }
+    $('jobsBody').onclick=(e)=>{const tr=e.target.closest('tr.jobrow'); if(tr) openMenu(tr.dataset.job);};
+
+    /* -------- create -------- */
+    $('createBtn').onclick=()=>{
+      const jobNo=$('jobNo').value.trim().toUpperCase();
+      const desc=$('desc').value.trim().toUpperCase();
+      const start=$('startDate').value || today();
+      if(!jobNo) return alert('JOB NO. REQUIRED');
+      if(jobNo.length>8) return alert('JOB NO. MUST BE ≤ 8');
+      if(readJobs().some(j=>j.jobNo===jobNo)) return alert('JOB NO. ALREADY EXISTS');
+      const now=new Date().toISOString();
+      const id=(crypto.randomUUID&&crypto.randomUUID())||Math.random().toString(36).slice(2);
+      const jobs=readJobs(); jobs.unshift({id,jobNo,desc,startDate:start,createdAt:now}); writeJobs(jobs);
+      $('jobNo').value=''; $('desc').value=''; $('startDate').value=today(); renderJobs();
     };
+    $('clearBtn').onclick=()=>{$('jobNo').value='';$('desc').value='';};
 
-    const slice=records.slice(i,i+3);
-    for(let s=0;s<slice.length;s++){
-      const r = normalizeRec(slice[s]);
-      const OX = 0;                        // overall X offset for slot
-      const OY = SLOT_TOPS[s];             // slot top
-      // Basic rows
-      draw(r.jobNo,          OX+F.JOB_NO[0],       OY+F.JOB_NO[1]);
-      draw(r.vendor,         OX+F.VENDOR[0],       OY+F.VENDOR[1]);
-      draw(r.po,             OX+F.PO[0],           OY+F.PO[1]);
-      draw(r.date,           OX+F.DATE[0],         OY+F.DATE[1]);
-      draw(r.qty,            OX+F.QTY[0],          OY+F.QTY[1]);
+    /* -------- action menu -------- */
+    let current=null;
+    function openMenu(jobNo){
+      const job=readJobs().find(j=>j.jobNo===jobNo); if(!job) return;
+      current=job; $('dlgMeta').textContent=`${job.jobNo} — ${(job.desc||'')}`;
+      $('viewBtn').href=`job.html?job=${encodeURIComponent(job.jobNo)}`;
+      $('confirmBox').style.display='none'; $('zipNote').textContent='';
+      $('overlay').style.display='flex'; $('closeBtn').focus();
+    }
+    function closeMenu(){ $('overlay').style.display='none'; current=null; }
+    $('closeBtn').onclick=closeMenu;
+    $('overlay').onclick=(e)=>{ if(e.target===e.currentTarget) closeMenu(); };
 
-      // Spec block
-      draw(r.product,        OX+F.PRODUCT[0],      OY+F.PRODUCT[1]);
-      draw(r.grade,          OX+F.GRADE[0],        OY+F.GRADE[1]);
-      draw(`${r.specPrefix} - ${r.specCode}`, OX+F.SPEC[0], OY+F.SPEC[1]);
-      draw(r.fitting,        OX+F.FITTING[0],      OY+F.FITTING[1]);
-
-      // Dimensions
-      draw((r.th||[]).filter(Boolean).join('   '), OX+F.TH[0], OY+F.TH[1], 34);
-      draw(r.width,          OX+F.WIDTH[0],        OY+F.WIDTH[1], 34);
-      draw(r.length,         OX+F.LENGTH[0],       OY+F.LENGTH[1], 34);
-      draw(`${r.diameter} ${r.diaType}`, OX+F.DIAMETER[0], OY+F.DIAMETER[1], 34);
-      draw(r.dimOther,       OX+F.OTHER[0],        OY+F.OTHER[1], 34);
-
-      // Acceptability
-      draw(r.visualOk,       OX+F.VISUAL_OK[0],    OY+F.VISUAL_OK[1], 34);
-      draw(r.b16Ok,          OX+F.B16_OK[0],       OY+F.B16_OK[1], 34);
-
-      // Marking
-      drawWrap(r.marking,    OX+F.MARKING[0],      OY+F.MARKING[1], 1200, 32, 30);
-      draw(r.markingCode,    OX+F.MARKING_CODE[0], OY+F.MARKING_CODE[1], 34);
-      draw(r.mtrOk,          OX+F.MTR_OK[0],       OY+F.MTR_OK[1], 34);
-
-      // Decision + comments
-      if((r.decision||'ACCEPT')==='ACCEPT') draw('X', OX+F.DECISION_ACCEPT[0], OY+F.DECISION_ACCEPT[1], 40, '700');
-      if((r.decision||'ACCEPT')==='REJECT') draw('X', OX+F.DECISION_REJECT[0], OY+F.DECISION_REJECT[1], 40, '700');
-      drawWrap(r.comments,   OX+F.COMMENTS[0],     OY+F.COMMENTS[1], 900, 32, 30);
+    /* -------- EXPORT REPORTS (PDF only) -------- */
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    function sanitize(s){ return (s||'').toUpperCase().replace(/[^A-Z0-9\-_. ]/g,'_').replace(/\s+/g,'-'); }
+    function saveBlobSmart(name, blob){
+      const url = URL.createObjectURL(blob);
+      if(isIOS){ window.open(url, '_blank'); setTimeout(()=>URL.revokeObjectURL(url), 30000); }
+      else { const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url), 10000); }
     }
 
-    pages.push(c);
-  }
-  return pages;
-}
-function normalizeRec(r){
-  // Ensure uppercase and safe fallbacks
-  return {
-    jobNo:(r.jobNo||'').toUpperCase(),
-    vendor:(r.vendor||'').toUpperCase(),
-    po:(r.po||'').toUpperCase(),
-    date:(r.date||'').toUpperCase(),
-    qty:(r.qty||'').toUpperCase(),
-    product:(r.product||'').toUpperCase(),
-    grade:(r.grade||'').toUpperCase(),
-    specPrefix:(r.specPrefix||'').toUpperCase(),
-    specCode:(r.specCode||'').toUpperCase(),
-    fitting:(r.fitting||'').toUpperCase(),
-    th:(r.th||[]).map(s=>(s||'').toUpperCase()),
-    width:(r.width||'').toUpperCase(),
-    length:(r.length||'').toUpperCase(),
-    diameter:(r.diameter||'').toUpperCase(),
-    diaType:(r.diaType||'').toUpperCase(),
-    dimOther:(r.dimOther||'').toUpperCase(),
-    visualOk:(r.visualOk||'').toUpperCase(),
-    b16Ok:(r.b16Ok||'').toUpperCase(),
-    marking:(r.marking||'').toUpperCase(),
-    markingCode:(r.markingCode||'').toUpperCase(),
-    mtrOk:(r.mtrOk||'').toUpperCase(),
-    decision:(r.decision||'ACCEPT').toUpperCase(),
-    comments:(r.comments||'').toUpperCase()
-  };
-}
+    $('exportBtn').onclick=async ()=>{
+      if(!current) return;
+      const entries=readRecv().filter(r=>r.jobNo===current.jobNo);
+      if(!entries.length){ alert('NO RECEIVING ENTRIES FOR THIS JOB'); return; }
+      const canvases=await renderThreeUpPages(entries);
+      const jpegU8s = canvases.map(c => dataURLtoU8(c.toDataURL('image/jpeg', 0.92)));
+      const pdfBlob = buildPdfFromJpegs(jpegU8s, 792, 612); // Letter landscape points
+      const base = `${sanitize(current.jobNo)}_${sanitize(current.desc||'')}`.replace(/_$/,'');
+      saveBlobSmart(`${base}-REPORT.pdf`, pdfBlob);
+    };
 
-/* ===== PDF builder (multi-page; one JPEG per page) ===== */
-function buildPdfFromJpegs(jpegsU8, pageWpt=792, pageHpt=612){
-  const parts=[]; const xref=[null]; let offset=0; const enc=new TextEncoder();
-  const push=(u8)=>{parts.push(u8); offset+=u8.length;};
-  const pushS=(s)=>push(enc.encode(s));
+    /* -------- Canvas 3-up (simple, robust) -------- */
+    async function renderThreeUpPages(records){
+      const W=1650, H=1275, PAD=40, GAP=22; // ~150dpi letter landscape
+      const titleY=30, rowY1=60, rowStep=24, footerH=30;
+      const pages=[];
+      for(let i=0;i<records.length;i+=3){
+        const slice=records.slice(i,i+3);
+        const c=document.createElement('canvas'); c.width=W; c.height=H; const g=c.getContext('2d');
+        g.fillStyle='#FFFFFF'; g.fillRect(0,0,W,H); g.strokeStyle='#111'; g.fillStyle='#000'; g.lineWidth=1;
 
-  pushS('%PDF-1.4\n');
-  const cat=1, pages=2;
-  xref[cat]=offset; pushS(`${cat} 0 obj\n<< /Type /Catalog /Pages ${pages} 0 R >>\nendobj\n`);
-  xref[pages]=offset; pushS(`${pages} 0 obj\n<< /Type /Pages /Count ${jpegsU8.length} /Kids [ `);
-  let next=3; const kids=[]; for(let i=0;i<jpegsU8.length;i++){ kids.push(next+2); next+=3; }
-  pushS(kids.map(id=>`${id} 0 R `).join('')); pushS(`] >>\nendobj\n`);
+        // footer
+        g.strokeRect(PAD, H-PAD-footerH, W-2*PAD, footerH);
+        g.font='12px Arial';
+        g.fillText('MATERIAL APPROVAL: APPROVED', PAD+10, H-PAD-10);
+        g.fillText('QC MANAGER: INITIALS / DATE', PAD+360, H-PAD-10);
 
-  next=3;
-  for(let i=0;i<jpegsU8.length;i++){
-    const imgId=next++, contId=next++, pageId=next++;
-    const img=jpegsU8[i];
-    xref[imgId]=offset; pushS(`${imgId} 0 obj\n<< /Type /XObject /Subtype /Image /Filter /DCTDecode /ColorSpace /DeviceRGB /BitsPerComponent 8 /Width ${pageWpt} /Height ${pageHpt} /Length ${img.length} >>\nstream\n`); push(img); pushS(`\nendstream\nendobj\n`);
-    const content=`q\n${pageWpt} 0 0 ${pageHpt} 0 0 cm\n/Im${i} Do\nQ\n`;
-    xref[contId]=offset; pushS(`${contId} 0 obj\n<< /Length ${content.length} >>\nstream\n${content}\nendstream\nendobj\n`);
-    xref[pageId]=offset; pushS(`${pageId} 0 obj\n<< /Type /Page /Parent ${pages} 0 R /MediaBox [0 0 ${pageWpt} ${pageHpt}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${contId} 0 R >>\nendobj\n`);
-  }
-  const xrefStart=offset; pushS(`xref\n0 ${xref.length}\n0000000000 65535 f \n`);
-  for(let i=1;i<xref.length;i++){ const off=String(xref[i]||0).padStart(10,'0'); pushS(`${off} 00000 n \n`); }
-  pushS(`trailer\n<< /Size ${xref.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`);
-  return new Blob(parts,{type:'application/pdf'});
-}
+        const boxH=(H - PAD*2 - footerH - GAP*2)/3;
 
-/* ===== Images & ZIP helpers ===== */
-function loadImage(src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.src=src; }); }
-async function compressDataUrlToJpegU8(dataUrl, maxDim=1600, quality=0.8){
-  const img = await loadImage(dataUrl);
-  const scale = Math.min(1, maxDim/Math.max(img.width,img.height));
-  const w = Math.max(1, Math.round(img.width*scale));
-  const h = Math.max(1, Math.round(img.height*scale));
-  const c=document.createElement('canvas'); c.width=w; c.height=h;
-  c.getContext('2d').drawImage(img,0,0,w,h);
-  const out=c.toDataURL('image/jpeg', quality);
-  return {u8:dataUrlToU8(out)};
-}
-function dataUrlToU8(durl){ const i=durl.indexOf(','); const bin=atob(durl.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
-function blobToU8(blob){ return new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(new Uint8Array(fr.result)); fr.readAsArrayBuffer(blob); }); }
+        for(let r=0;r<slice.length;r++){
+          const rec = normalize(slice[r]);
+          const top=PAD + r*(boxH+GAP);
 
-/* ZIP store-only (robust & small) */
-function crc32(u8){ let c=~0>>>0; for(let i=0;i<u8.length;i++){ c^=u8[i]; for(let k=0;k<8;k++) c=(c>>>1) ^ (0xEDB88320 & -(c&1)); } return (~c)>>>0; }
-function strU8(s){ return new TextEncoder().encode(s); }
-function num4(n){ const a=new Uint8Array(4); a[0]=n&255;a[1]=(n>>>8)&255;a[2]=(n>>>16)&255;a[3]=(n>>>24)&255; return a; }
-function num2(n){ const a=new Uint8Array(2); a[0]=n&255;a[1]=(n>>>8)&255; return a; }
-function concatU8(arrs){ let len=0; for(const a of arrs) len+=a.length; const out=new Uint8Array(len); let o=0; for(const a of arrs){ out.set(a,o); o+=a.length; } return out; }
-function zipStore(files){
-  const headers=[]; const datas=[]; const centrals=[]; let offset=0;
-  for(const f of files){
-    const nameU8 = strU8(f.name);
-    const crc = crc32(f.data);
-    const size = f.data.length;
-    const localHeader = concatU8([strU8('PK\u0003\u0004'), num2(20), num2(0), num2(0), num2(0), num2(0), num4(crc), num4(size), num4(size), num2(nameU8.length), num2(0), nameU8]);
-    headers.push(localHeader); datas.push(f.data);
-    const central = concatU8([strU8('PK\u0001\u0002'), num2(20), num2(20), num2(0), num2(0), num2(0), num2(0), num4(crc), num4(size), num4(size), num2(nameU8.length), num2(0), num2(0), num2(0), num2(0), num4(0), num4(offset), nameU8]);
-    centrals.push(central);
-    offset += localHeader.length + size;
-  }
-  const centralAll = concatU8(centrals);
-  const headersAll = concatU8(headers);
-  const datasAll   = concatU8(datas);
-  const end = concatU8([strU8('PK\u0005\u0006'), num2(0), num2(0), num2(files.length), num2(files.length), num4(centralAll.length), num4(headersAll.length + datasAll.length), num2(0)]);
-  return new Blob([headersAll, datasAll, centralAll, end], {type:'application/zip'});
-}
+          // outer box & title
+          g.strokeRect(PAD, top, W-2*PAD, boxH);
+          g.font='bold 22px Arial'; g.fillText('RECEIVING INSPECTION REPORT', PAD+10, top+titleY);
 
-/* ===== Delete ===== */
-$('deleteBtn').onclick=()=>{ $('confirmBox').style.display='block'; };
-$('yesDel').onclick=()=>{
-  if(!current) return;
-  const has=readRecv().some(r=>r.jobNo===current.jobNo);
-  if(has) { alert('CANNOT DELETE — JOB HAS RECEIVING REPORTS'); return; }
-  writeJobs(readJobs().filter(j=>j.jobNo!==current.jobNo)); closeMenu(); renderJobs();
-};
-$('noDel').onclick=()=>{ $('confirmBox').style.display='none'; };
+          const L=(t,x,y)=>{g.font='bold 14px Arial'; g.fillText(t,x,y);};
+          const V=(t,x,y)=>{g.font='12px Arial'; g.fillText((t||'').toUpperCase(),x,y);};
 
-/* ===== Init & SW ===== */
-(function init(){ if(!$('startDate').value) $('startDate').value=today(); renderJobs(); })();
-(async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){} })();
-</script>
+          L('JOB NO.', PAD+10, top+rowY1); V(rec.jobNo, PAD+110, top+rowY1);
+          L('VENDOR:', PAD+430, top+rowY1); V(rec.vendor, PAD+520, top+rowY1);
+
+          L('PO.', PAD+10, top+rowY1+rowStep); V(rec.po, PAD+110, top+rowY1+rowStep);
+          L('DATE:', PAD+430, top+rowY1+rowStep); V(rec.date, PAD+520, top+rowY1+rowStep);
+
+          L('QUANTITY:', PAD+10, top+rowY1+rowStep*2); V(rec.qty, PAD+110, top+rowY1+rowStep*2);
+
+          g.strokeRect(PAD+6, top+rowY1+rowStep*2+16, W-2*PAD-12, 24);
+          g.font='bold 14px Arial'; g.fillText('SPECIFICATION', PAD+12, top+rowY1+rowStep*2+33);
+
+          L('PRODUCT:', PAD+10, top+rowY1+rowStep*3+24); V(rec.product, PAD+110, top+rowY1+rowStep*3+24);
+          L('GRADE/TYPE:', PAD+430, top+rowY1+rowStep*3+24); V(rec.grade, PAD+540, top+rowY1+rowStep*3+24);
+
+          L('SPECIFICATION:', PAD+10, top+rowY1+rowStep*4+24); V(`${rec.specPrefix} - ${rec.specCode}`, PAD+160, top+rowY1+rowStep*4+24);
+          L('FITTING:', PAD+430, top+rowY1+rowStep*4+24); V(rec.fitting, PAD+500, top+rowY1+rowStep*4+24);
+
+          g.strokeRect(PAD+6, top+rowY1+rowStep*4+38, W-2*PAD-12, 24);
+          g.font='bold 14px Arial'; g.fillText('DIMENSIONS', PAD+12, top+rowY1+rowStep*4+55);
+
+          L('DIMENSIONS: TH', PAD+10, top+rowY1+rowStep*6-20); V(rec.th.filter(Boolean).join('   '), PAD+170, top+rowY1+rowStep*6-20);
+          L('WIDTH:', PAD+10, top+rowY1+rowStep*6+4); V(rec.width, PAD+110, top+rowY1+rowStep*6+4);
+          L('LENGTH:', PAD+300, top+rowY1+rowStep*6+4); V(rec.length, PAD+380, top+rowY1+rowStep*6+4);
+          L('DIAMETER:', PAD+600, top+rowY1+rowStep*6+4); V(`${rec.diameter} ${rec.diaType}`, PAD+700, top+rowY1+rowStep*6+4);
+          L('OTHER:', PAD+980, top+rowY1+rowStep*6+4); V(rec.dimOther, PAD+1040, top+rowY1+rowStep*6+4);
+
+          L('VISUAL INSPECTION ACCEPTABLE:', PAD+10, top+rowY1+rowStep*7+6); V(rec.visualOk, PAD+260, top+rowY1+rowStep*7+6);
+          L('B16 DIMENSIONS ACCEPTABLE:', PAD+500, top+rowY1+rowStep*7+6); V(rec.b16Ok, PAD+760, top+rowY1+rowStep*7+6);
+
+          L('ACTUAL MATERIAL MARKING:', PAD+10, top+rowY1+rowStep*8+8);
+          wrap(g, rec.marking, PAD+230, top+rowY1+rowStep*8+8, W-2*PAD-240, 14, '12px Arial');
+
+          L('MARKING ACCEPTABLE TO CODE/STANDARD:', PAD+10, top+rowY1+rowStep*10-6); V(rec.markingCode, PAD+330, top+rowY1+rowStep*10-6);
+          L('MTR/CofC ACCEPTABLE TO SPECIFICATION:', PAD+500, top+rowY1+rowStep*10-6); V(rec.mtrOk, PAD+820, top+rowY1+rowStep*10-6);
+
+          L('ACCEPT / REJECT', PAD+10, top+rowY1+rowStep*11-6);
+          g.strokeRect(PAD+160, top+rowY1+rowStep*11-20, 18, 18); if(rec.decision==='ACCEPT'){ g.fillText('X', PAD+163, top+rowY1+rowStep*11-6); }
+          g.fillText('ACCEPT', PAD+185, top+rowY1+rowStep*11-6);
+          g.strokeRect(PAD+270, top+rowY1+rowStep*11-20, 18, 18); if(rec.decision==='REJECT'){ g.fillText('X', PAD+273, top+rowY1+rowStep*11-6); }
+          g.fillText('REJECT', PAD+295, top+rowY1+rowStep*11-6);
+
+          L('COMMENTS:', PAD+420, top+rowY1+rowStep*11-6);
+          wrap(g, rec.comments, PAD+510, top+rowY1+rowStep*11-6, 500, 14, '12px Arial');
+
+          if(rec.photos.length){
+            g.fillText('PHOTOS:', PAD+10, top+rowY1+rowStep*12-10);
+            const thumb=100, gap=6; let x=PAD+90, y=top+rowY1+rowStep*11-40;
+            for(let pi=0;pi<Math.min(rec.photos.length,5);pi++){
+              const img=await loadImage(rec.photos[pi].dataUrl);
+              const s=Math.min(thumb/img.width, thumb/img.height);
+              const w=Math.round(img.width*s), h=Math.round(img.height*s);
+              g.drawImage(img, x, y, w, h); x+=thumb+gap;
+            }
+          }
+        }
+        pages.push(c);
+      }
+      return pages;
+    }
+    function normalize(r){
+      return {
+        jobNo:(r.jobNo||'').toUpperCase(),
+        vendor:(r.vendor||'').toUpperCase(),
+        po:(r.po||'').toUpperCase(),
+        date:(r.date||'').toUpperCase(),
+        qty:(r.qty||'').toUpperCase(),
+        product:(r.product||'').toUpperCase(),
+        grade:(r.grade||'').toUpperCase(),
+        specPrefix:(r.specPrefix||'').toUpperCase(),
+        specCode:(r.specCode||'').toUpperCase(),
+        fitting:(r.fitting||'').toUpperCase(),
+        th:(r.th||[]).map(s=>(s||'').toUpperCase()),
+        width:(r.width||'').toUpperCase(),
+        length:(r.length||'').toUpperCase(),
+        diameter:(r.diameter||'').toUpperCase(),
+        diaType:(r.diaType||'').toUpperCase(),
+        dimOther:(r.dimOther||'').toUpperCase(),
+        visualOk:(r.visualOk||'').toUpperCase(),
+        b16Ok:(r.b16Ok||'').toUpperCase(),
+        marking:(r.marking||'').toUpperCase(),
+        markingCode:(r.markingCode||'').toUpperCase(),
+        mtrOk:(r.mtrOk||'').toUpperCase(),
+        decision:(r.decision||'ACCEPT').toUpperCase(),
+        comments:(r.comments||'').toUpperCase(),
+        photos:(r.photos||[])
+      };
+    }
+    function wrap(g,text,x,y,maxW,lh,font){
+      g.font=font; const words=(text||'').split(/\s+/); let line=''; let yy=y;
+      for(const w of words){ const t=line? line+' '+w:w; if(g.measureText(t).width>maxW){ g.fillText(line,x,yy); line=w; yy+=lh; } else line=t; }
+      if(line) g.fillText(line,x,yy);
+    }
+
+    /* -------- PDF builder (no libs) -------- */
+    function buildPdfFromJpegs(jpegsU8, pageWpt, pageHpt){
+      const parts=[]; const xref=[null]; let offset=0; const enc=new TextEncoder();
+      const push=(u8)=>{parts.push(u8); offset+=u8.length;};
+      const pushS=(s)=>push(enc.encode(s));
+      pushS('%PDF-1.4\n');
+      const cat=1,pages=2;
+      xref[cat]=offset; pushS(`${cat} 0 obj\n<< /Type /Catalog /Pages ${pages} 0 R >>\nendobj\n`);
+      xref[pages]=offset; pushS(`${pages} 0 obj\n<< /Type /Pages /Count ${jpegsU8.length} /Kids [ `);
+      let next=3; const kids=[]; for(let i=0;i<jpegsU8.length;i++){ kids.push(next+2); next+=3; }
+      pushS(kids.map(id=>`${id} 0 R `).join('')); pushS(`] >>\nendobj\n`);
+      next=3;
+      for(let i=0;i<jpegsU8.length;i++){
+        const imgId=next++, contId=next++, pageId=next++;
+        const img=jpegsU8[i];
+        xref[imgId]=offset; pushS(`${imgId} 0 obj\n<< /Type /XObject /Subtype /Image /Filter /DCTDecode /ColorSpace /DeviceRGB /BitsPerComponent 8 /Width ${pageWpt} /Height ${pageHpt} /Length ${img.length} >>\nstream\n`); push(img); pushS(`\nendstream\nendobj\n`);
+        const content=`q\n${pageWpt} 0 0 ${pageHpt} 0 0 cm\n/Im${i} Do\nQ\n`;
+        xref[contId]=offset; pushS(`${contId} 0 obj\n<< /Length ${content.length} >>\nstream\n${content}\nendstream\nendobj\n`);
+        xref[pageId]=offset; pushS(`${pageId} 0 obj\n<< /Type /Page /Parent ${pages} 0 R /MediaBox [0 0 ${pageWpt} ${pageHpt}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${contId} 0 R >>\nendobj\n`);
+      }
+      const xrefStart=offset; pushS(`xref\n0 ${xref.length}\n0000000000 65535 f \n`);
+      for(let i=1;i<xref.length;i++){ const off=String(xref[i]||0).padStart(10,'0'); pushS(`${off} 00000 n \n`); }
+      pushS(`trailer\n<< /Size ${xref.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`);
+      return new Blob(parts,{type:'application/pdf'});
+    }
+
+    /* -------- utils -------- */
+    function dataURLtoU8(d){ const i=d.indexOf(','); const bin=atob(d.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
+    function loadImage(src){ return new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.src=src; }); }
+
+    /* -------- delete -------- */
+    $('deleteBtn').onclick=()=>{ $('confirmBox').style.display='block'; };
+    $('yesDel').onclick=()=>{
+      if(!current) return;
+      const has=readRecv().some(r=>r.jobNo===current.jobNo);
+      if(has) { alert('CANNOT DELETE — JOB HAS RECEIVING REPORTS'); return; }
+      writeJobs(readJobs().filter(j=>j.jobNo!==current.jobNo)); closeMenu(); renderJobs();
+    };
+    $('noDel').onclick=()=>{ $('confirmBox').style.display='none'; };
+
+    /* -------- init -------- */
+    (function init(){ if(!$('startDate').value) $('startDate').value=today(); renderJobs(); })();
+    (async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){} })();
+  </script>
 </body>
 </html>
