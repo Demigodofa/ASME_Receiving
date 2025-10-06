@@ -1,5 +1,5 @@
 /* Why: bump forces browsers to fetch fresh files after deploy. */
-const CACHE_VERSION = 'wh-v26';
+const CACHE_VERSION = 'wh-v27';
 const CACHE_NAME = `welders-helper-${CACHE_VERSION}`;
 
 const CORE_ASSETS = [
