@@ -1,5 +1,5 @@
 <!-- =================================================================== -->
-<!-- /jobs.html  — JOBS + working EXPORT (PDF+PHOTOS ZIP)                -->
+<!-- /jobs.html  — JOBS + working EXPORT (Letter PDF + PHOTOS ZIP)       -->
 <!-- =================================================================== -->
 <!doctype html>
 <html lang="en">
@@ -99,8 +99,8 @@
 /* ============================ STORAGE ============================ */
 const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
 const $=id=>document.getElementById(id);
-const safeRead=(k)=>{ try{const s=localStorage.getItem(k);return s?JSON.parse(s):[]}catch(e){console.warn('parse',k,e);return[]} };
-const safeWrite=(k,v)=>{ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){console.warn('write',k,e);} };
+const safeRead=(k)=>{ try{const s=localStorage.getItem(k);return s?JSON.parse(s):[]}catch{ return []} };
+const safeWrite=(k,v)=>{ try{localStorage.setItem(k,JSON.stringify(v));}catch{} };
 const readJobs=()=>safeRead(JOBS_KEY);
 const writeJobs=(a)=>safeWrite(JOBS_KEY,a);
 const readRecv=()=>safeRead(RECV_KEY);
@@ -160,10 +160,15 @@ $('exportBtn').onclick = async (ev) => {
   const entries = readRecv().filter(r => r.jobNo === current.jobNo);
   if (!entries.length) { alert('NO RECEIVING ENTRIES FOR THIS JOB'); return; }
 
-  // Render: one portrait Letter page per entry
+  // Render each entry to a Letter-portrait canvas (150dpi)
   const canvases = await renderReceivingPdfPages(entries);
-  const jpegU8s  = canvases.map(c => dataURLtoU8(c.toDataURL('image/jpeg', 0.92)));
-  const pdfBlob  = buildPdfFromJpegs(jpegU8s, 612, 792);
+
+  // Convert to JPEGs with real pixel sizes and build the PDF correctly
+  const pages = canvases.map(c => ({
+    u8: dataURLtoU8(c.toDataURL('image/jpeg', 0.92)),
+    w: c.width, h: c.height
+  }));
+  const pdfBlob  = buildPdfFromJpegsExact(pages, 612, 792); // 8.5x11in
   const pdfU8    = new Uint8Array(await pdfBlob.arrayBuffer());
 
   const base = `${sanitize(current.jobNo)}_${sanitize(current.desc||'')}`.replace(/_$/,'');
@@ -179,16 +184,15 @@ $('exportBtn').onclick = async (ev) => {
     }
   }
 
-  // Build ZIP and save smartly
   const zipBlob = zipStoreCompat(files);
-  await askPersistentStorageOnce(); // reduce eviction risk
+  await askPersistentStorageOnce();
   const ok = await saveSmartZip(base, zipBlob);
   $('zipNote').textContent = ok ? 'EXPORTED. CHECK DOWNLOADS / FILES.' : 'EXPORT FAILED';
 };
 
 /* ---------- PDF RENDER (Letter portrait, 0.5" margins) ---------- */
 async function renderReceivingPdfPages(entries){
-  const W=1275, H=1650, M=75; // 150dpi
+  const W=1275, H=1650, M=75; // 150dpi canvas
   const pages=[];
   for(const raw of entries){
     const r = norm(raw);
@@ -267,7 +271,7 @@ async function renderReceivingPdfPages(entries){
     text('VISUAL', M+12, y+24+acRw-8, 12, true); text(r.visualOk, M+120, y+24+acRw-8);
     text('B16 DIMENSIONS', midX+12, y+24+acRw-8, 12, true); text(r.b16Ok, midX+180, y+24+acRw-8);
 
-    // DECISION boxes
+    // DECISION
     text('DECISION', M+12, y+24+2*acRw-8, 12, true);
     const bxY=y+24+2*acRw-22;
     g.strokeRect(M+120, bxY, 18, 18); text('ACCEPT', M+146, y+24+2*acRw-8, 12);
@@ -305,25 +309,39 @@ async function renderReceivingPdfPages(entries){
 
 /* ---------------------- BINARY / PDF / ZIP ----------------------- */
 function dataURLtoU8(d){ const i=d.indexOf(','); const bin=atob(d.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
-function blobToU8(blob){ return blob.arrayBuffer().then(buf=>new Uint8Array(buf)); }
 
-function buildPdfFromJpegs(jpegsU8, pageWpt=612, pageHpt=792){
-  const parts=[], xref=[null]; let off=0; const enc=new TextEncoder();
-  const pushU8=u8=>{parts.push(u8); off+=u8.length;}; const push=s=>pushU8(enc.encode(s));
-  push('%PDF-1.4\n'); const CAT=1,PAGES=2;
-  xref[CAT]=off; push(`${CAT} 0 obj\n<< /Type /Catalog /Pages ${PAGES} 0 R >>\nendobj\n`);
-  xref[PAGES]=off; push(`${PAGES} 0 obj\n<< /Type /Pages /Count ${jpegsU8.length} /Kids [ `);
-  let id=3; const kids=[]; for(let i=0;i<jpegsU8.length;i++){ kids.push(id+2); id+=3; }
-  push(kids.map(k=>`${k} 0 R `).join('')); push(`] >>\nendobj\n`); id=3;
-  for(let i=0;i<jpegsU8.length;i++){
-    const imgId=id++, contId=id++, pageId=id++; const img=jpegsU8[i];
-    xref[imgId]=off; push(`${imgId} 0 obj\n<< /Type /XObject /Subtype /Image /Filter /DCTDecode /ColorSpace /DeviceRGB /BitsPerComponent 8 /Width ${pageWpt} /Height ${pageHpt} /Length ${img.length} >>\nstream\n`); pushU8(img); push(`\nendstream\nendobj\n`);
-    const content=`q\n${pageWpt} 0 0 ${pageHpt} 0 0 cm\n/Im${i} Do\nQ\n`;
-    xref[contId]=off; push(`${contId} 0 obj\n<< /Length ${content.length} >>\nstream\n${content}\nendstream\nendobj\n`);
-    xref[pageId]=off; push(`${pageId} 0 obj\n<< /Type /Page /Parent ${PAGES} 0 R /MediaBox [0 0 ${pageWpt} ${pageHpt}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${contId} 0 R >>\nendobj\n`);
-  }
-  const x=off; push(`xref\n0 ${xref.length}\n0000000000 65535 f \n`); for(let i=1;i<xref.length;i++){ push(String(xref[i]).padStart(10,'0')+' 00000 n \n'); }
-  push(`trailer\n<< /Size ${xref.length} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF`); 
+/* Correct PDF builder: uses REAL image pixel sizes to avoid cropping */
+function buildPdfFromJpegsExact(pages, pageWpt=612, pageHpt=792){
+  const parts=[]; const enc=new TextEncoder(); let offset=0; const xref=[null];
+  const addS=s=>{const u8=enc.encode(s); parts.push(u8); offset+=u8.length;};
+  const addU8=u8=>{parts.push(u8); offset+=u8.length;};
+  const obj=(id,body)=>{ xref[id]=offset; addS(`${id} 0 obj\n${body}\nendobj\n`); };
+
+  addS('%PDF-1.4\n');
+  obj(1, `<< /Type /Catalog /Pages 2 0 R >>`);
+  obj(2, `<< /Type /Pages /Count ${pages.length} /Kids [ ${pages.map((_,i)=>`${3+i*3+2} 0 R`).join(' ')} ] >>`);
+
+  pages.forEach((pg,i)=>{
+    const imgId=3+i*3, cntId=4+i*3, pageId=5+i*3;
+
+    xref[imgId]=offset;
+    addS(`${imgId} 0 obj\n<< /Type /XObject /Subtype /Image /Filter /DCTDecode /ColorSpace /DeviceRGB /BitsPerComponent 8 /Width ${pg.w} /Height ${pg.h} /Length ${pg.u8.length} >>\nstream\n`);
+    addU8(pg.u8); addS(`\nendstream\nendobj\n`);
+
+    const content=`q
+${pageWpt} 0 0 ${pageHpt} 0 0 cm
+/Im${i} Do
+Q
+`;
+    obj(cntId, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+
+    obj(pageId, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWpt} ${pageHpt}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${cntId} 0 R >>`);
+  });
+
+  const startXref=offset;
+  addS(`xref\n0 ${xref.length}\n0000000000 65535 f \n`);
+  for(let i=1;i<xref.length;i++) addS(`${String(xref[i]).padStart(10,'0')} 00000 n \n`);
+  addS(`trailer\n<< /Size ${xref.length} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF`);
   return new Blob(parts,{type:'application/pdf'});
 }
 
@@ -335,7 +353,7 @@ async function compressDataUrlToJpegU8(dataUrl, maxDim=1600, quality=0.85){
   return {u8:dataURLtoU8(c.toDataURL('image/jpeg', quality))};
 }
 
-/* ZIP (store) */
+/* ZIP (store mode, wide compatibility) */
 function zipStoreCompat(files) {
   const enc = new TextEncoder(), LE2=n=>new Uint8Array([n&255,(n>>>8)&255]), LE4=n=>new Uint8Array([n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]);
   const join = arrs => { let L=0; for(const a of arrs) L+=a.length; const out=new Uint8Array(L); let o=0; for(const a of arrs){ out.set(a,o); o+=a.length; } return out; };
