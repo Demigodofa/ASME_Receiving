@@ -1,5 +1,5 @@
 /* -------- Welder's Helper SW (robust update) -------- */
-const CACHE_VERSION = 'wh-v32';                 // <- bump every release
+const CACHE_VERSION = 'wh-v33';                 // <- bump every release
 const CACHE_NAME    = `welders-helper-${CACHE_VERSION}`;
 
 // Tip: add a short token to bust cache on core files if needed
