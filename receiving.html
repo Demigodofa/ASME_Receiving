@@ -1,6 +1,3 @@
-<!-- =================================================================== -->
-<!-- /receiving.html — RECEIVING (unchanged UX + SW auto-update)         -->
-<!-- =================================================================== -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -127,7 +124,7 @@
 
       <!-- Photos -->
       <div class="groupTitle">PHOTOS (UP TO 5)</div>
-      <button id="photoBtn" class="btn" type="button">📷 TAKE PHOTO(S)</button>
+      <button id="photoBtn" class="btn" type="button">📷 TAKE / ADD PHOTO(S)</button>
       <input id="photoInput" type="file" accept="image/*" capture="environment" multiple style="display:none" />
       <div id="photoStrip" class="photos"></div>
 
@@ -150,49 +147,131 @@
   </main>
 
   <script>
-    /* Storage & utils */
+    /* ===== Keys / utils ===== */
     const RECV_KEY='wh_receiving_v1';
-    const readAll=()=>JSON.parse(localStorage.getItem(RECV_KEY)||'[]');
-    const writeAll=(rows)=>localStorage.setItem(RECV_KEY,JSON.stringify(rows));
+    const DB_NAME='wh_db', DB_VER=1, DB_PHOTOS='photos';
+    const readAll=()=>{ try{ return JSON.parse(localStorage.getItem(RECV_KEY)||'[]'); }catch{ return []; } };
+    const writeAll=(rows)=>{ try{ localStorage.setItem(RECV_KEY,JSON.stringify(rows)); }catch{} };
     const $=id=>document.getElementById(id);
     const qs=(k)=>new URLSearchParams(location.search).get(k)||'';
     const today=()=>new Date().toISOString().slice(0,10);
     const up=s=>(s||'').trim().toUpperCase();
+    const uuid=()=>(crypto.randomUUID&&crypto.randomUUID())||Math.random().toString(36).slice(2);
 
-    /* Decision toggle */
+    /* ===== Decision toggle ===== */
     let decision='ACCEPT';
     function renderDecision(){ $('boxAccept').textContent=decision==='ACCEPT'?'X':' '; $('boxReject').textContent=decision==='REJECT'?'X':' '; }
     $('btnAccept').onclick=()=>{decision='ACCEPT';renderDecision();};
     $('btnReject').onclick =()=>{decision='REJECT'; renderDecision();};
 
-    /* Photos */
-    let photos=[];
-    function renderPhotos(){
-      const wrap=$('photoStrip'); wrap.innerHTML='';
-      photos.forEach((p,i)=>{
-        const div=document.createElement('div'); div.className='thumb';
-        div.innerHTML=`<img alt="photo ${i+1}" src="${p.dataUrl}"><button class="btn danger" data-i="${i}" type="button">X</button>`;
-        wrap.appendChild(div);
+    /* ===== IndexedDB (photos) ===== */
+    function openDB(){
+      return new Promise((res,rej)=>{
+        const r=indexedDB.open(DB_NAME, DB_VER);
+        r.onupgradeneeded = (e)=>{
+          const db = r.result;
+          if(!db.objectStoreNames.contains(DB_PHOTOS)){
+            db.createObjectStore(DB_PHOTOS, { keyPath:'id' });
+          }
+        };
+        r.onsuccess = ()=>res(r.result);
+        r.onerror   = ()=>rej(r.error);
       });
     }
-    $('photoStrip').onclick=(e)=>{const b=e.target.closest('button'); if(!b) return; const i=+b.dataset.i; photos.splice(i,1); renderPhotos();};
-    $('photoBtn').onclick   =()=>{const remain=5-photos.length; if(remain<=0){alert('MAX 5 PHOTOS');return;} $('photoInput').click();};
+    async function idbPutPhoto(blob, name){
+      const id = 'p_'+uuid();
+      const db = await openDB();
+      await new Promise((res,rej)=>{
+        const tx=db.transaction(DB_PHOTOS,'readwrite');
+        tx.objectStore(DB_PHOTOS).put({id, name, type:blob.type, createdAt:Date.now(), blob});
+        tx.oncomplete=()=>res();
+        tx.onerror=()=>rej(tx.error);
+      });
+      return { id, name, store:'idb' };
+    }
+    async function idbGetPhoto(id){
+      const db = await openDB();
+      return new Promise((res,rej)=>{
+        const tx=db.transaction(DB_PHOTOS,'readonly');
+        const req=tx.objectStore(DB_PHOTOS).get(id);
+        req.onsuccess=()=>res(req.result||null);
+        req.onerror=()=>rej(req.error);
+      });
+    }
+    async function idbDeletePhoto(id){
+      const db = await openDB();
+      return new Promise((res,rej)=>{
+        const tx=db.transaction(DB_PHOTOS,'readwrite');
+        tx.objectStore(DB_PHOTOS).delete(id);
+        tx.oncomplete=()=>res();
+        tx.onerror=()=>rej(tx.error);
+      });
+    }
+
+    /* ===== Photos in form (IDB-backed) ===== */
+    let photos=[];                // [{id, name, store:'idb'}]
+    const urlCache=new Map();     // id -> objectURL for thumb
+
+    async function photoRefToObjectURL(ref){
+      if(ref.store!=='idb') return '';
+      if(urlCache.has(ref.id)) return urlCache.get(ref.id);
+      const rec = await idbGetPhoto(ref.id);
+      if(!rec) return '';
+      const url = URL.createObjectURL(rec.blob);
+      urlCache.set(ref.id, url);
+      return url;
+    }
+    function revokeURL(id){
+      const u = urlCache.get(id);
+      if(u){ URL.revokeObjectURL(u); urlCache.delete(id); }
+    }
+
+    async function renderPhotos(){
+      const wrap=$('photoStrip'); wrap.innerHTML='';
+      for(let i=0;i<photos.length;i++){
+        const p=photos[i];
+        const url = await photoRefToObjectURL(p);
+        const div=document.createElement('div'); div.className='thumb';
+        div.innerHTML=`<img alt="photo ${i+1}" src="${url}"><button class="btn danger" data-i="${i}" type="button">X</button>`;
+        wrap.appendChild(div);
+      }
+    }
+    $('photoStrip').onclick=async (e)=>{
+      const b=e.target.closest('button'); if(!b) return;
+      const i=+b.dataset.i; const ref=photos[i];
+      if(ref?.store==='idb'){ await idbDeletePhoto(ref.id); revokeURL(ref.id); }
+      photos.splice(i,1); renderPhotos();
+    };
+    $('photoBtn').onclick=()=>{const remain=5-photos.length; if(remain<=0){alert('MAX 5 PHOTOS');return;} $('photoInput').click();};
     $('photoInput').onchange=async (e)=>{
-      const files=[...e.target.files].slice(0,5-photos.length);
+      const remain=5-photos.length;
+      const files=[...e.target.files].slice(0,remain);
       for (const f of files){
-        const dataUrl=await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f); });
+        const blob = await compressFileToJpegBlob(f, 1600, 0.82);
         const baseTitle=up($('title').value)||'ITEM';
-        photos.push({name:`${baseTitle} (${photos.length+1}).jpg`, dataUrl});
+        const name=`${baseTitle} (${photos.length+1}).jpg`;
+        const ref = await idbPutPhoto(blob, name);
+        photos.push(ref);
       }
       e.target.value=''; renderPhotos();
     };
 
-    /* Record <-> Form */
+    async function compressFileToJpegBlob(file, maxDim=1600, quality=0.82){
+      const dataUrl = await new Promise(r=>{ const rd=new FileReader(); rd.onload=()=>r(rd.result); rd.readAsDataURL(file); });
+      const img = await new Promise(r=>{ const im=new Image(); im.onload=()=>r(im); im.src=dataUrl; });
+      const s = Math.min(1, maxDim/Math.max(img.width,img.height));
+      const w = Math.max(1, Math.round(img.width*s)), h = Math.max(1, Math.round(img.height*s));
+      const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
+      const out = await new Promise(res=>c.toBlob(res,'image/jpeg',quality));
+      return out;
+    }
+
+    /* ===== Record <-> Form ===== */
     let editingId=null;
     function getForm(id=null){
       const suffix=up($('b16Override').value)||$('b16Suffix').value||'';
       return{
-        id: id || (crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)),
+        id: id || uuid(),
         jobNo: up($('jobNo').value),
         title: up($('title').value),
         vendor: up($('vendor').value),
@@ -217,6 +296,7 @@
         mtrOk: up($('mtrOk').value),
         decision,
         comments: up($('comments').value),
+        // only refs, no data URLs
         photos,
         createdAt:new Date().toISOString()
       };
@@ -229,14 +309,16 @@
       if(['5','9','11','34',''].includes(suf)){ $('b16Suffix').value=suf; $('b16Override').value=''; }
       else { $('b16Suffix').value=''; $('b16Override').value=suf.slice(0,2); }
       $('th1').value=r.th?.[0]||''; $('th2').value=r.th?.[1]||''; $('th3').value=r.th?.[2]||''; $('th4').value=r.th?.[3]||'';
-      $('width').value=r.width||''; $('length').value=r.length||''; $('diameter').value=r.diameter||''; $('diaType').value=r.diaType||'O.D.'; $('dimOther').value=r.dimOther||'';
+      $('width').value=r.width||''; $('length').value=r.length||'';
+      $('diameter').value=r.diameter||''; $('diaType').value=r.diaType||'O.D.'; $('dimOther').value=r.dimOther||'';
       $('visualOk').value=r.visualOk||'YES'; $('b16Ok').value=r.b16Ok||'YES';
       $('marking').value=r.marking||''; $('markingCode').value=r.markingCode||'YES'; $('mtrOk').value=r.mtrOk||'YES';
       decision=r.decision||'ACCEPT'; renderDecision();
-      $('comments').value=r.comments||''; photos=r.photos||[]; renderPhotos();
+      photos = (r.photos||[]).map(p=>({id:p.id,name:p.name,store:p.store||'idb'}));
+      renderPhotos();
     }
 
-    /* List (job-filtered live) */
+    /* ===== List (job-filtered) ===== */
     function renderList(){
       const job=up($('jobNo').value);
       const tb=$('listBody'); tb.innerHTML='';
@@ -256,17 +338,22 @@
         tb.appendChild(tr);
       }
     }
-    $('listBody').onclick=(e)=>{
+    $('listBody').onclick=async (e)=>{
       const btn=e.target.closest('button'); if(!btn) return;
       const id=btn.dataset.id, act=btn.dataset.act;
       const rows=readAll(); const idx=rows.findIndex(x=>x.id===id); if(idx<0) return;
       if(act==='edit'){ editingId=id; setForm(rows[idx]); window.scrollTo({top:0,behavior:'smooth'}); }
       if(act==='del'){
-        if(confirm('ARE YOU SURE YOU WANT TO DELETE THIS RECEIVING ENTRY?')){ rows.splice(idx,1); writeAll(rows); renderList(); }
+        if(confirm('ARE YOU SURE YOU WANT TO DELETE THIS RECEIVING ENTRY?')){
+          // Optional: cleanup photos for this entry
+          const entry = rows[idx];
+          for (const p of (entry.photos||[])) { if(p.store==='idb') { try{ await idbDeletePhoto(p.id); }catch{} } }
+          rows.splice(idx,1); writeAll(rows); renderList();
+        }
       }
     };
 
-    /* Save / reset */
+    /* ===== Save / reset ===== */
     function saveCore(nextMode){
       const rec=getForm(editingId);
       if(!rec.jobNo) return alert('JOB NO. REQUIRED');
@@ -276,6 +363,7 @@
       if(idx>=0) rows[idx]=rec; else rows.unshift(rec);
       writeAll(rows);
       editingId=null;
+      // Keep job filter; reset form for new entry
       setForm({jobNo:rec.jobNo,date:today(),photos:[]});
       renderList();
       if(nextMode==='another'){ window.scrollTo({top:0,behavior:'smooth'}); }
@@ -287,7 +375,7 @@
     $('doneBtn').onclick    =()=>saveCore('done');
     $('resetBtn').onclick   =()=>{ editingId=null; setForm({jobNo:$('jobNo').value,date:today(),photos:[]}); };
 
-    /* Init + live filter + SW auto-update */
+    /* ===== Init & SW ===== */
     (function init(){
       $('date').value=today();
       const job=(qs('job')||'').toUpperCase();
@@ -297,14 +385,11 @@
     })();
 
     (async()=>{ 
-      if (!('serviceWorker' in navigator)) return; 
-      try {
-        const reg = await navigator.serviceWorker.register('service_worker.js');
-        reg.update?.();
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (!window.__swReloadOnce) { window.__swReloadOnce = true; location.reload(); }
-        });
-      } catch(e){}
+      if(!('serviceWorker'in navigator))return; 
+      try{
+        const r=await navigator.serviceWorker.register('service_worker.js'); 
+        if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});
+      }catch(e){}
     })();
   </script>
 </body>
