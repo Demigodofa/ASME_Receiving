@@ -1,5 +1,5 @@
 <!-- =================================================================== -->
-<!-- /jobs.html — JOBS + REPORTS badge + green export text + delete job -->
+<!-- /jobs.html — JOBS + REPORTS badge + centered action sheet (mobile) -->
 <!-- =================================================================== -->
 <!doctype html>
 <html lang="en">
@@ -20,7 +20,7 @@
   .btn.primary{background:var(--accent);color:#052e16;border-color:#1B9E64}
   .btn.danger{background:var(--danger);border-color:#D83A3F}
   .btn:focus{outline:3px solid var(--focus);outline-offset:2px}
-  .btn.accentText{color:var(--accent)} /* export text turns green when reports exist */
+  .btn.accentText{color:var(--accent)}
   main{max-width:1120px;margin:24px auto;padding:0 16px}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
   label{font-size:12px;color:var(--muted);font-weight:800;display:block;margin-bottom:6px}
@@ -32,15 +32,46 @@
   table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--border);padding:14px 10px}
   th{font-size:11px;color:#8FA3BD;text-transform:uppercase;letter-spacing:.06em}
   .empty{color:var(--muted);text-align:center;padding:18px;text-transform:uppercase}
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50}
-  .sheet{width:min(620px,92%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+
+  /* ---------- Centered overlay (mobile-friendly) ---------- */
+  .overlay{
+    position:fixed; inset:0; display:none;
+    align-items:center; justify-content:center; z-index:50;
+    background:rgba(0,0,0,.5);
+    /* Safe-area padding so the sheet never butts against notches */
+    padding: max(12px, env(safe-area-inset-top))
+             max(12px, env(safe-area-inset-right))
+             max(12px, env(safe-area-inset-bottom))
+             max(12px, env(safe-area-inset-left));
+  }
+  .sheet{
+    width:min(560px, 94vw);           /* slightly narrower on phones */
+    max-width:94vw;
+    max-height:80vh;                  /* keep fully on screen */
+    overflow:auto;                    /* internal scroll if needed */
+    margin:auto;                      /* ensure centering in flex + when overflow */
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:18px;
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+    transform:translateZ(0);          /* helps some mobile GPUs render crisply */
+  }
   .sheet h2{margin:0 0 6px 0;font-size:20px;text-transform:uppercase}
-  .meta{color:#E6EAF0;font-size:22px;font-weight:900;letter-spacing:.06em;margin:2px 0 12px 0}
+  .meta{color:#E6EAF0;font-size:22px;font-weight:900;letter-spacing:.06em;margin:2px 0 8px 0}
   .stack{display:flex;flex-direction:column;gap:10px;align-items:center}
   .wide{width:100%;text-align:center}
   .confirm{display:none;margin-top:10px;text-align:center}
   .confirm .rowc{display:flex;gap:10px;justify-content:center;margin-top:10px}
   .small{font-size:12px;color:#8FA3BD}
+
+  /* Tiny devices polish */
+  @media (max-width: 380px){
+    .sheet{padding:14px;border-radius:16px}
+    .sheet h2{font-size:18px}
+    .meta{font-size:20px}
+    .btn{padding:10px 12px;border-radius:10px}
+  }
 </style>
 </head>
 <body>
@@ -152,6 +183,10 @@ $('clearBtn').onclick=()=>{$('jobNo').value='';$('desc').value='';};
 
 /* ============================ ACTIONS =========================== */
 let current=null;
+function lockScroll(lock){
+  document.documentElement.style.overflow = lock ? 'hidden' : '';
+  document.body.style.overflow = lock ? 'hidden' : '';
+}
 function openMenu(jobNo){
   const job=readJobs().find(j=>j.jobNo===jobNo); if(!job) return;
   current=job;
@@ -160,15 +195,19 @@ function openMenu(jobNo){
   $('dlgMeta').textContent = `${job.jobNo} — ${(job.desc||'')}`;
   $('dlgReportsNote').textContent = reports ? `${reports} RECEIVING REPORT(S) IN THIS JOB` : 'NO RECEIVING REPORTS IN THIS JOB';
 
-  // Link + button states
   $('viewBtn').href=`job.html?job=${encodeURIComponent(job.jobNo)}`;
-  $('exportBtn').classList.toggle('accentText', reports>0); // green text if reports exist
+  $('exportBtn').classList.toggle('accentText', reports>0);
 
-  // Reset confirm UI
   $('confirmBox').style.display='none'; $('zipNote').textContent='';
-  $('overlay').style.display='flex'; $('closeBtn').focus();
+  $('overlay').style.display='flex';
+  lockScroll(true);
+  $('closeBtn').focus();
 }
-function closeMenu(){ $('overlay').style.display='none'; current=null; }
+function closeMenu(){
+  $('overlay').style.display='none';
+  lockScroll(false);
+  current=null;
+}
 $('closeBtn').onclick=closeMenu;
 $('overlay').onclick=(e)=>{ if(e.target===e.currentTarget) closeMenu(); };
 
@@ -181,13 +220,10 @@ $('deleteBtn').onclick=()=>{
 $('noDel').onclick=()=>{ $('confirmBox').style.display='none'; };
 $('yesDel').onclick=()=>{
   if(!current) return;
-  // Remove job
   const jobs = readJobs().filter(j=>j.jobNo!==current.jobNo);
   writeJobs(jobs);
-  // Remove associated receiving entries
   const recv = readRecv().filter(r=>r.jobNo!==current.jobNo);
   writeRecv(recv);
-
   renderJobs();
   closeMenu();
 };
@@ -200,16 +236,14 @@ $('exportBtn').onclick = async (ev) => {
   const entries = readRecv().filter(r => r.jobNo === current.jobNo);
   if (!entries.length) { alert('NO RECEIVING ENTRIES FOR THIS JOB'); return; }
 
-  // Render: one portrait Letter page per entry
   const canvases = await renderReceivingPdfPages(entries);
   const pages = canvases.map(c => ({ u8: dataURLtoU8(c.toDataURL('image/jpeg', 0.92)), w: c.width, h: c.height }));
-  const pdfBlob  = buildPdfFromJpegsExact(pages, 612, 792); // 8.5×11
+  const pdfBlob  = buildPdfFromJpegsExact(pages, 612, 792);
   const pdfU8    = new Uint8Array(await pdfBlob.arrayBuffer());
 
   const base = `${sanitize(current.jobNo)}_${sanitize(current.desc||'')}`.replace(/_$/,'');
   const files = [{ name:`${base}-REPORTS.pdf`, data: pdfU8 }, { name:'PHOTOS/', dir:true }];
 
-  // Photos → PHOTOS/
   for (const r of entries) {
     const title = sanitize(r.title || 'ITEM');
     for (let i = 0; i < (r.photos || []).length; i++) {
@@ -344,8 +378,6 @@ async function renderReceivingPdfPages(entries){
 
 /* ---------------------- BINARY / PDF / ZIP ----------------------- */
 function dataURLtoU8(d){ const i=d.indexOf(','); const bin=atob(d.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
-
-/* Correct PDF builder: uses REAL image pixel sizes to avoid cropping */
 function buildPdfFromJpegsExact(pages, pageWpt=612, pageHpt=792){
   const parts=[]; const enc=new TextEncoder(); let offset=0; const xref=[null];
   const addS=s=>{const u8=enc.encode(s); parts.push(u8); offset+=u8.length;};
@@ -381,7 +413,6 @@ Q
   addS(`trailer\n<< /Size ${xref.length} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF`);
   return new Blob(parts,{type:'application/pdf'});
 }
-
 async function compressDataUrlToJpegU8(dataUrl, maxDim=1600, quality=0.85){
   const img = await new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.src=dataUrl; });
   const s = Math.min(1, maxDim/Math.max(img.width,img.height));
