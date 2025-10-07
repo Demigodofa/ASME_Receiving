@@ -12,91 +12,68 @@
     :root{
       --bg:#0A0F1A;--card:#101826;--border:#223046;--fg:#E6EAF0;
       --muted:#8FA3BD;--accent:#26D07C;--accentText:#052e16;
-      --readyBg:#0d1f17;--readyBorder:#155e3b;--readyText:#b7f7d2;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
     body{
-      display:grid;place-items:center;
-      background:var(--bg);color:var(--fg);
+      display:grid; place-items:center; /* perfect centering */
+      background:var(--bg); color:var(--fg);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
       padding:24px;
     }
-    .wrap{
-      width:min(720px,100%);
-      display:flex;flex-direction:column;align-items:center;gap:24px;
-    }
-    .brand{font-weight:900;letter-spacing:.02em;font-size:28px}
-    .badge{
-      display:inline-block;padding:6px 10px;border-radius:999px;
-      background:#0F172A;border:1px solid var(--border);
-      font-size:12px;font-weight:900
-    }
-    .badge.ready{background:var(--readyBg);border-color:var(--readyBorder);color:var(--readyText)}
     .card{
-      width:100%; background:var(--card); border:1px solid var(--border);
-      border-radius:22px; padding:32px; box-shadow:0 10px 30px rgba(0,0,0,.35);
+      width:min(720px,100%);
+      background:var(--card); border:1px solid var(--border);
+      border-radius:22px; padding:32px;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
       display:flex; flex-direction:column; align-items:center; gap:24px;
+      margin:0 auto; text-align:center; /* ensure perfect center */
     }
     .logo{
-      width:384px; height:384px; /* ~6× the old 64px preview */
-      border-radius:24px; display:block; object-fit:contain;
+      width:336px; height:336px; /* 384px - ~0.5in (≈48px) */
+      border-radius:24px; display:block; object-fit:contain; margin:0 auto;
     }
-    .title{margin:0;font-size:32px;font-weight:900;letter-spacing:.2px;text-align:center}
-    .subtitle{margin:0;color:var(--muted);text-align:center}
+    .title{margin:0; font-size:32px; font-weight:900; letter-spacing:.2px}
+    .subtitle{margin:0; color:var(--muted)}
     .btn{
-      appearance:none;border:0;border-radius:18px;
-      padding:26px 40px; font-size:24px; /* ~4× larger */
+      appearance:none; border:0; border-radius:18px;
+      padding:26px 40px; font-size:24px;
       font-weight:900; cursor:pointer; text-transform:uppercase;
     }
-    .btn.primary{background:var(--accent);color:var(--accentText)}
-    .install-hint{color:var(--muted);font-size:14px;text-align:center;max-width:520px}
+    .btn.primary{background:var(--accent); color:var(--accentText)}
+    .install-hint{color:var(--muted); font-size:14px; max-width:520px}
     .hidden{display:none!important}
   </style>
 </head>
 <body>
-  <main class="wrap" role="main" aria-label="Landing">
-    <div class="brand">WELDERS HELPER</div>
-    <span id="swBadge" class="badge">CHECKING OFFLINE…</span>
+  <main class="card" role="main" aria-label="Landing">
+    <img class="logo" src="assets/icons/icon-512.png" alt="App logo" />
+    <h1 class="title">Welders Helper</h1>
+    <p class="subtitle">Install once. Works offline.</p>
 
-    <section class="card">
-      <img class="logo" src="assets/icons/icon-512.png" alt="App logo" />
-      <h1 class="title">Welders Helper</h1>
-      <p class="subtitle">Install once. Works offline.</p>
+    <button class="btn primary" onclick="location.href='app.html'">Enter</button>
 
-      <button class="btn primary" onclick="location.href='app.html'">Enter</button>
-
-      <!-- Optional install tips; auto-hidden when installed/standalone -->
-      <div id="instructions" class="install-hint">
-        <strong>Add to Home Screen:</strong>
-        <div><b>Android (Chrome)</b>: tap ⋮ → <em>Add to Home screen</em></div>
-        <div><b>iPhone/iPad (Safari)</b>: tap <em>Share</em> → <em>Add to Home Screen</em></div>
-      </div>
-    </section>
+    <!-- Optional install tips; auto-hidden when installed/standalone -->
+    <div id="instructions" class="install-hint">
+      <strong>Add to Home Screen:</strong><br/>
+      <b>Android (Chrome)</b>: tap ⋮ → <em>Add to Home screen</em><br/>
+      <b>iPhone/iPad (Safari)</b>: tap <em>Share</em> → <em>Add to Home Screen</em>
+    </div>
   </main>
 
   <script>
-    // ---- Service Worker: auto register + mark offline ready ----
-    const swBadge = document.getElementById('swBadge');
-    const markReady = () => { swBadge.textContent = 'OFFLINE READY'; swBadge.classList.add('ready'); };
-
+    // Silent SW register (no badge)
     (async () => {
-      if (!('serviceWorker' in navigator)) { swBadge.textContent = 'NO SERVICE WORKER'; return; }
+      if (!('serviceWorker' in navigator)) return;
       try {
         const reg = await navigator.serviceWorker.register('service_worker.js');
         reg.update?.();
-        // If already controlled or active, we're ready
-        if (navigator.serviceWorker.controller || reg.active) markReady();
-        navigator.serviceWorker.addEventListener('controllerchange', markReady);
-      } catch (e) {
-        swBadge.textContent = 'SW FAILED';
-        console.error(e);
-      }
+      } catch (e) { /* non-fatal */ }
     })();
 
-    // ---- Hide install instructions if already installed/standalone ----
+    // Hide tips if already installed / standalone
     function hideInstructionsIfInstalled() {
-      const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator.standalone;
       const el = document.getElementById('instructions');
       if (standalone && el) el.classList.add('hidden');
     }
