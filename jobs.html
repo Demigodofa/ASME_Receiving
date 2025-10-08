@@ -1,5 +1,5 @@
 <!-- =================================================================== -->
-<!-- /jobs.html — JOBS (export-hardened, centered sheet, reports badge)  -->
+<!-- /jobs.html — JOBS (centered actions, robust export with photo cap)  -->
 <!-- =================================================================== -->
 <!doctype html>
 <html lang="en">
@@ -31,9 +31,17 @@
   th{font-size:11px;color:#8FA3BD;text-transform:uppercase;letter-spacing:.06em}
   .empty{color:var(--muted);text-align:center;padding:18px;text-transform:uppercase}
 
-  /* Overlay sheet: centered & phone-safe */
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
-  .sheet{width:min(560px,94vw);max-height:90vh;overflow:auto;background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+  /* Overlay — bulletproof centering on phones */
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.5);
+    display:none; z-index:50; padding:16px;
+    display:grid; place-items:center;
+  }
+  .sheet{
+    width:min(520px,92vw); max-height:90vh; overflow:auto;
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:18px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.45);
+  }
   .sheet h2{margin:0 0 6px 0;font-size:20px;text-transform:uppercase}
   .meta{color:#E6EAF0;font-size:20px;font-weight:900;letter-spacing:.06em;margin:2px 0 10px 0;word-break:break-word}
   .stack{display:flex;flex-direction:column;gap:10px;align-items:center}
@@ -51,9 +59,9 @@
   /* Export button green text when reports exist */
   .btn.hasReports{color:#26D07C}
 
-  /* Tiny progress line */
+  /* Progress line */
   .progress{height:6px;border-radius:999px;background:#0b1f15;border:1px solid #1B9E64;overflow:hidden;width:100%;display:none}
-  .progress > div{height:100%;width:0%;background:#26D07C}
+  .progress > div{height:100%;width:0%;background:#26D07C;transition:width .15s linear}
 </style>
 </head>
 <body>
@@ -176,21 +184,19 @@ function openMenu(jobNo){
   $('confirmBox').style.display='none'; $('zipNote').textContent='';
   const hasReports = countReports(job.jobNo) > 0;
   $('exportBtn').classList.toggle('hasReports', hasReports);
-  $('overlay').style.display='flex'; $('closeBtn').focus();
+  $('overlay').style.display='grid'; $('closeBtn').focus();
 }
 function closeMenu(){ $('overlay').style.display='none'; current=null; }
 $('closeBtn').onclick=closeMenu;
 $('overlay').onclick=(e)=>{ if(e.target===e.currentTarget) closeMenu(); };
 
-/* DELETE JOB (really deletes job + its receiving entries) */
+/* DELETE JOB (job + its receiving entries) */
 $('deleteBtn').onclick=()=>{ $('confirmBox').style.display='block'; };
 $('noDel').onclick =()=>{ $('confirmBox').style.display='none'; };
 $('yesDel').onclick=()=>{
   if(!current) return;
-  // remove job
-  const jobs = readJobs().filter(j=>j.jobNo!==current.jobNo); writeJobs(jobs);
-  // remove its receiving entries
-  const recs = readRecv().filter(r=>r.jobNo!==current.jobNo); writeRecv(recs);
+  writeJobs(readJobs().filter(j=>j.jobNo!==current.jobNo));
+  writeRecv(readRecv().filter(r=>r.jobNo!==current.jobNo));
   current=null; renderJobs(); closeMenu();
 };
 
@@ -207,6 +213,9 @@ $('exportBtn').onclick = async (ev) => {
   const setProg = (pct) => { progWrap.style.display='block'; progBar.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
   const tick = () => new Promise(r=>setTimeout(r,0));
 
+  // CONFIG: cap photos per report for reliability on phones
+  const MAX_EXPORT_PHOTOS = 4;
+
   try{
     setNote('BUILDING PDF…'); setProg(10);
 
@@ -219,36 +228,41 @@ $('exportBtn').onclick = async (ev) => {
     for (let i=0;i<canvases.length;i++){
       const c = canvases[i];
       pages.push({ u8: dataURLtoU8(c.toDataURL('image/jpeg', 0.92)), w: c.width, h: c.height });
-      setProg(10 + Math.round(((i+1)/canvases.length)*30));
+      setProg(10 + Math.round(((i+1)/canvases.length)*25)); // to ~35%
       await tick();
     }
 
-    // 3) Build PDF (exact page size to avoid cropping)
+    // 3) Build PDF (exact page size → no cropping)
     const pdfBlob = buildPdfFromJpegsExact(pages, 612, 792);
     const pdfU8    = new Uint8Array(await pdfBlob.arrayBuffer());
-    setProg(45); setNote('ADDING PHOTOS…');
+    setProg(40); setNote('ADDING PHOTOS…');
 
-    // 4) Add photos (compressed) into ZIP
+    // 4) Add photos (compressed) into ZIP — with per-photo timeout/guard
     const base = `${sanitize(current.jobNo)}_${sanitize(current.desc||'')}`.replace(/_$/,'');
     const files = [{ name:`${base}-REPORTS.pdf`, data: pdfU8 }, { name:'PHOTOS/', dir:true }];
 
-    let photoCount=0, totalPhotos=0;
-    entries.forEach(r=>{ totalPhotos += (r.photos||[]).length; });
+    let photoDone=0, photoTotal=0;
+    entries.forEach(r=>{ photoTotal += Math.min(MAX_EXPORT_PHOTOS, (r.photos||[]).length); });
+
     for (const r of entries) {
       const title = sanitize(r.title || 'ITEM');
-      for (let i = 0; i < (r.photos || []).length; i++) {
-        const p = r.photos[i];
-        const { u8 } = await compressDataUrlToJpegU8(p.dataUrl, 1600, 0.85);
-        files.push({ name:`PHOTOS/${sanitize(r.jobNo)}-${title} (${i+1}).jpg`, data: u8 });
-        photoCount++;
-        setProg(45 + Math.round((photoCount/(Math.max(1,totalPhotos)))*35)); // up to 80%
+      const photos = (r.photos || []).slice(0, MAX_EXPORT_PHOTOS);
+      for (let i = 0; i < photos.length; i++) {
+        try {
+          const { u8 } = await compressDataUrlToJpegU8Safe(photos[i].dataUrl, 1280, 0.80, 7000);
+          files.push({ name:`PHOTOS/${sanitize(r.jobNo)}-${title} (${i+1}).jpg`, data: u8 });
+        } catch (err) {
+          console.warn('Photo skipped:', err);
+          setNote('ADDING PHOTOS… (one photo skipped)');
+        }
+        photoDone++;
+        setProg(40 + Math.round((photoDone/Math.max(1,photoTotal))*45)); // to ~85%
         await tick();
       }
     }
 
-    setNote('ZIPPING…'); setProg(85);
+    setNote('ZIPPING…'); setProg(88);
     const zipBlob = zipStoreCompat(files);
-    await askPersistentStorageOnce();
 
     setNote('SAVING…'); setProg(95);
     const ok = await saveSmartZip(base, zipBlob);
@@ -423,12 +437,54 @@ Q
   return new Blob(parts,{type:'application/pdf'});
 }
 
-async function compressDataUrlToJpegU8(dataUrl, maxDim=1600, quality=0.85){
-  const img = await new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.src=dataUrl; });
-  const s = Math.min(1, maxDim/Math.max(img.width,img.height));
-  const w = Math.max(1, Math.round(img.width*s)), h = Math.max(1, Math.round(img.height*s));
-  const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
-  return {u8:dataURLtoU8(c.toDataURL('image/jpeg', quality))};
+/* JPEG compress — robust: createImageBitmap + timeout, lower memory */
+async function compressDataUrlToJpegU8Safe(dataUrl, maxDim=1280, quality=0.80, timeoutMs=7000){
+  const controller = new AbortController();
+  const to = setTimeout(()=>controller.abort('timeout'), timeoutMs);
+
+  try{
+    // Prefer createImageBitmap for speed & memory
+    let bmp=null, w=0, h=0;
+    if (self.createImageBitmap) {
+      const res = await fetch(dataUrl, {signal:controller.signal});
+      const blob = await res.blob();
+      bmp = await createImageBitmap(blob);
+      w=bmp.width; h=bmp.height;
+    } else {
+      const img = await new Promise((res,rej)=>{
+        const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=dataUrl;
+      });
+      w=img.width; h=img.height; bmp=img; // drawImage can accept HTMLImageElement too
+    }
+
+    const scale = Math.min(1, maxDim/Math.max(w,h));
+    const W = Math.max(1, Math.round(w*scale)), H = Math.max(1, Math.round(h*scale));
+
+    let canvas, ctx;
+    if ('OffscreenCanvas' in self) {
+      canvas = new OffscreenCanvas(W, H); ctx = canvas.getContext('2d');
+    } else {
+      const c = document.createElement('canvas'); c.width=W; c.height=H; canvas = c; ctx=c.getContext('2d');
+    }
+    ctx.drawImage(bmp, 0, 0, W, H);
+
+    // OffscreenCanvas → blob; HTMLCanvasElement → toDataURL
+    let u8;
+    if (canvas.convertToBlob) {
+      const blob = await canvas.convertToBlob({type:'image/jpeg', quality});
+      const buf  = await blob.arrayBuffer(); u8 = new Uint8Array(buf);
+    } else {
+      const durl = canvas.toDataURL('image/jpeg', quality);
+      u8 = dataURLtoU8(durl);
+    }
+
+    try{ if (bmp && 'close' in bmp) bmp.close(); }catch{}
+    clearTimeout(to);
+    return {u8};
+  } catch (e) {
+    clearTimeout(to);
+    throw e;
+  }
 }
 
 /* ZIP (store mode, wide compatibility) */
@@ -495,6 +551,7 @@ async function saveSmartZip(baseName, zipBlob) {
   if (await saveWithPicker(fileName, zipBlob)) return true;
   if (await shareFile(fileName, zipBlob)) return true;
   if (downloadViaAnchor(fileName, zipBlob)) return true;
+  // final fallback handled by caller (open PDF in new tab)
   return false;
 }
 
