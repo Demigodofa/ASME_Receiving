@@ -1,6 +1,4 @@
-<!-- =================================================================== -->
-<!-- /jobs.html — Export stays on screen; multi-entry PDF; ZIP download  -->
-<!-- =================================================================== -->
+<!-- jobs.html — centered action sheet + robust export (Blob/dataURL/Uint8Array) -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -34,18 +32,24 @@
   .badge.zero{opacity:.5}
   .btn.hasReports{color:#26D07C}
 
-  /* Centered overlay on all mobiles */
+  /* Overlay centering: grid/flex + **fixed/translate** fallback */
   .overlay{
     position:fixed; inset:0; background:rgba(0,0,0,.52);
     z-index:50; padding:16px; min-height:100svh; display:none;
   }
-  .overlay.open{ display:grid; place-items:center; }
+  .overlay.open{ display:flex; align-items:center; justify-content:center; }
+  @supports (place-items:center){ .overlay.open{ display:grid; place-items:center; } }
   .sheet{
     width:min(480px,92vw); max-height:88svh; overflow:auto;
     background:var(--panel); border:1px solid var(--border);
     border-radius:18px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.45);
-    margin:0 auto;
+    margin:0;
   }
+  /* Fallback: if some mobile still positions low, force absolute center */
+  .overlay.open.center-fallback .sheet{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); /* why: Samsung edge cases */
+  }
+
   .sheet h2{margin:0 0 6px 0;font-size:20px;text-transform:uppercase;text-align:center}
   .meta{color:#E6EAF0;font-size:20px;font-weight:900;letter-spacing:.06em;margin:2px 0 10px 0;word-break:break-word;text-align:center}
   .stack{display:flex;flex-direction:column;gap:10px;align-items:center}
@@ -119,7 +123,7 @@
 <script>
 /* ============================ CONFIG ============================ */
 const MAX_PHOTOS_ALLOWED = Number(localStorage.getItem('wh_max_photos') || '4');
-localStorage.setItem('wh_max_photos', String(MAX_PHOTOS_ALLOWED)); // single source of truth
+localStorage.setItem('wh_max_photos', String(MAX_PHOTOS_ALLOWED));
 
 /* ============================ STORAGE ============================ */
 const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
@@ -132,6 +136,41 @@ const readRecv=()=>safeRead(RECV_KEY);
 const writeRecv=(a)=>safeWrite(RECV_KEY,a);
 const today=()=>new Date().toISOString().slice(0,10);
 const sanitize=s=>(s||'').toUpperCase().replace(/[^A-Z0-9\-_. /]/g,'_').replace(/\s+/g,'-');
+
+/* ====================== PDF BUILDER (defined early) ============= */
+function buildPdfFromJpegsExact(pages, pageWpt=612, pageHpt=792){
+  const parts=[]; const enc=new TextEncoder(); let offset=0; const xref=[null];
+  const addS=s=>{const u8=enc.encode(s); parts.push(u8); offset+=u8.length;};
+  const addU8=u8=>{parts.push(u8); offset+=u8.length;};
+  const obj=(id,body)=>{ xref[id]=offset; addS(`${id} 0 obj\n${body}\nendobj\n`); };
+
+  addS('%PDF-1.4\n');
+  obj(1, `<< /Type /Catalog /Pages 2 0 R >>`);
+  obj(2, `<< /Type /Pages /Count ${pages.length} /Kids [ ${pages.map((_,i)=>`${3+i*3+2} 0 R`).join(' ')} ] >>`);
+
+  pages.forEach((pg,i)=>{
+    const imgId=3+i*3, cntId=4+i*3, pageId=5+i*3;
+
+    xref[imgId]=offset;
+    addS(`${imgId} 0 obj\n<< /Type /XObject /Subtype /Image /Filter /DCTDecode /ColorSpace /DeviceRGB /BitsPerComponent 8 /Width ${pg.w} /Height ${pg.h} /Length ${pg.u8.length} >>\nstream\n`);
+    addU8(pg.u8); addS(`\nendstream\nendobj\n`);
+
+    const content=`q
+${pageWpt} 0 0 ${pageHpt} 0 0 cm
+/Im${i} Do
+Q
+`;
+    obj(cntId, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+
+    obj(pageId, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWpt} ${pageHpt}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${cntId} 0 R >>`);
+  });
+
+  const startXref=offset;
+  addS(`xref\n0 ${xref.length}\n0000000000 65535 f \n`);
+  for(let i=1;i<xref.length;i++) addS(`${String(xref[i]).padStart(10,'0')} 00000 n \n`);
+  addS(`trailer\n<< /Size ${xref.length} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF`);
+  return new Blob(parts,{type:'application/pdf'});
+}
 
 /* ============================ UI: LIST =========================== */
 function countReports(jobNo){ return readRecv().filter(r=>r.jobNo===jobNo).length; }
@@ -178,9 +217,10 @@ function openMenu(jobNo){
   $('confirmBox').style.display='none'; $('zipNote').textContent='';
   const hasReports = countReports(job.jobNo) > 0;
   $('exportBtn').classList.toggle('hasReports', hasReports);
-  $('overlay').classList.add('open'); $('closeBtn').focus();
+  const ov=$('overlay'); ov.classList.add('open'); ov.classList.add('center-fallback'); // extra safety for mobile
+  $('closeBtn').focus();
 }
-function closeMenu(){ $('overlay').classList.remove('open'); current=null; }
+function closeMenu(){ const ov=$('overlay'); ov.classList.remove('open'); ov.classList.remove('center-fallback'); current=null; }
 $('closeBtn').onclick=closeMenu;
 $('overlay').addEventListener('click',(e)=>{ if(e.target===e.currentTarget) closeMenu(); });
 document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && $('overlay').classList.contains('open')) closeMenu(); });
@@ -195,7 +235,7 @@ $('yesDel').onclick=()=>{
   current=null; renderJobs(); closeMenu();
 };
 
-/* ============================ EXPORT (PDF + PHOTOS → ≤20MB ZIPs) */
+/* ============================ EXPORT (PDF + PHOTOS → ZIPs) ====== */
 $('exportBtn').onclick = async (ev) => {
   ev.preventDefault();
   if (!current) return;
@@ -210,33 +250,33 @@ $('exportBtn').onclick = async (ev) => {
   try{
     setNote('Building PDF…'); setProg(20);
 
-    // One combined PDF across ALL receiving entries for this job
     const canvases = await renderReceivingPdfPages(entries);
     const pages = canvases.map(c => ({ u8: dataURLtoU8(c.toDataURL('image/jpeg', 0.92)), w: c.width, h: c.height }));
     const pdfBlob  = buildPdfFromJpegsExact(pages, 612, 792);
-    const pdfU8 = new Uint8Array(await pdfBlob.arrayBuffer());
+    const pdfU8 = await toU8(pdfBlob);
 
     setNote('Preparing ZIP…'); setProg(55);
 
-    // Gather files to ZIP
     const files = [];
     const base = `${sanitize(current.jobNo)}_RECEIVING`;
     files.push({name:`${base}.pdf`, u8: pdfU8});
 
     let photoCount = 0;
-    entries.forEach((raw, idx) => {
-      const r = normalizeEntry(raw);
+    // use for..of + await to support Blob/File/Uint8Array/dataURL
+    for (let idx = 0; idx < entries.length; idx++) {
+      const r = normalizeEntry(entries[idx]);
       const folder = `${sanitize(r.jobNo)}/${r.date || `ENTRY-${idx+1}`}/${sanitize(r.title || 'UNTITLED')}`;
-      (r.photos||[]).filter(Boolean).forEach((dataUrl, i) => {
-        const u8 = dataURLtoU8(dataUrl);
+      for (let i = 0; i < (r.photos||[]).length; i++) {
+        const ph = r.photos[i];
+        if (!ph) continue;
+        const u8 = await toU8(ph);
         files.push({name:`${folder}/photo-${String(i+1).padStart(2,'0')}.jpg`, u8});
         photoCount++;
-      });
-    });
+      }
+    }
 
-    setProg(75);
+    setProg(80);
 
-    // Build ≤20MB zips and auto-download
     const zips = buildZipParts(files, `${sanitize(current.jobNo)}_EXPORT`, 20 * 1024 * 1024);
     if (!zips.length) throw new Error('Nothing to export.');
 
@@ -249,13 +289,13 @@ $('exportBtn').onclick = async (ev) => {
     setProg(100);
     setNote(`Done — downloaded ${zips.length} ZIP file${zips.length>1?'s':''} with PDF and ${photoCount} photo${photoCount!==1?'s':''}.`, 'ok');
   } catch(e){
-    setNote(`Export failed: ${e?.message || 'Unexpected error.'} Please try again.`, 'warn');
+    setNote(`Export failed: ${e?.message || e || 'Unexpected error.'}`, 'warn');
   }
 };
 
-/* ---------- PDF RENDER (Letter portrait, centered columns) ---------- */
+/* ---------- PDF RENDER (letter portrait, centered columns) ------ */
 async function renderReceivingPdfPages(entries){
-  const W=1275, H=1650, M=75; // 150dpi
+  const W=1275, H=1650, M=75;
   const pages=[];
   for(const raw of entries){
     const r = normalizeEntry(raw);
@@ -282,7 +322,7 @@ async function renderReceivingPdfPages(entries){
     const IDH=124; box(M,y+24,W-2*M,IDH);
 
     const rw=IDH/3;
-    const midX=M+(W-2*M)/2; // single mid-column
+    const midX=M+(W-2*M)/2;
     hln(M, y+24+rw, W-M); hln(M, y+24+2*rw, W-M); vln(midX, y+24, y+24+IDH);
 
     text('JOB NO.',   M+12, y+24+rw-8, 12, true); text(r.jobNo,   M+120, y+24+rw-8);
@@ -360,7 +400,7 @@ async function renderReceivingPdfPages(entries){
   return pages;
 }
 
-/* ---- Shared normalization -------------------------------------- */
+/* ---- Normalize entry ------------------------------------------- */
 function normalizeEntry(r){
   return {
     jobNo:(r.jobNo||''), date:(r.date||''), title:(r.title||''), qty:(r.qty||''),
@@ -374,22 +414,30 @@ function normalizeEntry(r){
   };
 }
 
-/* ----------------------- PDF & ZIP utils ------------------------ */
+/* ----------------------- U8 helpers ------------------------------ */
 function dataURLtoU8(d){ const i=d.indexOf(','); const bin=atob(d.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
-function triggerDownload(url, filename){
-  const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+/* Accept dataURL | Blob/File | Uint8Array and return Uint8Array */
+async function toU8(d){
+  if (d == null) throw new Error('Empty photo');
+  if (d instanceof Uint8Array) return d;
+  if (d instanceof Blob) return new Uint8Array(await d.arrayBuffer());
+  if (typeof d === 'string') {
+    if (d.startsWith('data:')) return dataURLtoU8(d);
+    throw new Error('Unsupported string photo format');
+  }
+  throw new Error('Unsupported photo type');
 }
+function triggerDownload(url, filename){ const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); }
 
-/* Minimal ZIP (STORE) with correct offsets; split to ≤ maxBytes */
+/* ----------------------- ZIP helpers ---------------------------- */
 function buildZipParts(files, baseName, maxBytes){
   const parts=[]; let bucket=[], part=1;
   const roughSize = (list) => list.reduce((s,f)=>s+f.u8.length,0) + list.length*220 + 256;
-
   for(const f of files){
     if(!bucket.length){ bucket.push(f); continue; }
     if(roughSize(bucket)+f.u8.length+220 > maxBytes){
       parts.push(makeZipBlob(bucket, `${baseName}_part-${String(part).padStart(2,'0')}.zip`)); part++; bucket=[f];
-    }else bucket.push(f);
+    } else bucket.push(f);
   }
   if(bucket.length){
     const name = parts.length ? `${baseName}_part-${String(part).padStart(2,'0')}.zip` : `${baseName}.zip`;
@@ -399,52 +447,39 @@ function buildZipParts(files, baseName, maxBytes){
 }
 
 function makeZipBlob(list, name){
-  const enc = new TextEncoder();
-  const chunks=[]; let offset=0; const cdrecs=[];
-
+  const enc=new TextEncoder(); const chunks=[]; let offset=0; const cdrecs=[];
   for(const f of list){
-    const fileName = f.name.replace(/^\/+/,'');
-    const fn = enc.encode(fileName);
-    const crc = crc32(f.u8);
-
-    const localHeaderOffset = offset;
-
-    const lh = new Uint8Array(30 + fn.length);
+    const fileName=f.name.replace(/^\/+/,''); const fn=enc.encode(fileName); const crc=crc32(f.u8);
+    const localHeaderOffset=offset;
+    const lh=new Uint8Array(30+fn.length);
     wu32(lh,0,0x04034b50); wu16(lh,4,20); wu16(lh,6,0); wu16(lh,8,0);
     wu16(lh,10,0); wu16(lh,12,0);
     wu32(lh,14,crc); wu32(lh,18,f.u8.length); wu32(lh,22,f.u8.length);
     wu16(lh,26,fn.length); wu16(lh,28,0);
-    chunks.push(lh, fn, f.u8); offset += lh.length + fn.length + f.u8.length;
+    chunks.push(lh,fn,f.u8); offset+=lh.length+fn.length+f.u8.length;
 
-    const cd = new Uint8Array(46 + fn.length);
+    const cd=new Uint8Array(46+fn.length);
     wu32(cd,0,0x02014b50); wu16(cd,4,20); wu16(cd,6,20); wu16(cd,8,0);
     wu16(cd,10,0); wu16(cd,12,0);
     wu32(cd,14,crc); wu32(cd,18,f.u8.length); wu32(cd,22,f.u8.length);
     wu16(cd,26,fn.length); wu16(cd,28,0); wu16(cd,30,0); wu16(cd,32,0); wu16(cd,34,0);
     wu32(cd,36,0); wu32(cd,40,localHeaderOffset);
-    cd.set(fn,46);
-    cdrecs.push(cd);
+    cd.set(fn,46); cdrecs.push(cd);
   }
-
-  const cdStart = offset;
-  for(const rec of cdrecs){ chunks.push(rec); offset += rec.length; }
-  const cdSize = offset - cdStart;
-
-  const eocd = new Uint8Array(22);
+  const cdStart=offset; for(const r of cdrecs){ chunks.push(r); offset+=r.length; }
+  const cdSize=offset-cdStart;
+  const eocd=new Uint8Array(22);
   wu32(eocd,0,0x06054b50); wu16(eocd,4,0); wu16(eocd,6,0);
   wu16(eocd,8,list.length); wu16(eocd,10,list.length);
   wu32(eocd,12,cdSize); wu32(eocd,16,cdStart); wu16(eocd,20,0);
   chunks.push(eocd);
-
-  return { blob: new Blob(chunks, {type:'application/zip'}), name };
+  return { blob:new Blob(chunks,{type:'application/zip'}), name };
 
   function wu16(a,o,v){ a[o]=v&255; a[o+1]=(v>>>8)&255; }
   function wu32(a,o,v){ a[o]=v&255; a[o+1]=(v>>>8)&255; a[o+2]=(v>>>16)&255; a[o+3]=(v>>>24)&255; }
 }
-
-/* CRC32 for ZIP */
-const CRC_TABLE = (()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1); t[n]=c>>>0; } return t; })();
-function crc32(u8){ let c=0xFFFFFFFF; for(let i=0;i<u8.length;i++){ c = CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); } return (c ^ 0xFFFFFFFF) >>> 0; }
+const CRC_TABLE=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; } return t; })();
+function crc32(u8){ let c=0xFFFFFFFF; for(let i=0;i<u8.length;i++){ c=CRC_TABLE[(c^u8[i])&0xFF]^(c>>>8); } return (c^0xFFFFFFFF)>>>0; }
 
 /* ============================ INIT ============================== */
 function initJobsPage(){
