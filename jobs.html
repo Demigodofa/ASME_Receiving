@@ -1,5 +1,5 @@
 <!-- =================================================================== -->
-<!-- /jobs.html — FIX: centered action sheet + working ZIP export       -->
+<!-- /jobs.html — Export stays on screen; multi-entry PDF; ZIP download  -->
 <!-- =================================================================== -->
 <!doctype html>
 <html lang="en">
@@ -34,12 +34,12 @@
   .badge.zero{opacity:.5}
   .btn.hasReports{color:#26D07C}
 
-  /* Overlay — centered on all mobiles via grid; toggled with .open */
+  /* Centered overlay on all mobiles */
   .overlay{
-    position:fixed; inset:0; background:rgba(0,0,0,.5);
+    position:fixed; inset:0; background:rgba(0,0,0,.52);
     z-index:50; padding:16px; min-height:100svh; display:none;
   }
-  .overlay.open{ display:grid; place-items:center; } /* why: reliable centering on Android/Samsung Chrome */
+  .overlay.open{ display:grid; place-items:center; }
   .sheet{
     width:min(480px,92vw); max-height:88svh; overflow:auto;
     background:var(--panel); border:1px solid var(--border);
@@ -119,7 +119,7 @@
 <script>
 /* ============================ CONFIG ============================ */
 const MAX_PHOTOS_ALLOWED = Number(localStorage.getItem('wh_max_photos') || '4');
-localStorage.setItem('wh_max_photos', String(MAX_PHOTOS_ALLOWED));
+localStorage.setItem('wh_max_photos', String(MAX_PHOTOS_ALLOWED)); // single source of truth
 
 /* ============================ STORAGE ============================ */
 const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
@@ -195,7 +195,7 @@ $('yesDel').onclick=()=>{
   current=null; renderJobs(); closeMenu();
 };
 
-/* ============================ EXPORT (PDF + PHOTOS to ≤20MB ZIPs) */
+/* ============================ EXPORT (PDF + PHOTOS → ≤20MB ZIPs) */
 $('exportBtn').onclick = async (ev) => {
   ev.preventDefault();
   if (!current) return;
@@ -208,18 +208,17 @@ $('exportBtn').onclick = async (ev) => {
   const setProg = (pct) => { progWrap.style.display='block'; progBar.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
 
   try{
-    setNote('Building PDF…'); setProg(15);
+    setNote('Building PDF…'); setProg(20);
 
+    // One combined PDF across ALL receiving entries for this job
     const canvases = await renderReceivingPdfPages(entries);
     const pages = canvases.map(c => ({ u8: dataURLtoU8(c.toDataURL('image/jpeg', 0.92)), w: c.width, h: c.height }));
     const pdfBlob  = buildPdfFromJpegsExact(pages, 612, 792);
     const pdfU8 = new Uint8Array(await pdfBlob.arrayBuffer());
 
-    const viewUrl = URL.createObjectURL(pdfBlob);
-    window.open(viewUrl, '_blank'); // still open viewer
-    setNote('PDF opened. Preparing ZIP files…'); setProg(45);
+    setNote('Preparing ZIP…'); setProg(55);
 
-    // Gather files for zipping
+    // Gather files to ZIP
     const files = [];
     const base = `${sanitize(current.jobNo)}_RECEIVING`;
     files.push({name:`${base}.pdf`, u8: pdfU8});
@@ -235,11 +234,11 @@ $('exportBtn').onclick = async (ev) => {
       });
     });
 
-    setProg(65);
+    setProg(75);
 
-    // Split into ≤20MB parts and download
+    // Build ≤20MB zips and auto-download
     const zips = buildZipParts(files, `${sanitize(current.jobNo)}_EXPORT`, 20 * 1024 * 1024);
-    if (!zips.length) throw new Error('Nothing to export.'); // defensive
+    if (!zips.length) throw new Error('Nothing to export.');
 
     for (const {blob, name} of zips) {
       const zurl = URL.createObjectURL(blob);
@@ -249,10 +248,8 @@ $('exportBtn').onclick = async (ev) => {
 
     setProg(100);
     setNote(`Done — downloaded ${zips.length} ZIP file${zips.length>1?'s':''} with PDF and ${photoCount} photo${photoCount!==1?'s':''}.`, 'ok');
-    setTimeout(()=>URL.revokeObjectURL(viewUrl), 30000);
   } catch(e){
-    console.error(e);
-    setNote(`Export failed: ${e?.message || 'Unexpected error.'} Try again.`, 'warn'); // why: plain-language feedback for users
+    setNote(`Export failed: ${e?.message || 'Unexpected error.'} Please try again.`, 'warn');
   }
 };
 
@@ -270,7 +267,7 @@ async function renderReceivingPdfPages(entries){
     const text=(s,x,y,px=14,b=false)=>{ g.font=b?B(px):R(px); g.fillStyle='#000'; g.textBaseline='alphabetic'; g.fillText((s||'').toUpperCase(),x,y); };
     const box =(x,y,w,h)=>g.strokeRect(x,y,w,h);
     const hln =(x1,y,x2)=>{ g.beginPath(); g.moveTo(x1,y); g.lineTo(x2,y); g.stroke(); };
-    const vln =(x,y1,y2)=>{ g.beginPath(); g.moveTo(x,y1); g.lineTo(y2?x:y1,y2||y1); g.stroke(); };
+    const vln =(x,y1,y2)=>{ g.beginPath(); g.moveTo(x,y1); g.lineTo(x,y2); g.stroke(); };
     const wrap=(s,x,y,maxW,lh=18,px=14)=>{ g.font=R(px); let line='',yy=y; (s||'').toUpperCase().split(/\s+/).forEach(w=>{
       const t=line? line+' '+w:w; if(g.measureText(t).width>maxW){ g.fillText(line,x,yy); yy+=lh; line=w; } else line=t;
     }); if(line) g.fillText(line,x,yy); };
@@ -363,7 +360,7 @@ async function renderReceivingPdfPages(entries){
   return pages;
 }
 
-/* ---- Shared normalization (fixes "norm is not defined" on export) */
+/* ---- Shared normalization -------------------------------------- */
 function normalizeEntry(r){
   return {
     jobNo:(r.jobNo||''), date:(r.date||''), title:(r.title||''), qty:(r.qty||''),
@@ -383,10 +380,9 @@ function triggerDownload(url, filename){
   const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
 }
 
-/* Minimal ZIP (STORE) with correct offsets, split to ≤ maxBytes */
+/* Minimal ZIP (STORE) with correct offsets; split to ≤ maxBytes */
 function buildZipParts(files, baseName, maxBytes){
   const parts=[]; let bucket=[], part=1;
-
   const roughSize = (list) => list.reduce((s,f)=>s+f.u8.length,0) + list.length*220 + 256;
 
   for(const f of files){
@@ -411,9 +407,8 @@ function makeZipBlob(list, name){
     const fn = enc.encode(fileName);
     const crc = crc32(f.u8);
 
-    const localHeaderOffset = offset; // why: needed in central directory
+    const localHeaderOffset = offset;
 
-    // Local file header
     const lh = new Uint8Array(30 + fn.length);
     wu32(lh,0,0x04034b50); wu16(lh,4,20); wu16(lh,6,0); wu16(lh,8,0);
     wu16(lh,10,0); wu16(lh,12,0);
@@ -421,7 +416,6 @@ function makeZipBlob(list, name){
     wu16(lh,26,fn.length); wu16(lh,28,0);
     chunks.push(lh, fn, f.u8); offset += lh.length + fn.length + f.u8.length;
 
-    // Central directory header
     const cd = new Uint8Array(46 + fn.length);
     wu32(cd,0,0x02014b50); wu16(cd,4,20); wu16(cd,6,20); wu16(cd,8,0);
     wu16(cd,10,0); wu16(cd,12,0);
@@ -452,41 +446,6 @@ function makeZipBlob(list, name){
 const CRC_TABLE = (()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1); t[n]=c>>>0; } return t; })();
 function crc32(u8){ let c=0xFFFFFFFF; for(let i=0;i<u8.length;i++){ c = CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); } return (c ^ 0xFFFFFFFF) >>> 0; }
 
-/* ----------------------- Build PDF from JPEGs -------------------- */
-function buildPdfFromJpegsExact(pages, pageWpt=612, pageHpt=792){
-  const parts=[]; const enc=new TextEncoder(); let offset=0; const xref=[null];
-  const addS=s=>{const u8=enc.encode(s); parts.push(u8); offset+=u8.length;};
-  const addU8=u8=>{parts.push(u8); offset+=u8.length;};
-  const obj=(id,body)=>{ xref[id]=offset; addS(`${id} 0 obj\n${body}\nendobj\n`); };
-
-  addS('%PDF-1.4\n');
-  obj(1, `<< /Type /Catalog /Pages 2 0 R >>`);
-  obj(2, `<< /Type /Pages /Count ${pages.length} /Kids [ ${pages.map((_,i)=>`${3+i*3+2} 0 R`).join(' ')} ] >>`);
-
-  pages.forEach((pg,i)=>{
-    const imgId=3+i*3, cntId=4+i*3, pageId=5+i*3;
-
-    xref[imgId]=offset;
-    addS(`${imgId} 0 obj\n<< /Type /XObject /Subtype /Image /Filter /DCTDecode /ColorSpace /DeviceRGB /BitsPerComponent 8 /Width ${pg.w} /Height ${pg.h} /Length ${pg.u8.length} >>\nstream\n`);
-    addU8(pg.u8); addS(`\nendstream\nendobj\n`);
-
-    const content=`q
-${pageWpt} 0 0 ${pageHpt} 0 0 cm
-/Im${i} Do
-Q
-`;
-    obj(cntId, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
-
-    obj(pageId, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWpt} ${pageHpt}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${cntId} 0 R >>`);
-  });
-
-  const startXref=offset;
-  addS(`xref\n0 ${xref.length}\n0000000000 65535 f \n`);
-  for(let i=1;i<xref.length;i++) addS(`${String(xref[i]).padStart(10,'0')} 00000 n \n`);
-  addS(`trailer\n<< /Size ${xref.length} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF`);
-  return new Blob(parts,{type:'application/pdf'});
-}
-
 /* ============================ INIT ============================== */
 function initJobsPage(){
   const sd = document.getElementById('startDate');
@@ -500,13 +459,6 @@ window.addEventListener('pageshow', () => {
   renderJobs();
 });
 window.addEventListener('storage', (e)=>{ if (e.key === JOBS_KEY || e.key===RECV_KEY) renderJobs(); });
-
-/* -------- Service Worker note ----------------------------------- */
-/* This page does not change your SW. The console warnings about SW cache
-   are unrelated to these fixes. */
-
-/* --------- Dev aid: surface runtime errors for development ------- */
-window.addEventListener('error', e => console.error('[JS ERROR]', e.message, e.error || ''));
 </script>
 </body>
 </html>
