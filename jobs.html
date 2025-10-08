@@ -27,13 +27,15 @@
   th,td{border-bottom:1px solid var(--border);padding:14px 10px}
   th{font-size:11px;color:#8FA3BD;text-transform:uppercase;letter-spacing:.06em}
   .empty{color:var(--muted);text-align:center;padding:18px;text-transform:uppercase}
+  .badge{display:inline-block;min-width:1.6em;text-align:center;padding:2px 6px;border-radius:999px;border:1px solid var(--border);background:#0F172A;font-weight:900;font-size:12px}
+  .badge.zero{opacity:.5}
+  .btn.hasReports{color:#26D07C}
 
-  /* Overlay — flex center, safe viewport heights */
+  /* Overlay: bulletproof centering; never stuck */
   .overlay{
     position:fixed; inset:0; background:rgba(0,0,0,.5);
-    display:none; z-index:50; padding:16px;
-    min-height:100svh; /* handles mobile URL bar changes */
-    display:flex; align-items:center; justify-content:center;
+    z-index:50; padding:16px; display:none;
+    min-height:100svh; display:flex; align-items:center; justify-content:center;
   }
   .sheet{
     width:min(480px,92vw); max-height:88svh; overflow:auto;
@@ -49,11 +51,6 @@
   .small{font-size:12px;color:#8FA3BD}
   .ok{color:#b7f7d2}
   .warn{color:#ffd6d6}
-
-  .badge{display:inline-block;min-width:1.6em;text-align:center;padding:2px 6px;border-radius:999px;border:1px solid var(--border);background:#0F172A;font-weight:900;font-size:12px}
-  .badge.zero{opacity:.5}
-  .btn.hasReports{color:#26D07C}
-
   .progress{height:6px;border-radius:999px;background:#0b1f15;border:1px solid #1B9E64;overflow:hidden;width:100%;display:none}
   .progress > div{height:100%;width:0%;background:#26D07C;transition:width .12s linear}
 </style>
@@ -68,7 +65,6 @@
 </header>
 
 <main>
-  <!-- Create -->
   <section class="card">
     <div class="row">
       <div><label for="jobNo">JOB NO. (MAX 8) *</label><input id="jobNo" maxlength="8" /></div>
@@ -81,12 +77,9 @@
     </div>
   </section>
 
-  <!-- List -->
   <section class="card">
     <table>
-      <thead>
-        <tr><th>JOB</th><th>DESC</th><th>START</th><th>CREATED</th><th>REPORTS</th></tr>
-      </thead>
+      <thead><tr><th>JOB</th><th>DESC</th><th>START</th><th>CREATED</th><th>REPORTS</th></tr></thead>
       <tbody id="jobsBody"><tr><td colspan="5" class="empty">NO JOBS YET</td></tr></tbody>
     </table>
     <div class="small">TIP: TAP A ROW FOR ACTIONS</div>
@@ -95,7 +88,7 @@
 
 <!-- ACTION MENU -->
 <div id="overlay" class="overlay" role="dialog" aria-modal="true">
-  <div class="sheet">
+  <div class="sheet" role="document">
     <h2>JOB ACTIONS</h2>
     <div id="dlgMeta" class="meta">JOB — DESC</div>
 
@@ -168,7 +161,7 @@ $('createBtn').onclick=()=>{
 };
 $('clearBtn').onclick=()=>{$('jobNo').value='';$('desc').value='';};
 
-/* ============================ ACTIONS =========================== */
+/* ============================ ACTIONS (never stuck) ============== */
 let current=null;
 function openMenu(jobNo){
   const job=readJobs().find(j=>j.jobNo===jobNo); if(!job) return;
@@ -181,9 +174,10 @@ function openMenu(jobNo){
 }
 function closeMenu(){ $('overlay').style.display='none'; current=null; }
 $('closeBtn').onclick=closeMenu;
-$('overlay').onclick=(e)=>{ if(e.target===e.currentTarget) closeMenu(); };
+$('overlay').addEventListener('click',(e)=>{ if(e.target===e.currentTarget) closeMenu(); });
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && $('overlay').style.display!=='none') closeMenu(); });
 
-/* DELETE JOB (job + its receiving entries) */
+/* DELETE JOB */
 $('deleteBtn').onclick=()=>{ $('confirmBox').style.display='block'; };
 $('noDel').onclick =()=>{ $('confirmBox').style.display='none'; };
 $('yesDel').onclick=()=>{
@@ -198,6 +192,7 @@ $('exportBtn').onclick = async (ev) => {
   ev.preventDefault();
   if (!current) return;
 
+  const disable = (on)=>{ ['exportBtn','deleteBtn','viewBtn','closeBtn'].forEach(id=>{ const el=$(id); if(el) el.disabled=on; }); };
   const entries = readRecv().filter(r => r.jobNo === current.jobNo);
   if (!entries.length) { alert('NO RECEIVING ENTRIES FOR THIS JOB'); return; }
 
@@ -206,14 +201,14 @@ $('exportBtn').onclick = async (ev) => {
   const setProg = (pct) => { progWrap.style.display='block'; progBar.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
   const tick = () => new Promise(r=>setTimeout(r,0));
 
-  // CONFIG
-  const MAX_EXPORT_PHOTOS = 6; // bump if you want
+  const MAX_EXPORT_PHOTOS = 12;   // higher cap, we will compress if needed
   let photoAdded = 0;
 
   try{
+    disable(true);
     setNote('BUILDING PDF…'); setProg(10);
 
-    // 1) Render pages (canvas at 150dpi)
+    // 1) Render pages (150dpi)
     const canvases = await renderReceivingPdfPages(entries);
     await tick();
 
@@ -222,11 +217,11 @@ $('exportBtn').onclick = async (ev) => {
     for (let i=0;i<canvases.length;i++){
       const c = canvases[i];
       pages.push({ u8: dataURLtoU8(c.toDataURL('image/jpeg', 0.92)), w: c.width, h: c.height });
-      setProg(10 + Math.round(((i+1)/canvases.length)*25));
+      setProg(10 + Math.round(((i+1)/canvases.length)*25)); // → 35%
       await tick();
     }
 
-    // 3) Build PDF (exact page size → no cropping)
+    // 3) Build PDF
     const pdfBlob = buildPdfFromJpegsExact(pages, 612, 792);
     const pdfU8    = new Uint8Array(await pdfBlob.arrayBuffer());
     setProg(40); setNote('ADDING PHOTOS…');
@@ -244,23 +239,14 @@ $('exportBtn').onclick = async (ev) => {
 
       for (let i = 0; i < photos.length; i++) {
         try {
-          const src = getPhotoDataURL(photos[i]); // tolerant key lookup
-          if (!src) throw new Error('no dataURL');
-
-          // If it’s already a JPEG dataURL, we can drop it straight in fast.
-          if (src.startsWith('data:image/jpeg')) {
-            files.push({ name:`PHOTOS/${sanitize(r.jobNo)}-${title} (${i+1}).jpg`, data: dataURLtoU8(src) });
-            photoAdded++;
-          } else {
-            const { u8 } = await compressDataUrlToJpegU8Safe(src, 1280, 0.80, 8000);
-            files.push({ name:`PHOTOS/${sanitize(r.jobNo)}-${title} (${i+1}).jpg`, data: u8 });
-            photoAdded++;
-          }
+          const {u8, ext} = await getPhotoBytes(photos[i]); // tolerant loader
+          files.push({ name:`PHOTOS/${sanitize(r.jobNo)}-${title} (${i+1}).${ext}`, data: u8 });
+          photoAdded++;
         } catch (err) {
           console.warn('Photo skipped:', err);
         }
         done++;
-        setProg(40 + Math.round((done/Math.max(1,total))*45)); // → ~85%
+        setProg(40 + Math.round((done/Math.max(1,total))*45)); // → 85%
         await tick();
       }
     }
@@ -282,21 +268,82 @@ $('exportBtn').onclick = async (ev) => {
     }
   } catch(e){
     console.error(e);
-    setNote('EXPORT FAILED. SEE CONSOLE LOGS.', 'warn'); progWrap.style.display='none';
+    setNote('EXPORT FAILED. SEE CONSOLE LOGS.', 'warn'); 
+  } finally {
+    // Never leave the UI frozen
+    disable(false);
   }
 };
 
-/* ---------- Helpers to accept any photo shape ---------- */
-function getPhotoDataURL(p){
-  // Accept {dataUrl}, {dataURL}, {src}, {url}, or raw string
-  if (!p) return '';
-  if (typeof p === 'string') return p;
-  return p.dataUrl || p.dataURL || p.src || p.url || '';
+/* ---------- Photo loader: accept many shapes; prefer originals ----- */
+async function getPhotoBytes(photo){
+  // Returns {u8: Uint8Array, ext: 'jpg'|'png'}
+  if (!photo) throw new Error('empty photo');
+
+  // Raw string (data URL)
+  if (typeof photo === 'string') return dataUrlToBytes(photo);
+
+  // Common fields
+  const durl = photo.dataUrl || photo.dataURL || photo.src || photo.url;
+  if (typeof durl === 'string') return dataUrlToBytes(durl);
+
+  // Blob/File
+  const blob = photo.blob || photo.file;
+  if (blob instanceof Blob) return blobToPreferred(blob);
+
+  // Raw bytes
+  const bytes = photo.bytes || photo.data;
+  if (bytes instanceof Uint8Array) return {u8: bytes, ext: 'jpg'}; // assume jpg if unknown
+  if (bytes instanceof ArrayBuffer) return {u8: new Uint8Array(bytes), ext: 'jpg'};
+
+  throw new Error('unsupported photo shape');
+}
+
+function dataUrlToBytes(durl){
+  if (!durl.startsWith('data:')) throw new Error('not a dataURL');
+  const mime = durl.slice(5, durl.indexOf(';')) || 'image/jpeg';
+  const i = durl.indexOf(',');
+  const bin = atob(durl.slice(i+1));
+  const u8 = new Uint8Array(bin.length);
+  for (let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k);
+
+  // Keep JPEG/PNG as-is; convert others to JPEG for PC-friendliness
+  if (mime.includes('jpeg') || mime.includes('jpg')) return {u8, ext:'jpg'};
+  if (mime.includes('png'))  return {u8, ext:'png'};
+  // HEIC/WEBP/etc -> convert
+  return {u8: null, ext: 'jpg', _convertFrom: durl};
+}
+
+async function blobToPreferred(blob){
+  const mime = blob.type || 'image/jpeg';
+  const buf = await blob.arrayBuffer();
+  const u8 = new Uint8Array(buf);
+  if (mime.includes('jpeg') || mime.includes('jpg')) return {u8, ext:'jpg'};
+  if (mime.includes('png'))  return {u8, ext:'png'};
+  // Convert others to JPEG
+  const durl = URL.createObjectURL(blob);
+  try {
+    const jpeg = await toJpegBytesFromUrl(durl, 1280, 0.82);
+    return {u8: jpeg, ext:'jpg'};
+  } finally {
+    URL.revokeObjectURL(durl);
+  }
+}
+
+async function toJpegBytesFromUrl(url, maxDim=1280, quality=0.82){
+  const img = await new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=url; });
+  const s = Math.min(1, maxDim/Math.max(img.width,img.height));
+  const W = Math.max(1, Math.round(img.width*s)), H = Math.max(1, Math.round(img.height*s));
+  const c=document.createElement('canvas'); c.width=W; c.height=H; c.getContext('2d').drawImage(img,0,0,W,H);
+  const durl = c.toDataURL('image/jpeg', quality);
+  const i=durl.indexOf(','), bin=atob(durl.slice(i+1)); const u8=new Uint8Array(bin.length);
+  for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k);
+  return u8;
 }
 
 /* ---------- PDF RENDER (Letter portrait, 0.5" margins) ---------- */
 async function renderReceivingPdfPages(entries){
-  const W=1275, H=1650, M=75; // 150dpi canvas
+  const W=1275, H=1650, M=75; // 150dpi
   const pages=[];
   for(const raw of entries){
     const r = norm(raw);
@@ -313,11 +360,9 @@ async function renderReceivingPdfPages(entries){
       const t=line? line+' '+w:w; if(g.measureText(t).width>maxW){ g.fillText(line,x,yy); yy+=lh; line=w; } else line=t;
     }); if(line) g.fillText(line,x,yy); };
 
-    // Title
     text('RECEIVING REPORTS', M, M+22, 22, true);
     hln(M, M+28, W-M);
 
-    // IDENTIFICATION
     let y=M+40;
     text('IDENTIFICATION', M+6, y+18, 14, true);
     const IDH=124; box(M,y+24,W-2*M,IDH);
@@ -330,7 +375,6 @@ async function renderReceivingPdfPages(entries){
     text('VENDOR',   M+12, y+24+3*rw-8, 12, true); text(r.vendor,  M+120, y+24+3*rw-8);
     text('PO.',      midX+12, y+24+3*rw-8, 12, true); text(r.po,   midX+100, y+24+3*rw-8);
 
-    // SPECIFICATION
     y += 24+IDH+16;
     text('SPECIFICATION', M+6, y+18, 14, true);
     const SPH=92; box(M,y+24,W-2*M,SPH);
@@ -341,7 +385,6 @@ async function renderReceivingPdfPages(entries){
     text('SPEC', M+12, y+24+2*spRw-8, 12, true); text(`${r.specPrefix} ${r.specCode}`, M+120, y+24+2*spRw-8);
     text('FITTING', spMid+12, y+24+2*spRw-8, 12, true); text(r.fitting, spMid+120, y+24+2*spRw-8);
 
-    // DIMENSIONS
     y += 24+SPH+16;
     text('DIMENSIONS', M+6, y+18, 14, true);
     const DMH=108; box(M,y+24,W-2*M,DMH);
@@ -354,7 +397,6 @@ async function renderReceivingPdfPages(entries){
     text('DIAMETER', M+12, y+24+3*dmRw-8, 12, true); text(`${r.diameter} ${r.diaType}`.trim(), M+120, y+24+3*dmRw-8);
     text('OTHER',    midX+12, y+24+3*dmRw-8, 12, true); text(r.dimOther, midX+100, y+24+3*dmRw-8);
 
-    // MARKINGS
     y += 24+DMH+16;
     text('MARKINGS', M+6, y+18, 14, true);
     const MKH=128; box(M,y+24,W-2*M,MKH);
@@ -367,7 +409,6 @@ async function renderReceivingPdfPages(entries){
     text('MTR/COFC ACCEPTABLE TO SPECIFICATION', M+12, y+24+3*mkRw-8, 12, true);
     text(r.mtrOk, M+360, y+24+3*mkRw-8);
 
-    // ACCEPTABILITY
     y += 24+MKH+16;
     text('ACCEPTABILITY', M+6, y+18, 14, true);
     const ACH=98; box(M,y+24,W-2*M,ACH);
@@ -375,19 +416,17 @@ async function renderReceivingPdfPages(entries){
     text('VISUAL', M+12, y+24+acRw-8, 12, true); text(r.visualOk, M+120, y+24+acRw-8);
     text('B16 DIMENSIONS', midX+12, y+24+acRw-8, 12, true); text(r.b16Ok, midX+180, y+24+acRw-8);
 
-    // DECISION
     text('DECISION', M+12, y+24+2*acRw-8, 12, true);
     const bxY=y+24+2*acRw-22;
-    const check = (x, on)=>{ g.strokeRect(x, bxY, 18, 18); if(on){ g.font=B(14); g.fillText('X', x+4, y+24+2*acRw-8); } };
-    check(M+120, (r.decision||'ACCEPT')==='ACCEPT'); g.fillText('ACCEPT', M+146, y+24+2*acRw-8);
-    check(M+240, (r.decision||'ACCEPT')==='REJECT'); g.fillText('REJECT', M+266, y+24+2*acRw-8);
+    g.strokeRect(M+120, bxY, 18, 18); g.fillText('ACCEPT', M+146, y+24+2*acRw-8);
+    g.strokeRect(M+240, bxY, 18, 18); g.fillText('REJECT', M+266, y+24+2*acRw-8);
+    if((r.decision||'ACCEPT')==='ACCEPT'){ g.font=B(14); g.fillText('X', M+124, y+24+2*acRw-8); }
+    else { g.font=B(14); g.fillText('X', M+244, y+24+2*acRw-8); }
 
-    // COMMENTS
     const midX=M+(W-2*M)/2;
     g.font=B(12); g.fillText('COMMENTS', midX+12, y+24+2*acRw-8);
     wrap(r.comments, midX+120, y+24+2*acRw-22, (W-2*M)-(midX-M)-20, 18, 14);
 
-    // FOOTER
     y += 24+ACH+16;
     g.strokeRect(M,y,W-2*M,44);
     g.font=B(12);
@@ -412,10 +451,9 @@ async function renderReceivingPdfPages(entries){
   }
 }
 
-/* ---------------------- BINARY / PDF / ZIP ----------------------- */
+/* ----------------------- PDF & ZIP utils ------------------------ */
 function dataURLtoU8(d){ const i=d.indexOf(','); const bin=atob(d.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
 
-/* Correct PDF builder: uses REAL image pixel sizes to avoid cropping */
 function buildPdfFromJpegsExact(pages, pageWpt=612, pageHpt=792){
   const parts=[]; const enc=new TextEncoder(); let offset=0; const xref=[null];
   const addS=s=>{const u8=enc.encode(s); parts.push(u8); offset+=u8.length;};
@@ -450,25 +488,6 @@ Q
   return new Blob(parts,{type:'application/pdf'});
 }
 
-/* JPEG compress — robust & memory friendly */
-async function compressDataUrlToJpegU8Safe(dataUrl, maxDim=1280, quality=0.80, timeoutMs=8000){
-  const controller = new AbortController();
-  const to = setTimeout(()=>controller.abort('timeout'), timeoutMs);
-  try{
-    const img = await new Promise((res,rej)=>{
-      const im=new Image(); im.crossOrigin='anonymous';
-      im.onload=()=>res(im); im.onerror=rej; im.src=dataUrl;
-    });
-    const s = Math.min(1, maxDim/Math.max(img.width,img.height));
-    const W = Math.max(1, Math.round(img.width*s)), H = Math.max(1, Math.round(img.height*s));
-    const c=document.createElement('canvas'); c.width=W; c.height=H; c.getContext('2d').drawImage(img,0,0,W,H);
-    const durl = c.toDataURL('image/jpeg', quality);
-    clearTimeout(to);
-    return {u8:dataURLtoU8(durl)};
-  } catch (e) { clearTimeout(to); throw e; }
-}
-
-/* ZIP (store mode) */
 function zipStoreCompat(files) {
   const enc = new TextEncoder(), LE2=n=>new Uint8Array([n&255,(n>>>8)&255]), LE4=n=>new Uint8Array([n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]);
   const join = arrs => { let L=0; for(const a of arrs) L+=a.length; const out=new Uint8Array(L); let o=0; for(const a of arrs){ out.set(a,o); o+=a.length; } return out; };
@@ -489,7 +508,6 @@ function zipStoreCompat(files) {
   return new Blob([localsAll, centralsAll, end], {type:'application/zip'});
 }
 
-/* SAVE / SHARE */
 async function saveWithPicker(fileName, blob, mime='application/zip', ext='.zip') {
   if (!('showSaveFilePicker' in window)) return false;
   try {
