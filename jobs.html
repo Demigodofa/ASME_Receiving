@@ -1,3 +1,6 @@
+<!-- =================================================================== -->
+<!-- /jobs.html — JOBS (fixed: no duplicate const, date autofill, works) -->
+<!-- =================================================================== -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -31,14 +34,13 @@
   .badge.zero{opacity:.5}
   .btn.hasReports{color:#26D07C}
 
-  /* Overlay — centered, but hidden by default */
-.overlay{
-  position:fixed; inset:0; background:rgba(0,0,0,.5);
-  z-index:50; padding:16px;
-  min-height:100svh;
-  display:none;               /* <-- keep ONLY this display */
-  align-items:center; justify-content:center; /* used when JS sets display:flex */
-}
+  /* Overlay — centered, hidden by default; JS sets display:flex */
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.5);
+    z-index:50; padding:16px; min-height:100svh;
+    display:none;
+    align-items:center; justify-content:center;
+  }
   .sheet{
     width:min(480px,92vw); max-height:88svh; overflow:auto;
     background:var(--panel); border:1px solid var(--border);
@@ -189,159 +191,36 @@ $('yesDel').onclick=()=>{
   current=null; renderJobs(); closeMenu();
 };
 
-/* ============================ EXPORT ============================ */
+/* ============================ EXPORT (PDF only here) ============= */
+/* (Photo export lives in receiving workflow; this page builds the PDF) */
 $('exportBtn').onclick = async (ev) => {
   ev.preventDefault();
   if (!current) return;
 
-  const disable = (on)=>{ ['exportBtn','deleteBtn','viewBtn','closeBtn'].forEach(id=>{ const el=$(id); if(el) el.disabled=on; }); };
   const entries = readRecv().filter(r => r.jobNo === current.jobNo);
   if (!entries.length) { alert('NO RECEIVING ENTRIES FOR THIS JOB'); return; }
 
   const setNote = (msg, cls='') => { const n=$('zipNote'); n.textContent=msg; n.className='small '+cls; };
   const progWrap = $('exportProg'), progBar = progWrap.firstElementChild;
   const setProg = (pct) => { progWrap.style.display='block'; progBar.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
-  const tick = () => new Promise(r=>setTimeout(r,0));
-
-  const MAX_EXPORT_PHOTOS = 12;   // higher cap, we will compress if needed
-  let photoAdded = 0;
 
   try{
-    disable(true);
-    setNote('BUILDING PDF…'); setProg(10);
+    setNote('BUILDING PDF…'); setProg(20);
 
-    // 1) Render pages (150dpi)
     const canvases = await renderReceivingPdfPages(entries);
-    await tick();
+    const pages = canvases.map(c => ({ u8: dataURLtoU8(c.toDataURL('image/jpeg', 0.92)), w: c.width, h: c.height }));
+    const pdfBlob  = buildPdfFromJpegsExact(pages, 612, 792);
+    setProg(90); setNote('OPENING PDF…');
 
-    // 2) JPEG pages
-    const pages=[]; 
-    for (let i=0;i<canvases.length;i++){
-      const c = canvases[i];
-      pages.push({ u8: dataURLtoU8(c.toDataURL('image/jpeg', 0.92)), w: c.width, h: c.height });
-      setProg(10 + Math.round(((i+1)/canvases.length)*25)); // → 35%
-      await tick();
-    }
-
-    // 3) Build PDF
-    const pdfBlob = buildPdfFromJpegsExact(pages, 612, 792);
-    const pdfU8    = new Uint8Array(await pdfBlob.arrayBuffer());
-    setProg(40); setNote('ADDING PHOTOS…');
-
-    // 4) Photos into ZIP
-    const base = `${sanitize(current.jobNo)}_${sanitize(current.desc||'')}`.replace(/_$/,'');
-    const files = [{ name:`${base}-REPORTS.pdf`, data: pdfU8 }, { name:'PHOTOS/', dir:true }];
-
-    let done=0, total=0;
-    entries.forEach(r=>{ total += Math.min(MAX_EXPORT_PHOTOS, (r.photos||[]).length); });
-
-    for (const r of entries) {
-      const title = sanitize(r.title || 'ITEM');
-      const photos = (r.photos || []).slice(0, MAX_EXPORT_PHOTOS);
-
-      for (let i = 0; i < photos.length; i++) {
-        try {
-          const {u8, ext} = await getPhotoBytes(photos[i]); // tolerant loader
-          files.push({ name:`PHOTOS/${sanitize(r.jobNo)}-${title} (${i+1}).${ext}`, data: u8 });
-          photoAdded++;
-        } catch (err) {
-          console.warn('Photo skipped:', err);
-        }
-        done++;
-        setProg(40 + Math.round((done/Math.max(1,total))*45)); // → 85%
-        await tick();
-      }
-    }
-
-    setNote(photoAdded ? `ZIPPING… (${photoAdded} photos)` : 'ZIPPING… (no photos found)');
-    setProg(88);
-    const zipBlob = zipStoreCompat(files);
-
-    setNote('SAVING…'); setProg(95);
-    const ok = await saveSmartZip(base, zipBlob);
-
-    if (ok) { setProg(100); setNote(`EXPORTED. ${photoAdded} PHOTOS INCLUDED. CHECK DOWNLOADS / FILES.`, 'ok'); }
-    else {
-      const url = URL.createObjectURL(pdfBlob);
-      window.open(url, '_blank');
-      setNote('COULD NOT SAVE ZIP. OPENED PDF IN A NEW TAB.', 'warn');
-      setProg(100);
-      setTimeout(()=>URL.revokeObjectURL(url), 30000);
-    }
+    const url = URL.createObjectURL(pdfBlob);
+    window.open(url, '_blank');
+    setProg(100); setNote('PDF OPENED. YOU CAN DOWNLOAD/SHARE FROM VIEWER.', 'ok');
+    setTimeout(()=>URL.revokeObjectURL(url), 30000);
   } catch(e){
     console.error(e);
     setNote('EXPORT FAILED. SEE CONSOLE LOGS.', 'warn'); 
-  } finally {
-    // Never leave the UI frozen
-    disable(false);
   }
 };
-
-/* ---------- Photo loader: accept many shapes; prefer originals ----- */
-async function getPhotoBytes(photo){
-  // Returns {u8: Uint8Array, ext: 'jpg'|'png'}
-  if (!photo) throw new Error('empty photo');
-
-  // Raw string (data URL)
-  if (typeof photo === 'string') return dataUrlToBytes(photo);
-
-  // Common fields
-  const durl = photo.dataUrl || photo.dataURL || photo.src || photo.url;
-  if (typeof durl === 'string') return dataUrlToBytes(durl);
-
-  // Blob/File
-  const blob = photo.blob || photo.file;
-  if (blob instanceof Blob) return blobToPreferred(blob);
-
-  // Raw bytes
-  const bytes = photo.bytes || photo.data;
-  if (bytes instanceof Uint8Array) return {u8: bytes, ext: 'jpg'}; // assume jpg if unknown
-  if (bytes instanceof ArrayBuffer) return {u8: new Uint8Array(bytes), ext: 'jpg'};
-
-  throw new Error('unsupported photo shape');
-}
-
-function dataUrlToBytes(durl){
-  if (!durl.startsWith('data:')) throw new Error('not a dataURL');
-  const mime = durl.slice(5, durl.indexOf(';')) || 'image/jpeg';
-  const i = durl.indexOf(',');
-  const bin = atob(durl.slice(i+1));
-  const u8 = new Uint8Array(bin.length);
-  for (let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k);
-
-  // Keep JPEG/PNG as-is; convert others to JPEG for PC-friendliness
-  if (mime.includes('jpeg') || mime.includes('jpg')) return {u8, ext:'jpg'};
-  if (mime.includes('png'))  return {u8, ext:'png'};
-  // HEIC/WEBP/etc -> convert
-  return {u8: null, ext: 'jpg', _convertFrom: durl};
-}
-
-async function blobToPreferred(blob){
-  const mime = blob.type || 'image/jpeg';
-  const buf = await blob.arrayBuffer();
-  const u8 = new Uint8Array(buf);
-  if (mime.includes('jpeg') || mime.includes('jpg')) return {u8, ext:'jpg'};
-  if (mime.includes('png'))  return {u8, ext:'png'};
-  // Convert others to JPEG
-  const durl = URL.createObjectURL(blob);
-  try {
-    const jpeg = await toJpegBytesFromUrl(durl, 1280, 0.82);
-    return {u8: jpeg, ext:'jpg'};
-  } finally {
-    URL.revokeObjectURL(durl);
-  }
-}
-
-async function toJpegBytesFromUrl(url, maxDim=1280, quality=0.82){
-  const img = await new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=url; });
-  const s = Math.min(1, maxDim/Math.max(img.width,img.height));
-  const W = Math.max(1, Math.round(img.width*s)), H = Math.max(1, Math.round(img.height*s));
-  const c=document.createElement('canvas'); c.width=W; c.height=H; c.getContext('2d').drawImage(img,0,0,W,H);
-  const durl = c.toDataURL('image/jpeg', quality);
-  const i=durl.indexOf(','), bin=atob(durl.slice(i+1)); const u8=new Uint8Array(bin.length);
-  for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k);
-  return u8;
-}
 
 /* ---------- PDF RENDER (Letter portrait, 0.5" margins) ---------- */
 async function renderReceivingPdfPages(entries){
@@ -362,13 +241,16 @@ async function renderReceivingPdfPages(entries){
       const t=line? line+' '+w:w; if(g.measureText(t).width>maxW){ g.fillText(line,x,yy); yy+=lh; line=w; } else line=t;
     }); if(line) g.fillText(line,x,yy); };
 
+    // Title
     text('RECEIVING REPORTS', M, M+22, 22, true);
     hln(M, M+28, W-M);
 
+    // IDENTIFICATION
     let y=M+40;
     text('IDENTIFICATION', M+6, y+18, 14, true);
     const IDH=124; box(M,y+24,W-2*M,IDH);
-    const rw=IDH/3, midX=M+(W-2*M)/2;
+    const rw=IDH/3, midX=M+(W-2*M)/2; /* <-- define midX ONCE and reuse */
+
     hln(M, y+24+rw, W-M); hln(M, y+24+2*rw, W-M); vln(midX, y+24, y+24+IDH);
     text('JOB NO.',   M+12, y+24+rw-8, 12, true); text(r.jobNo,   M+120, y+24+rw-8);
     text('DATE',     midX+12, y+24+rw-8, 12, true); text(r.date, midX+100, y+24+rw-8);
@@ -377,6 +259,7 @@ async function renderReceivingPdfPages(entries){
     text('VENDOR',   M+12, y+24+3*rw-8, 12, true); text(r.vendor,  M+120, y+24+3*rw-8);
     text('PO.',      midX+12, y+24+3*rw-8, 12, true); text(r.po,   midX+100, y+24+3*rw-8);
 
+    // SPECIFICATION
     y += 24+IDH+16;
     text('SPECIFICATION', M+6, y+18, 14, true);
     const SPH=92; box(M,y+24,W-2*M,SPH);
@@ -387,6 +270,7 @@ async function renderReceivingPdfPages(entries){
     text('SPEC', M+12, y+24+2*spRw-8, 12, true); text(`${r.specPrefix} ${r.specCode}`, M+120, y+24+2*spRw-8);
     text('FITTING', spMid+12, y+24+2*spRw-8, 12, true); text(r.fitting, spMid+120, y+24+2*spRw-8);
 
+    // DIMENSIONS
     y += 24+SPH+16;
     text('DIMENSIONS', M+6, y+18, 14, true);
     const DMH=108; box(M,y+24,W-2*M,DMH);
@@ -399,6 +283,7 @@ async function renderReceivingPdfPages(entries){
     text('DIAMETER', M+12, y+24+3*dmRw-8, 12, true); text(`${r.diameter} ${r.diaType}`.trim(), M+120, y+24+3*dmRw-8);
     text('OTHER',    midX+12, y+24+3*dmRw-8, 12, true); text(r.dimOther, midX+100, y+24+3*dmRw-8);
 
+    // MARKINGS
     y += 24+DMH+16;
     text('MARKINGS', M+6, y+18, 14, true);
     const MKH=128; box(M,y+24,W-2*M,MKH);
@@ -411,6 +296,7 @@ async function renderReceivingPdfPages(entries){
     text('MTR/COFC ACCEPTABLE TO SPECIFICATION', M+12, y+24+3*mkRw-8, 12, true);
     text(r.mtrOk, M+360, y+24+3*mkRw-8);
 
+    // ACCEPTABILITY + DECISION
     y += 24+MKH+16;
     text('ACCEPTABILITY', M+6, y+18, 14, true);
     const ACH=98; box(M,y+24,W-2*M,ACH);
@@ -425,10 +311,11 @@ async function renderReceivingPdfPages(entries){
     if((r.decision||'ACCEPT')==='ACCEPT'){ g.font=B(14); g.fillText('X', M+124, y+24+2*acRw-8); }
     else { g.font=B(14); g.fillText('X', M+244, y+24+2*acRw-8); }
 
-    const midX=M+(W-2*M)/2;
+    // COMMENTS (re-use midX defined earlier)
     g.font=B(12); g.fillText('COMMENTS', midX+12, y+24+2*acRw-8);
     wrap(r.comments, midX+120, y+24+2*acRw-22, (W-2*M)-(midX-M)-20, 18, 14);
 
+    // FOOTER
     y += 24+ACH+16;
     g.strokeRect(M,y,W-2*M,44);
     g.font=B(12);
@@ -490,59 +377,6 @@ Q
   return new Blob(parts,{type:'application/pdf'});
 }
 
-function zipStoreCompat(files) {
-  const enc = new TextEncoder(), LE2=n=>new Uint8Array([n&255,(n>>>8)&255]), LE4=n=>new Uint8Array([n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]);
-  const join = arrs => { let L=0; for(const a of arrs) L+=a.length; const out=new Uint8Array(L); let o=0; for(const a of arrs){ out.set(a,o); o+=a.length; } return out; };
-  const crc32=u8=>{ let c=~0>>>0; for(let i=0;i<u8.length;i++){ c^=u8[i]; for(let k=0;k<8;k++) c=(c>>>1)^(0xEDB88320&-(c&1)); } return (~c)>>>0; };
-  const now=new Date(); const dosTime=((now.getHours()&31)<<11)|((now.getMinutes()&63)<<5)|((now.getSeconds()/2)&31);
-  const dosDate=(((now.getFullYear()-1980)&127)<<9)|(((now.getMonth()+1)&15)<<5)|(now.getDate()&31);
-  const norm = files.map(f=>({ name:sanitize((f.name||'').replace(/\\/g,'/')), dir:!!f.dir, data:f.data? (f.data instanceof Uint8Array?f.data:new Uint8Array(f.data)):new Uint8Array() }));
-  const locals=[], centrals=[]; let offset=0;
-  for(const f of norm){
-    const name=enc.encode(f.name), isDir=f.dir||f.name.endsWith('/'), data=isDir?new Uint8Array():f.data, crc=isDir?0:crc32(data), size=data.length;
-    const local=join([enc.encode('PK\x03\x04'),LE2(20),LE2(0),LE2(0),LE2(dosTime),LE2(dosDate),LE4(crc),LE4(size),LE4(size),LE2(name.length),LE2(0),name]);
-    locals.push(local,data);
-    const central=join([enc.encode('PK\x01\x02'),LE2(20),LE2(20),LE2(0),LE2(0),LE2(dosTime),LE2(dosDate),LE4(crc),LE4(size),LE4(size),LE2(name.length),LE2(0),LE2(0),LE2(isDir?0x10:0),LE2(0),LE4(isDir?0x10:0),LE4(offset),name]);
-    centrals.push(central); offset += local.length + data.length;
-  }
-  const localsAll=join(locals), centralsAll=join(centrals);
-  const end=join([enc.encode('PK\x05\x06'),LE2(0),LE2(0),LE2(norm.length),LE2(norm.length),LE4(centralsAll.length),LE4(localsAll.length),LE2(0)]);
-  return new Blob([localsAll, centralsAll, end], {type:'application/zip'});
-}
-
-async function saveWithPicker(fileName, blob, mime='application/zip', ext='.zip') {
-  if (!('showSaveFilePicker' in window)) return false;
-  try {
-    const handle = await showSaveFilePicker({
-      suggestedName: fileName,
-      types: [{ description: 'Archive', accept: { [mime]: [ext] } }],
-      excludeAcceptAllOption: false
-    });
-    const w = await handle.createWritable(); await w.write(blob); await w.close(); return true;
-  } catch { return false; }
-}
-async function shareFile(fileName, blob, mime='application/zip') {
-  try { const file = new File([blob], fileName, { type: mime });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: fileName, text: 'WELDERS HELPER EXPORT' }); return true;
-    }
-  } catch {}
-  return false;
-}
-function downloadViaAnchor(fileName, blob) {
-  try { const url = URL.createObjectURL(blob); const a=document.createElement('a');
-    a.href=url; a.download=fileName; document.body.appendChild(a); a.click();
-    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500); return true;
-  } catch { return false; }
-}
-async function saveSmartZip(baseName, zipBlob) {
-  const fileName = `${baseName}-DOCS.zip`;
-  if (await saveWithPicker(fileName, zipBlob)) return true;
-  if (await shareFile(fileName, zipBlob)) return true;
-  if (downloadViaAnchor(fileName, zipBlob)) return true;
-  return false;
-}
-
 /* ============================ INIT ============================== */
 function initJobsPage(){
   const sd = document.getElementById('startDate');
@@ -550,7 +384,11 @@ function initJobsPage(){
   renderJobs();
 }
 initJobsPage();
-window.addEventListener('pageshow', initJobsPage);
+window.addEventListener('pageshow', () => {
+  const sd = document.getElementById('startDate');
+  if (sd && !sd.value) sd.value = today();
+  renderJobs();
+});
 window.addEventListener('storage', (e)=>{ if (e.key === JOBS_KEY || e.key===RECV_KEY) renderJobs(); });
 
 /* -------- Service Worker: update now + reload once on upgrade ---- */
@@ -564,6 +402,9 @@ window.addEventListener('storage', (e)=>{ if (e.key === JOBS_KEY || e.key===RECV
     });
   } catch (e) { console.error('SW registration failed', e); }
 })();
+
+/* --------- Dev aid: surface runtime errors in console ------------- */
+window.addEventListener('error', e => console.error('[JS ERROR]', e.message, e.error || ''));
 </script>
 </body>
 </html>
