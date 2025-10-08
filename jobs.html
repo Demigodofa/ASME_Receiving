@@ -1,5 +1,5 @@
 <!-- =================================================================== -->
-<!-- /jobs.html — JOBS (fixed: no duplicate const, date autofill, works) -->
+<!-- /jobs.html — JOBS (centered PDF columns, ZIP export with photos)   -->
 <!-- =================================================================== -->
 <!doctype html>
 <html lang="en">
@@ -34,20 +34,20 @@
   .badge.zero{opacity:.5}
   .btn.hasReports{color:#26D07C}
 
-  /* Overlay — centered, hidden by default; JS sets display:flex */
+  /* Overlay — centered */
   .overlay{
     position:fixed; inset:0; background:rgba(0,0,0,.5);
     z-index:50; padding:16px; min-height:100svh;
-    display:none;
-    align-items:center; justify-content:center;
+    display:none; align-items:center; justify-content:center;
   }
   .sheet{
     width:min(480px,92vw); max-height:88svh; overflow:auto;
     background:var(--panel); border:1px solid var(--border);
     border-radius:18px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.45);
+    margin:auto; /* why: ensure strict centering on odd mobile viewports */
   }
   .sheet h2{margin:0 0 6px 0;font-size:20px;text-transform:uppercase}
-  .meta{color:#E6EAF0;font-size:20px;font-weight:900;letter-spacing:.06em;margin:2px 0 10px 0;word-break:break-word}
+  .meta{color:#E6EAF0;font-size:20px;font-weight:900;letter-spacing:.06em;margin:2px 0 10px 0;word-break:break-word;text-align:center}
   .stack{display:flex;flex-direction:column;gap:10px;align-items:center}
   .wide{width:100%;text-align:center}
   .confirm{display:none;margin-top:10px;text-align:center}
@@ -93,15 +93,15 @@
 <!-- ACTION MENU -->
 <div id="overlay" class="overlay" role="dialog" aria-modal="true">
   <div class="sheet" role="document">
-    <h2>JOB ACTIONS</h2>
+    <h2 style="text-align:center">JOB ACTIONS</h2>
     <div id="dlgMeta" class="meta">JOB — DESC</div>
 
     <div class="progress" id="exportProg"><div></div></div>
-    <div id="zipNote" class="small" style="min-height:1.2em"></div>
+    <div id="zipNote" class="small" style="min-height:1.2em;text-align:center"></div>
 
     <div class="stack" style="margin-top:8px">
       <a id="viewBtn" class="btn primary wide" href="#">VIEW JOB</a>
-      <button id="exportBtn" class="btn wide">EXPORT REPORTS</button>
+      <button id="exportBtn" class="btn wide">EXPORT REPORTS & PHOTOS</button>
       <button id="deleteBtn" class="btn danger wide">DELETE JOB</button>
       <button id="closeBtn" class="btn wide">CLOSE</button>
 
@@ -117,6 +117,10 @@
 </div>
 
 <script>
+/* ============================ CONFIG ============================ */
+const MAX_PHOTOS_ALLOWED = Number(localStorage.getItem('wh_max_photos') || '4'); // why: single source of truth for Receiving screen
+localStorage.setItem('wh_max_photos', String(MAX_PHOTOS_ALLOWED));
+
 /* ============================ STORAGE ============================ */
 const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
 const $=id=>document.getElementById(id);
@@ -165,7 +169,7 @@ $('createBtn').onclick=()=>{
 };
 $('clearBtn').onclick=()=>{$('jobNo').value='';$('desc').value='';};
 
-/* ============================ ACTIONS (never stuck) ============== */
+/* ============================ ACTIONS =========================== */
 let current=null;
 function openMenu(jobNo){
   const job=readJobs().find(j=>j.jobNo===jobNo); if(!job) return;
@@ -191,8 +195,7 @@ $('yesDel').onclick=()=>{
   current=null; renderJobs(); closeMenu();
 };
 
-/* ============================ EXPORT (PDF only here) ============= */
-/* (Photo export lives in receiving workflow; this page builds the PDF) */
+/* ============================ EXPORT (PDF + PHOTOS to 20MB ZIPs) = */
 $('exportBtn').onclick = async (ev) => {
   ev.preventDefault();
   if (!current) return;
@@ -205,16 +208,51 @@ $('exportBtn').onclick = async (ev) => {
   const setProg = (pct) => { progWrap.style.display='block'; progBar.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
 
   try{
-    setNote('BUILDING PDF…'); setProg(20);
+    setNote('BUILDING PDF…'); setProg(15);
 
     const canvases = await renderReceivingPdfPages(entries);
     const pages = canvases.map(c => ({ u8: dataURLtoU8(c.toDataURL('image/jpeg', 0.92)), w: c.width, h: c.height }));
     const pdfBlob  = buildPdfFromJpegsExact(pages, 612, 792);
-    setProg(90); setNote('OPENING PDF…');
+    const pdfU8 = new Uint8Array(await pdfBlob.arrayBuffer());
 
+    // Open PDF viewer (unchanged behavior)
     const url = URL.createObjectURL(pdfBlob);
     window.open(url, '_blank');
-    setProg(100); setNote('PDF OPENED. YOU CAN DOWNLOAD/SHARE FROM VIEWER.', 'ok');
+    setNote('PDF OPENED. PREPARING ZIP(S)…'); setProg(45);
+
+    // Collect files: PDF + all photos
+    const files = [];
+    const base = `${sanitize(current.jobNo)}_RECEIVING`;
+    files.push({name:`${base}.pdf`, u8: pdfU8});
+
+    // Photos per entry
+    let photoCount = 0;
+    for (const [idx, raw] of entries.entries()) {
+      const r = norm(raw);
+      const folder = `${sanitize(r.jobNo)}/${r.date || `ENTRY-${idx+1}`}/${sanitize(r.title || 'UNTITLED')}`;
+      (r.photos||[]).filter(Boolean).forEach((dataUrl, i) => {
+        const u8 = dataURLtoU8(dataUrl);
+        const num = String(i+1).padStart(2,'0');
+        files.push({name:`${folder}/photo-${num}.jpg`, u8});
+        photoCount++;
+      });
+    }
+
+    setProg(65);
+
+    // Build <=20MB zips and auto-download
+    const zips = buildZipParts(files, `${sanitize(current.jobNo)}_EXPORT`, 20 * 1024 * 1024);
+    setProg(85);
+
+    // Trigger downloads
+    for (const {blob, name} of zips) {
+      const zurl = URL.createObjectURL(blob);
+      triggerDownload(zurl, name);
+      setTimeout(()=>URL.revokeObjectURL(zurl), 30000);
+    }
+
+    setProg(100);
+    setNote(`DONE. PDF OPENED. ${zips.length} ZIP FILE${zips.length>1?'S':''} DOWNLOADED (${photoCount} PHOTO${photoCount!==1?'S':''}).`, 'ok');
     setTimeout(()=>URL.revokeObjectURL(url), 30000);
   } catch(e){
     console.error(e);
@@ -249,9 +287,11 @@ async function renderReceivingPdfPages(entries){
     let y=M+40;
     text('IDENTIFICATION', M+6, y+18, 14, true);
     const IDH=124; box(M,y+24,W-2*M,IDH);
-    const rw=IDH/3, midX=M+(W-2*M)/2; /* <-- define midX ONCE and reuse */
 
+    const rw=IDH/3;
+    const midX=M+(W-2*M)/2; /* why: single mid column; fixes centering everywhere */
     hln(M, y+24+rw, W-M); hln(M, y+24+2*rw, W-M); vln(midX, y+24, y+24+IDH);
+
     text('JOB NO.',   M+12, y+24+rw-8, 12, true); text(r.jobNo,   M+120, y+24+rw-8);
     text('DATE',     midX+12, y+24+rw-8, 12, true); text(r.date, midX+100, y+24+rw-8);
     text('TITLE',    M+12, y+24+2*rw-8, 12, true); text(r.title,   M+120, y+24+2*rw-8);
@@ -311,7 +351,7 @@ async function renderReceivingPdfPages(entries){
     if((r.decision||'ACCEPT')==='ACCEPT'){ g.font=B(14); g.fillText('X', M+124, y+24+2*acRw-8); }
     else { g.font=B(14); g.fillText('X', M+244, y+24+2*acRw-8); }
 
-    // COMMENTS (re-use midX defined earlier)
+    // COMMENTS (right column)
     g.font=B(12); g.fillText('COMMENTS', midX+12, y+24+2*acRw-8);
     wrap(r.comments, midX+120, y+24+2*acRw-22, (W-2*M)-(midX-M)-20, 18, 14);
 
@@ -342,7 +382,122 @@ async function renderReceivingPdfPages(entries){
 
 /* ----------------------- PDF & ZIP utils ------------------------ */
 function dataURLtoU8(d){ const i=d.indexOf(','); const bin=atob(d.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
+function blobToU8(blob){ return blob.arrayBuffer().then(ab=>new Uint8Array(ab)); }
+function triggerDownload(url, filename){
+  const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+}
 
+/* Minimal ZIP (store only) and 20MB splitting */
+function buildZipParts(files, baseName, maxBytes){
+  const parts=[];
+  let current=[], partIdx=1;
+
+  const approxSize = (list) => {
+    // Rough size: sum(data) + headers (~80 per file) + central dir (~110 per file) + EoCD (~22)
+    const n=list.length;
+    const data = list.reduce((s,f)=>s+f.u8.length,0);
+    return data + n*200 + 256;
+  };
+
+  for (const f of files){
+    if (!current.length){
+      current.push(f);
+    } else {
+      const sz = approxSize(current) + (f.u8.length + 200);
+      if (sz > maxBytes) {
+        parts.push(makeZipBlob(current, `${baseName}_part-${String(partIdx).padStart(2,'0')}.zip`));
+        partIdx++;
+        current=[f];
+      } else {
+        current.push(f);
+      }
+    }
+  }
+  if (current.length){
+    const name = parts.length ? `${baseName}_part-${String(partIdx).padStart(2,'0')}.zip` : `${baseName}.zip`;
+    parts.push(makeZipBlob(current, name));
+  }
+  return parts;
+}
+
+function makeZipBlob(list, name){
+  const enc = new TextEncoder();
+  const chunks=[];
+  let offset=0;
+  const cdrecs=[];
+
+  for(const f of list){
+    const fileName = f.name.replace(/^\/+/,'');
+    const fnBytes = enc.encode(fileName);
+    const crc = crc32(f.u8);
+
+    // Local file header
+    const lf = new Uint8Array(30 + fnBytes.length);
+    writeU32(lf, 0, 0x04034b50);
+    writeU16(lf, 4, 20); // version
+    writeU16(lf, 6, 0);  // flags
+    writeU16(lf, 8, 0);  // method = store
+    writeU16(lf,10, 0);  // time (0)
+    writeU16(lf,12, 0);  // date (0)
+    writeU32(lf,14, crc);
+    writeU32(lf,18, f.u8.length);
+    writeU32(lf,22, f.u8.length);
+    writeU16(lf,26, fnBytes.length);
+    writeU16(lf,28, 0); // extra len
+
+    chunks.push(lf, fnBytes, f.u8); offset += lf.length + fnBytes.length + f.u8.length;
+
+    // Central directory header
+    const cd = new Uint8Array(46 + fnBytes.length);
+    writeU32(cd, 0, 0x02014b50);
+    writeU16(cd, 4, 20); // version made
+    writeU16(cd, 6, 20); // version needed
+    writeU16(cd, 8, 0);
+    writeU16(cd,10, 0);
+    writeU16(cd,12, 0);
+    writeU32(cd,14, crc);
+    writeU32(cd,18, f.u8.length);
+    writeU32(cd,22, f.u8.length);
+    writeU16(cd,26, fnBytes.length);
+    writeU16(cd,28, 0);
+    writeU16(cd,30, 0);
+    writeU16(cd,32, 0);
+    writeU16(cd,34, 0);
+    writeU32(cd,36, 0);             // external attrs
+    writeU32(cd,40, offset - (30 + fnBytes.length + f.u8.length)); // relative offset of local header
+    cd.set(fnBytes,46-0);
+    cdrecs.push(cd);
+  }
+
+  const cdStart = offset;
+  for(const r of cdrecs){ chunks.push(r); offset += r.length; }
+  const cdSize = offset - cdStart;
+
+  const eocd = new Uint8Array(22);
+  writeU32(eocd, 0, 0x06054b50);
+  writeU16(eocd, 4, 0);
+  writeU16(eocd, 6, 0);
+  writeU16(eocd, 8, list.length);
+  writeU16(eocd,10, list.length);
+  writeU32(eocd,12, cdSize);
+  writeU32(eocd,16, cdStart);
+  writeU16(eocd,20, 0);
+  chunks.push(eocd);
+
+  return { blob: new Blob(chunks, {type:'application/zip'}), name };
+
+  function writeU16(arr, off, val){ arr[off]=val&255; arr[off+1]=(val>>>8)&255; }
+  function writeU32(arr, off, val){ arr[off]=val&255; arr[off+1]=(val>>>8)&255; arr[off+2]=(val>>>16)&255; arr[off+3]=(val>>>24)&255; }
+}
+
+/* CRC32 (for ZIP headers) */
+const CRC_TABLE = (()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1); t[n]=c>>>0; } return t; })();
+function crc32(u8){
+  let c=0xFFFFFFFF; for(let i=0;i<u8.length;i++){ c = CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); }
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+/* ----------------------- Build PDF from JPEGs -------------------- */
 function buildPdfFromJpegsExact(pages, pageWpt=612, pageHpt=792){
   const parts=[]; const enc=new TextEncoder(); let offset=0; const xref=[null];
   const addS=s=>{const u8=enc.encode(s); parts.push(u8); offset+=u8.length;};
