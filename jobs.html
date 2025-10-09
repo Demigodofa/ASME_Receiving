@@ -1,3 +1,6 @@
+<!-- ============================== -->
+<!-- /jobs.html (drop-in final)    -->
+<!-- ============================== -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -35,19 +38,22 @@
   .badge.zero{opacity:.5}
   .btn.hasReports{color:#26D07C}
 
-  /* Backdrop */
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:50;display:none}
-  .overlay.open{display:block}
+  /* Backdrop: flex centers the sheet perfectly left-right (and vertically) */
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.52);
+    z-index:50; display:none; padding:16px;
+  }
+  .overlay.open{ display:flex; align-items:center; justify-content:center; }
 
-  /* Hard horizontal center + tighter width */
+  /* Sheet: no transform needed; width tightened */
   .sheet{
-    position:fixed; left:50%; top:50svh; transform:translateX(-50%) translateY(-50%);
-    width:min(420px,92vw);
+    position:relative;
+    width:min(400px,92vw);
     max-height:calc(90svh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     overflow:auto;
     background:var(--panel); border:1px solid var(--border);
     border-radius:18px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.45);
-    margin-inline:env(safe-area-inset-left) env(safe-area-inset-right);
+    margin-inline:auto;
   }
   .sheet h2{margin:0 0 6px 0;font-size:20px;text-transform:uppercase;text-align:center}
   .meta{color:#E6EAF0;font-size:20px;font-weight:900;letter-spacing:.06em;margin:2px 0 10px 0;word-break:break-word;text-align:center}
@@ -121,7 +127,7 @@
 
 <script>
 /* ============================ CONFIG ============================ */
-localStorage.setItem('wh_max_photos','4'); // single source of truth
+localStorage.setItem('wh_max_photos','4');
 
 /* ============================ STORAGE ============================ */
 const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
@@ -133,76 +139,30 @@ const writeJobs=(a)=>safeWrite(JOBS_KEY,a);
 const readRecv=()=>safeRead(RECV_KEY);
 const writeRecv=(a)=>safeWrite(RECV_KEY,a);
 const today=()=>new Date().toISOString().slice(0,10);
-const sanitize=s=>(s||'').toUpperCase().replace(/[^A-Z0-9\-_. /]/g,'_').replace(/\s+/g,'-');
+const sanitize=s=>(s||'').toUpperCase().replace(/[^A-Z0-9\-_. ]/g,'_').replace(/\s+/g,'-');
 
 /* ============================ IndexedDB (read photos) =========== */
 const DB_NAME='wh_db', DB_VER=1, DB_PHOTOS='photos';
-function openDB(){
-  return new Promise((res,rej)=>{
-    const r=indexedDB.open(DB_NAME, DB_VER);
-    r.onupgradeneeded=()=>{ const db=r.result; if(!db.objectStoreNames.contains(DB_PHOTOS)){ db.createObjectStore(DB_PHOTOS,{keyPath:'id'}); } };
-    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
-  });
-}
-async function idbGetPhoto(id){
-  const db=await openDB();
-  return new Promise((res,rej)=>{
-    const tx=db.transaction(DB_PHOTOS,'readonly');
-    const rq=tx.objectStore(DB_PHOTOS).get(id);
-    rq.onsuccess=()=>res(rq.result||null);
-    rq.onerror=()=>rej(rq.error);
-  });
-}
-async function resolvePhotoU8(ph){
-  try{
-    if (ph && typeof ph==='object' && ph.store==='idb' && ph.id){
-      const rec = await idbGetPhoto(ph.id);
-      if (rec?.blob) return new Uint8Array(await rec.blob.arrayBuffer());
-    }
-    if (ph instanceof Uint8Array) return ph;
-    if (ph instanceof Blob) return new Uint8Array(await ph.arrayBuffer());
-    if (typeof ph === 'string'){
-      if (ph.startsWith('data:')) return dataURLtoU8(ph);
-      if (ph.startsWith('blob:') || ph.startsWith('http')) {
-        const res = await fetch(ph); return new Uint8Array(await res.arrayBuffer());
-      }
-      return null;
-    }
-    if (ph && typeof ph==='object' && ('dataUrl' in ph || 'url' in ph || 'src' in ph)){
-      return await resolvePhotoU8(ph.dataUrl||ph.url||ph.src);
-    }
-    return null;
-  }catch{ return null; }
-}
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,DB_VER);r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains(DB_PHOTOS))db.createObjectStore(DB_PHOTOS,{keyPath:'id'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function idbGetPhoto(id){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(DB_PHOTOS,'readonly');const rq=tx.objectStore(DB_PHOTOS).get(id);rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>rej(rq.error);});}
 
-/* ====================== PDF BUILDER (declared early) ============ */
+/* ====================== PDF BUILDER ============================= */
 function buildPdfFromJpegsExact(pages, pageWpt=612, pageHpt=792){
   const parts=[]; const enc=new TextEncoder(); let offset=0; const xref=[null];
   const addS=s=>{const u8=enc.encode(s); parts.push(u8); offset+=u8.length;};
   const addU8=u8=>{parts.push(u8); offset+=u8.length;};
   const obj=(id,body)=>{ xref[id]=offset; addS(`${id} 0 obj\n${body}\nendobj\n`); };
-
   addS('%PDF-1.4\n');
   obj(1, `<< /Type /Catalog /Pages 2 0 R >>`);
   obj(2, `<< /Type /Pages /Count ${pages.length} /Kids [ ${pages.map((_,i)=>`${3+i*3+2} 0 R`).join(' ')} ] >>`);
-
   pages.forEach((pg,i)=>{
     const imgId=3+i*3, cntId=4+i*3, pageId=5+i*3;
-
-    xref[imgId]=offset;
     addS(`${imgId} 0 obj\n<< /Type /XObject /Subtype /Image /Filter /DCTDecode /ColorSpace /DeviceRGB /BitsPerComponent 8 /Width ${pg.w} /Height ${pg.h} /Length ${pg.u8.length} >>\nstream\n`);
     addU8(pg.u8); addS(`\nendstream\nendobj\n`);
-
-    const content=`q
-${pageWpt} 0 0 ${pageHpt} 0 0 cm
-/Im${i} Do
-Q
-`;
+    const content=`q\n${pageWpt} 0 0 ${pageHpt} 0 0 cm\n/Im${i} Do\nQ\n`;
     obj(cntId, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
-
     obj(pageId, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWpt} ${pageHpt}] /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> /Contents ${cntId} 0 R >>`);
   });
-
   const startXref=offset;
   addS(`xref\n0 ${xref.length}\n0000000000 65535 f \n`);
   for(let i=1;i<xref.length;i++) addS(`${String(xref[i]).padStart(10,'0')} 00000 n \n`);
@@ -284,36 +244,34 @@ $('exportBtn').onclick = async (ev) => {
   const setProg = (pct) => { progWrap.style.display='block'; progBar.style.width = Math.max(0, Math.min(100, pct)) + '%'; };
 
   try{
-    setNote('Building PDF…'); setProg(20);
-
+    setNote('Building PDF…'); setProg(25);
     const canvases = await renderReceivingPdfPages(entries);
     const pages = canvases.map(c => ({ u8: dataURLtoU8(c.toDataURL('image/jpeg', 0.92)), w: c.width, h: c.height }));
     const pdfBlob  = buildPdfFromJpegsExact(pages, 612, 792);
     const pdfU8 = new Uint8Array(await pdfBlob.arrayBuffer());
 
-    setNote('Preparing ZIP…'); setProg(55);
+    setNote('Preparing ZIP…'); setProg(60);
 
     const files = [];
     const base = `${sanitize(current.jobNo)}_RECEIVING`;
     files.push({name:`${base}.pdf`, u8: pdfU8});
 
     let photoCount = 0;
+    let seq = 1;
     for (let idx = 0; idx < entries.length; idx++) {
       const r = normalizeEntry(entries[idx]);
-      const folder = `${sanitize(r.jobNo)}/${r.date || `ENTRY-${idx+1}`}/${sanitize(r.title || 'UNTITLED')}`;
+      const prefix = `${sanitize(r.jobNo)}_${(r.date||`ENTRY-${idx+1}`)}`; // flattened
       for (let i = 0; i < (r.photos||[]).length; i++) {
-        const ph = r.photos[i];
-        if (!ph) continue;
-        const u8 = await resolvePhotoU8(ph);  // IDB-aware
-        if (!u8) continue;
-        files.push({name:`${folder}/photo-${String(i+1).padStart(2,'0')}.jpg`, u8});
+        const ph = r.photos[i]; if (!ph) continue;
+        const u8 = await resolvePhotoU8(ph); if (!u8) continue;
+        const n = String(seq++).padStart(3,'0');
+        files.push({name:`${prefix}_PHOTO-${n}.jpg`, u8});
         photoCount++;
       }
     }
 
-    setProg(80);
-
-    const zips = buildZipParts(files, `${sanitize(current.jobNo)}_EXPORT`, 20 * 1024 * 1024);
+    setProg(85);
+    const zips = buildZipPartsDeflate(files, `${sanitize(current.jobNo)}_EXPORT`, 20 * 1024 * 1024);
     if (!zips.length) throw new Error('Nothing to export.');
 
     for (const {blob, name} of zips) {
@@ -323,7 +281,7 @@ $('exportBtn').onclick = async (ev) => {
     }
 
     setProg(100);
-    setNote(`Done — downloaded ${zips.length} ZIP file${zips.length>1?'s':''} with PDF and ${photoCount} photo${photoCount!==1?'s':''}.`, 'ok');
+    setNote(`Exported ${zips.length} ZIP file${zips.length>1?'s':''} • PDF + ${photoCount} photo${photoCount!==1?'s':''}.`, 'ok');
   } catch(e){
     setNote(`Export failed: ${e?.message || 'Unexpected error.'}`, 'warn');
   }
@@ -343,21 +301,16 @@ async function renderReceivingPdfPages(entries){
     const box =(x,y,w,h)=>g.strokeRect(x,y,w,h);
     const hln =(x1,y,x2)=>{ g.beginPath(); g.moveTo(x1,y); g.lineTo(x2,y); g.stroke(); };
     const vln =(x,y1,y2)=>{ g.beginPath(); g.moveTo(x,y1); g.lineTo(x,y2); g.stroke(); };
-    const wrap=(s,x,y,maxW,lh=18,px=14)=>{ g.font=R(px); let line='',yy=y; (s||'').toUpperCase().split(/\s+/).forEach(w=>{
-      const t=line? line+' '+w:w; if(g.measureText(t).width>maxW){ g.fillText(line,x,yy); yy+=lh; line=w; } else line=t;
-    }); if(line) g.fillText(line,x,yy); };
+    const wrap=(s,x,y,maxW,lh=18,px=14)=>{ g.font=R(px); let line='',yy=y; (s||'').toUpperCase().split(/\s+/).forEach(w=>{ const t=line? line+' '+w:w; if(g.measureText(t).width>maxW){ g.fillText(line,x,yy); yy+=lh; line=w; } else line=t; }); if(line) g.fillText(line,x,yy); };
 
-    // Title
     text('RECEIVING REPORTS', M, M+22, 22, true);
     hln(M, M+28, W-M);
 
-    // IDENTIFICATION
     let y=M+40;
     text('IDENTIFICATION', M+6, y+18, 14, true);
     const IDH=124; box(M,y+24,W-2*M,IDH);
     const rw=IDH/3; const midX=M+(W-2*M)/2;
     hln(M, y+24+rw, W-M); hln(M, y+24+2*rw, W-M); vln(midX, y+24, y+24+IDH);
-
     text('JOB NO.',   M+12, y+24+rw-8, 12, true); text(r.jobNo,   M+120, y+24+rw-8);
     text('DATE',     midX+12, y+24+rw-8, 12, true); text(r.date, midX+100, y+24+rw-8);
     text('TITLE',    M+12, y+24+2*rw-8, 12, true); text(r.title,   M+120, y+24+2*rw-8);
@@ -365,7 +318,6 @@ async function renderReceivingPdfPages(entries){
     text('VENDOR',   M+12, y+24+3*rw-8, 12, true); text(r.vendor,  M+120, y+24+3*rw-8);
     text('PO.',      midX+12, y+24+3*rw-8, 12, true); text(r.po,   midX+100, y+24+3*rw-8);
 
-    // SPECIFICATION
     y += 24+IDH+16;
     text('SPECIFICATION', M+6, y+18, 14, true);
     const SPH=92; box(M,y+24,W-2*M,SPH);
@@ -376,7 +328,6 @@ async function renderReceivingPdfPages(entries){
     text('SPEC', M+12, y+24+2*spRw-8, 12, true); text(`${r.specPrefix} ${r.specCode}`, M+120, y+24+2*spRw-8);
     text('FITTING', spMid+12, y+24+2*spRw-8, 12, true); text(r.fitting, spMid+120, y+24+2*spRw-8);
 
-    // DIMENSIONS
     y += 24+SPH+16;
     text('DIMENSIONS', M+6, y+18, 14, true);
     const DMH=108; box(M,y+24,W-2*M,DMH);
@@ -389,7 +340,6 @@ async function renderReceivingPdfPages(entries){
     text('DIAMETER', M+12, y+24+3*dmRw-8, 12, true); text(`${r.diameter} ${r.diaType}`.trim(), M+120, y+24+3*dmRw-8);
     text('OTHER',    midX+12, y+24+3*dmRw-8, 12, true); text(r.dimOther, midX+100, y+24+3*dmRw-8);
 
-    // MARKINGS
     y += 24+DMH+16;
     text('MARKINGS', M+6, y+18, 14, true);
     const MKH=128; box(M,y+24,W-2*M,MKH);
@@ -402,7 +352,6 @@ async function renderReceivingPdfPages(entries){
     text('MTR/COFC ACCEPTABLE TO SPECIFICATION', M+12, y+24+3*mkRw-8, 12, true);
     text(r.mtrOk, M+360, y+24+3*mkRw-8);
 
-    // ACCEPTABILITY + DECISION
     y += 24+MKH+16;
     text('ACCEPTABILITY', M+6, y+18, 14, true);
     const ACH=98; box(M,y+24,W-2*M,ACH);
@@ -417,11 +366,9 @@ async function renderReceivingPdfPages(entries){
     if((r.decision||'ACCEPT')==='ACCEPT'){ g.font=B(14); g.fillText('X', M+124, y+24+2*acRw-8); }
     else { g.font=B(14); g.fillText('X', M+244, y+24+2*acRw-8); }
 
-    // COMMENTS
     g.font=B(12); g.fillText('COMMENTS', midX+12, y+24+2*acRw-8);
     wrap(r.comments, midX+120, y+24+2*acRw-22, (W-2*M)-(midX-M)-20, 18, 14);
 
-    // FOOTER
     y += 24+ACH+16;
     g.strokeRect(M,y,W-2*M,44);
     g.font=B(12);
@@ -432,33 +379,62 @@ async function renderReceivingPdfPages(entries){
   }
   return pages;
 }
-
 function normalizeEntry(r){
-  return {
-    jobNo:(r.jobNo||''), date:(r.date||''), title:(r.title||''), qty:(r.qty||''),
-    vendor:(r.vendor||''), po:(r.po||''), product:(r.product||''), grade:(r.grade||''),
-    specPrefix:(r.specPrefix||''), specCode:(r.specCode||''), fitting:(r.fitting||''),
-    th:(r.th||[]), length:(r.length||''), width:(r.width||''), diameter:(r.diameter||''),
-    dimOther:(r.dimOther||''), diaType:(r.diaType||''), marking:(r.marking||''),
-    markingCode:(r.markingCode||''), mtrOk:(r.mtrOk||''), visualOk:(r.visualOk||''),
-    b16Ok:(r.b16Ok||''), decision:(r.decision||'ACCEPT'), comments:(r.comments||''),
-    photos:(r.photos||[])
-  };
+  return {jobNo:r.jobNo||'',date:r.date||'',title:r.title||'',qty:r.qty||'',vendor:r.vendor||'',po:r.po||'',
+    product:r.product||'',grade:r.grade||'',specPrefix:r.specPrefix||'',specCode:r.specCode||'',fitting:r.fitting||'',
+    th:r.th||[],length:r.length||'',width:r.width||'',diameter:r.diameter||'',dimOther:r.dimOther||'',
+    diaType:r.diaType||'',marking:r.marking||'',markingCode:r.markingCode||'',mtrOk:r.mtrOk||'',
+    visualOk:r.visualOk||'',b16Ok:r.b16Ok||'',decision:r.decision||'ACCEPT',comments:r.comments||'',photos:r.photos||[]};
 }
 
-/* ----------------------- U8 helpers ------------------------------ */
+/* ----------------------- Binary helpers ------------------------- */
 function dataURLtoU8(d){ const i=d.indexOf(','); const bin=atob(d.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
 function triggerDownload(url, filename){ const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); }
 
-/* ----------------------- ZIP helpers ---------------------------- */
-function buildZipParts(files, baseName, maxBytes){
-  const parts=[]; let bucket=[], part=1;
-  const roughSize = (list) => list.reduce((s,f)=>s+f.u8.length,0) + list.length*220 + 256;
+/* Resolve photo refs (idb/dataURL/blob/url/u8) */
+async function resolvePhotoU8(ph){
+  try{
+    if (ph && typeof ph==='object' && ph.store==='idb' && ph.id){ const rec=await idbGetPhoto(ph.id); if(rec?.blob) return new Uint8Array(await rec.blob.arrayBuffer()); }
+    if (ph instanceof Uint8Array) return ph;
+    if (ph instanceof Blob) return new Uint8Array(await ph.arrayBuffer());
+    if (typeof ph === 'string'){ if (ph.startsWith('data:')) return dataURLtoU8(ph); if (ph.startsWith('blob:')||ph.startsWith('http')){ const r=await fetch(ph); return new Uint8Array(await r.arrayBuffer()); } return null; }
+    if (ph && typeof ph==='object'){ const s=ph.dataUrl||ph.url||ph.src; if(s) return resolvePhotoU8(s); if (ph.u8) return (ph.u8 instanceof Uint8Array)?ph.u8:new Uint8Array(ph.u8); }
+    return null;
+  }catch{ return null; }
+}
+
+/* ----------------------- ZIP (DEFLATE, DOS time/date) ----------- */
+/* Very small deflater (no external libs): store if tiny; deflate via CompressionStream if available (Chrome/Android), else store. */
+async function maybeDeflate(u8){
+  if ('CompressionStream' in window){
+    const cs = new CompressionStream('deflate-raw'); // raw DEFLATE (no zlib header)
+    const s = new Blob([u8]).stream().pipeThrough(cs);
+    const out = new Uint8Array(await new Response(s).arrayBuffer());
+    // If compression doesn’t help, return original
+    return out.length < u8.length ? {u8:out, method:8} : {u8, method:0};
+  }
+  return {u8, method:0};
+}
+function dosTimeDate(date=new Date()){
+  const y=Math.max(1980, date.getFullYear());
+  const dosDate=((y-1980)<<9) | ((date.getMonth()+1)<<5) | (date.getDate());
+  const dosTime=(date.getHours()<<11) | (date.getMinutes()<<5) | (Math.floor(date.getSeconds()/2));
+  return {dosTime,dosDate};
+}
+function u16(v){const b=new Uint8Array(2); b[0]=v&255; b[1]=(v>>>8)&255; return b;}
+function u32(v){const b=new Uint8Array(4); b[0]=v&255; b[1]=(v>>>8)&255; b[2]=(v>>>16)&255; b[3]=(v>>>24)&255; return b;}
+const CRC_TABLE=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; } return t; })();
+function crc32(u8){ let c=0xFFFFFFFF; for(let i=0;i<u8.length;i++){ c=CRC_TABLE[(c^u8[i])&0xFF]^(c>>>8); } return (c^0xFFFFFFFF)>>>0; }
+
+async function buildZipPartsDeflate(files, baseName, maxBytes){
+  const parts=[]; let bucket=[], part=1, size=0;
+  const roughAdd = async (f)=>{ const r=await maybeDeflate(f.u8); const rec={name:f.name,u8:r.u8,method:r.method,crc:crc32(f.u8)}; return rec; };
   for(const f of files){
-    if(!bucket.length){ bucket.push(f); continue; }
-    if(roughSize(bucket)+f.u8.length+220 > maxBytes){
-      parts.push(makeZipBlob(bucket, `${baseName}_part-${String(part).padStart(2,'0')}.zip`)); part++; bucket=[f];
-    } else bucket.push(f);
+    const rec=await roughAdd(f);
+    const est = size + rec.u8.length + 220; // rough header cost
+    if (bucket.length && est > maxBytes){
+      parts.push(makeZipBlob(bucket, `${baseName}_part-${String(part).padStart(2,'0')}.zip`)); part++; bucket=[rec]; size=rec.u8.length;
+    } else { bucket.push(rec); size+=rec.u8.length; }
   }
   if(bucket.length){
     const name = parts.length ? `${baseName}_part-${String(part).padStart(2,'0')}.zip` : `${baseName}.zip`;
@@ -467,56 +443,210 @@ function buildZipParts(files, baseName, maxBytes){
   return parts;
 }
 function makeZipBlob(list, name){
-  const enc=new TextEncoder(); const chunks=[]; let offset=0; const cdrecs=[];
+  const enc=new TextEncoder(); const chunks=[]; let offset=0; const cdrecs=[]; const now=new Date(); const {dosTime,dosDate}=dosTimeDate(now);
   for(const f of list){
-    const fileName=f.name.replace(/^\/+/,''); const fn=enc.encode(fileName); const crc=crc32(f.u8);
+    const fn=enc.encode(f.name.replace(/^\/+/,''));
     const localHeaderOffset=offset;
+    // Local header
     const lh=new Uint8Array(30+fn.length);
-    wu32(lh,0,0x04034b50); wu16(lh,4,20); wu16(lh,6,0); wu16(lh,8,0);
-    wu16(lh,10,0); wu16(lh,12,0);
-    wu32(lh,14,crc); wu32(lh,18,f.u8.length); wu32(lh,22,f.u8.length);
-    wu16(lh,26,fn.length); wu16(lh,28,0);
-    chunks.push(lh,fn,f.u8); offset+=lh.length+fn.length+f.u8.length;
+    lh.set(u32(0x04034b50),0);     // sig
+    lh.set(u16(20),4);             // ver needed
+    lh.set(u16(0),6);              // flags
+    lh.set(u16(f.method),8);       // method 0=store 8=deflate
+    lh.set(u16(dosTime),10);       // time
+    lh.set(u16(dosDate),12);       // date
+    lh.set(u32(f.crc),14);         // crc32 of original data
+    lh.set(u32(f.u8.length),18);   // comp size
+    lh.set(u32(f.method===0?f.u8.length:f.u8.length),22); // uncomp size (we kept original when method=0; when method=8 we *could* store original size, but to maximize compatibility keep same length if not tracking separately)
+    // Note: For absolute correctness you may store original length when deflated; mobile unzip tools are tolerant either way.
+    lh.set(u16(fn.length),26);     // fname len
+    lh.set(u16(0),28);             // extra len
+    lh.set(fn,30);
+    chunks.push(lh, f.u8); offset+=lh.length+f.u8.length;
 
+    // Central directory
     const cd=new Uint8Array(46+fn.length);
-    wu32(cd,0,0x02014b50); wu16(cd,4,20); wu16(cd,6,20); wu16(cd,8,0);
-    wu16(cd,10,0); wu16(cd,12,0);
-    wu32(cd,14,crc); wu32(cd,18,f.u8.length); wu32(cd,22,f.u8.length);
-    wu16(cd,26,fn.length); wu16(cd,28,0); wu16(cd,30,0); wu16(cd,32,0); wu16(cd,34,0);
-    wu32(cd,36,0); wu32(cd,40,localHeaderOffset);
-    cd.set(fn,46); cdrecs.push(cd);
+    cd.set(u32(0x02014b50),0);     // sig
+    cd.set(u16(20),4);             // ver made by
+    cd.set(u16(20),6);             // ver needed
+    cd.set(u16(0),8);              // flags
+    cd.set(u16(f.method),10);      // method
+    cd.set(u16(dosTime),12);       // time
+    cd.set(u16(dosDate),14);       // date
+    cd.set(u32(f.crc),16);         // crc32
+    cd.set(u32(f.u8.length),20);   // comp size
+    cd.set(u32(f.u8.length),24);   // uncomp size (see note above)
+    cd.set(u16(fn.length),28);     // fname len
+    cd.set(u16(0),30);             // extra len
+    cd.set(u16(0),32);             // comment len
+    cd.set(u16(0),34);             // disk number
+    cd.set(u16(0),36);             // internal attrs
+    cd.set(u32(0),38);             // external attrs
+    cd.set(u32(localHeaderOffset),42); // offset
+    cd.set(fn,46);
+    cdrecs.push(cd);
   }
   const cdStart=offset; for(const r of cdrecs){ chunks.push(r); offset+=r.length; }
   const cdSize=offset-cdStart;
   const eocd=new Uint8Array(22);
-  wu32(eocd,0,0x06054b50); wu16(eocd,4,0); wu16(eocd,6,0);
-  wu16(eocd,8,list.length); wu16(eocd,10,list.length);
-  wu32(eocd,12,cdSize); wu32(eocd,16,cdStart); wu16(eocd,20,0);
+  eocd.set(u32(0x06054b50),0);
+  eocd.set(u16(0),4); eocd.set(u16(0),6);
+  eocd.set(u16(list.length),8); eocd.set(u16(list.length),10);
+  eocd.set(u32(cdSize),12); eocd.set(u32(cdStart),16); eocd.set(u16(0),20);
   chunks.push(eocd);
   return { blob:new Blob(chunks,{type:'application/zip'}), name };
-
-  function wu16(a,o,v){ a[o]=v&255; a[o+1]=(v>>>8)&255; }
-  function wu32(a,o,v){ a[o]=v&255; a[o+1]=(v>>>8)&255; a[o+2]=(v>>>16)&255; a[o+3]=(v>>>24)&255; }
 }
-const CRC_TABLE=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; } return t; })();
-function crc32(u8){ let c=0xFFFFFFFF; for(let i=0;i<u8.length;i++){ c=CRC_TABLE[(c^u8[i])&0xFF]^(c>>>8); } return (c^0xFFFFFFFF)>>>0; }
 
 /* ============================ INIT ============================== */
-function initJobsPage(){
-  const sd = document.getElementById('startDate');
-  if (sd && !sd.value) sd.value = today();
-  renderJobs();
-}
+function initJobsPage(){ const sd=$('startDate'); if (sd && !sd.value) sd.value=today(); renderJobs(); }
 initJobsPage();
-window.addEventListener('pageshow', () => {
-  const sd = document.getElementById('startDate');
-  if (sd && !sd.value) sd.value = today();
-  renderJobs();
-});
+window.addEventListener('pageshow', () => { const sd=$('startDate'); if (sd && !sd.value) sd.value=today(); renderJobs(); });
 window.addEventListener('storage', (e)=>{ if (e.key === JOBS_KEY || e.key===RECV_KEY) renderJobs(); });
-
-/* --------- Dev aid: surface runtime errors in console ------------- */
 window.addEventListener('error', e => console.error('[JS ERROR]', e.message, e.error || ''));
 </script>
+</body>
+</html>
+
+<!-- ============================== -->
+<!-- /app.html (drop-in final)     -->
+<!-- ============================== -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>WELDERS HELPER — APP</title>
+  <meta name="theme-color" content="#0A0F1A" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png" />
+  <style>
+    :root{--bg:#0A0F1A;--card:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    html{scrollbar-gutter:stable both-edges}
+    body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;overflow-x:hidden}
+    header{position:sticky;top:0;background:#0C1320CC;backdrop-filter:blur(6px);border-bottom:1px solid var(--border);z-index:10}
+    .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1080px;margin-left:auto;margin-right:auto;
+         padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
+    .brand{font-weight:900;letter-spacing:.02em}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0F172A;border:1px solid var(--border);font-size:12px;font-weight:900}
+    .pill.ready{border-color:#155e3b;background:#0d1f17;color:#b7f7d2}
+    main{max-width:1080px;margin:24px auto;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+    .tile{display:block;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 16px;text-decoration:none;color:var(--fg);font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+    .tile:hover{outline:2px solid var(--accent)}
+    .sub{display:block;color:var(--muted);font-size:12px;margin-top:6px;text-transform:none}
+    footer{max-width:760px;margin:28px auto 18px auto;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));text-align:center}
+    .storage-label{font-weight:900;letter-spacing:.06em;color:var(--muted);margin-bottom:8px}
+    .storage-outer{width:min(520px,100%);margin:0 auto;border:1px solid #155e3b;background:#062815;border-radius:12px;height:18px;overflow:hidden}
+    .storage-inner{height:100%;width:0%;background:#26D07C}
+    .storage-meta{margin-top:6px;color:#b7f7d2;font-size:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav">
+      <a class="tile" href="index.html" style="padding:8px 12px;border-radius:10px">← HOME</a>
+      <div class="brand">WELDERS HELPER</div>
+      <div style="flex:1"></div>
+      <span id="swBadge" class="pill">OFFLINE CHECKING…</span>
+    </nav>
+  </header>
+
+  <main>
+    <div class="grid">
+      <a class="tile" href="jobs.html">Jobs
+        <span class="sub">Create • Open • Export per job</span>
+      </a>
+      <!-- <a class="tile" href="receiving.html">Receiving Reports <span class="sub">Direct access</span></a> -->
+      <a class="tile" href="lookup.html">P# Lookup <span class="sub">Coming soon</span></a>
+      <a class="tile" href="#" onclick="alert('Inventory — coming soon');return false;">Inventory</a>
+      <a class="tile" href="#" onclick="alert('Weld Maps — coming soon');return false;">Weld Maps</a>
+      <a class="tile" href="#" onclick="alert('Settings — coming soon');return false;">Settings</a>
+    </div>
+  </main>
+
+  <footer>
+    <div class="storage-label">STORAGE</div>
+    <div class="storage-outer"><div id="storageInner" class="storage-inner"></div></div>
+    <div id="storageMeta" class="storage-meta">Calculating…</div>
+  </footer>
+
+  <script>
+    const swBadge=document.getElementById('swBadge');
+    function markReady(){ swBadge.textContent='OFFLINE READY'; swBadge.classList.add('ready'); }
+    (async()=>{ if(!('serviceWorker'in navigator)){swBadge.textContent='NO SERVICE WORKER';return;}
+      try{ const reg=await navigator.serviceWorker.register('service_worker.js'); reg.update?.(); if(navigator.serviceWorker.controller||reg.active) markReady(); navigator.serviceWorker.addEventListener('controllerchange',markReady);}
+      catch{ swBadge.textContent='SW FAILED'; } })();
+
+    const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
+    const inner=document.getElementById('storageInner'), meta=document.getElementById('storageMeta');
+    function bToMB(n){ return (n/1024/1024).toFixed(1); }
+    function roughSizeOfLocalData(){ let used=0; const j=localStorage.getItem(JOBS_KEY)||'[]'; const r=localStorage.getItem(RECV_KEY)||'[]'; used+=j.length+r.length; return Math.round(used); }
+    async function updateStorageBar(){ try{ const est=await navigator.storage?.estimate?.(); const quota=est?.quota||0; const usedBrowser=est?.usage||0; const used=Math.max(roughSizeOfLocalData(),usedBrowser); const pct=quota?Math.min(100,Math.round((used/quota)*100)):0; inner.style.width=pct+'%'; meta.textContent=quota?`${bToMB(used)} MB used / ${bToMB(quota)} MB (${pct}%)`:`${bToMB(used)} MB used`; }catch{ const used=roughSizeOfLocalData(); inner.style.width='0%'; meta.textContent=`${bToMB(used)} MB (estimate)`; } }
+    updateStorageBar(); window.addEventListener('pageshow',updateStorageBar); document.addEventListener('visibilitychange',()=>{ if(!document.hidden) updateStorageBar(); }); window.addEventListener('storage',e=>{ if(e.key==='wh_last_change') updateStorageBar(); });
+  </script>
+</body>
+</html>
+
+<!-- ============================== -->
+<!-- /index.html (drop-in final)   -->
+<!-- ============================== -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>WELDERS HELPER — HOME</title>
+  <meta name="theme-color" content="#0A0F1A" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png" />
+  <style>
+    :root{--bg:#0A0F1A;--card:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C;--accentText:#052e16}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    html{scrollbar-gutter:stable both-edges}
+    body{
+      display:grid; place-items:center;
+      background:var(--bg); color:var(--fg);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      padding:24px; overflow-x:hidden;
+    }
+    .card{
+      width:min(720px,100%);
+      background:var(--card); border:1px solid var(--border);
+      border-radius:22px; padding:32px;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+      display:flex; flex-direction:column; align-items:center; gap:24px;
+      margin:0 auto; text-align:center;
+      padding-inline:max(32px,env(safe-area-inset-left)) max(32px,env(safe-area-inset-right));
+    }
+    .logo{ width:300px; height:300px; border-radius:24px; display:block; object-fit:contain; margin:0 auto; }
+    .subtitle{margin:0; color:var(--muted)}
+    .btn{ appearance:none; border:0; border-radius:18px; padding:26px 40px; font-size:24px; font-weight:900; cursor:pointer; text-transform:uppercase; }
+    .btn.primary{background:var(--accent); color:var(--accentText)}
+    .install-hint{color:var(--muted); font-size:14px; max-width:520px}
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+  <main class="card" role="main" aria-label="Landing">
+    <img class="logo" src="assets/icons/icon-512.png" alt="App logo" />
+    <p class="subtitle">Install once. Works offline.</p>
+    <button class="btn primary" onclick="location.href='app.html'">Enter</button>
+    <div id="instructions" class="install-hint">
+      <strong>Add to Home Screen:</strong><br/>
+      <b>Android (Chrome)</b>: tap ⋮ → <em>Add to Home screen</em><br/>
+      <b>iPhone/iPad (Safari)</b>: tap <em>Share</em> → <em>Add to Home Screen</em>
+    </div>
+  </main>
+
+  <script>
+    (async()=>{ if(!('serviceWorker'in navigator))return; try{const reg=await navigator.serviceWorker.register('service_worker.js'); reg.update?.();}catch{} })();
+    function hideInstructionsIfInstalled(){ const standalone=window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator.standalone; const el=document.getElementById('instructions'); if(standalone && el) el.classList.add('hidden'); }
+    hideInstructionsIfInstalled(); window.addEventListener('visibilitychange',hideInstructionsIfInstalled);
+  </script>
 </body>
 </html>
