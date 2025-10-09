@@ -1,4 +1,4 @@
-<!-- jobs.html — centered action sheet + robust export (Blob/dataURL/Uint8Array) -->
+<!-- jobs.html — hard-centered actions, universal photo loader, same export UX -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -11,6 +11,7 @@
   :root{--bg:#0A0F1A;--panel:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C;--danger:#FF5A5F;--focus:#8AB4F8}
   *{box-sizing:border-box} html,body{height:100%;margin:0}
   body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;letter-spacing:.02em}
+  body.modal-open{overflow:hidden; touch-action:none;} /* why: prevent background scroll shifting modal */
   header{position:sticky;top:0;background:#0C1320CC;backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
   .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1120px;margin:0 auto}
   .brand{font-weight:900}
@@ -23,7 +24,7 @@
   label{font-size:12px;color:var(--muted);font-weight:800;display:block;margin-bottom:6px}
   input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid var(--border);background:#0D1424;color:#E6EAF0;text-transform:uppercase;font-weight:800}
   .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-  .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#0F172A;border:1px solid var(--border);font-size:12px;font-weight:800}
+  .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#0F172A;border:1px solid var(--border);font-size:12px}
   table{width:100%;border-collapse:collapse}
   th,td{border-bottom:1px solid var(--border);padding:14px 10px}
   th{font-size:11px;color:#8FA3BD;text-transform:uppercase;letter-spacing:.06em}
@@ -32,24 +33,22 @@
   .badge.zero{opacity:.5}
   .btn.hasReports{color:#26D07C}
 
-  /* Overlay centering: grid/flex + **fixed/translate** fallback */
+  /* Overlay backdrop */
   .overlay{
     position:fixed; inset:0; background:rgba(0,0,0,.52);
-    z-index:50; padding:16px; min-height:100svh; display:none;
+    z-index:50; padding:0; display:none;
   }
-  .overlay.open{ display:flex; align-items:center; justify-content:center; }
-  @supports (place-items:center){ .overlay.open{ display:grid; place-items:center; } }
+  .overlay.open{ display:block; }
+
+  /* HARD-CENTERED sheet: works on Samsung S-series + iPhone */
   .sheet{
-    width:min(480px,92vw); max-height:88svh; overflow:auto;
+    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:min(480px,92vw);
+    max-height:calc(90svh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow:auto;
     background:var(--panel); border:1px solid var(--border);
     border-radius:18px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.45);
-    margin:0;
   }
-  /* Fallback: if some mobile still positions low, force absolute center */
-  .overlay.open.center-fallback .sheet{
-    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); /* why: Samsung edge cases */
-  }
-
   .sheet h2{margin:0 0 6px 0;font-size:20px;text-transform:uppercase;text-align:center}
   .meta{color:#E6EAF0;font-size:20px;font-weight:900;letter-spacing:.06em;margin:2px 0 10px 0;word-break:break-word;text-align:center}
   .stack{display:flex;flex-direction:column;gap:10px;align-items:center}
@@ -137,7 +136,7 @@ const writeRecv=(a)=>safeWrite(RECV_KEY,a);
 const today=()=>new Date().toISOString().slice(0,10);
 const sanitize=s=>(s||'').toUpperCase().replace(/[^A-Z0-9\-_. /]/g,'_').replace(/\s+/g,'-');
 
-/* ====================== PDF BUILDER (defined early) ============= */
+/* ====================== PDF BUILDER (declared early) ============= */
 function buildPdfFromJpegsExact(pages, pageWpt=612, pageHpt=792){
   const parts=[]; const enc=new TextEncoder(); let offset=0; const xref=[null];
   const addS=s=>{const u8=enc.encode(s); parts.push(u8); offset+=u8.length;};
@@ -174,7 +173,6 @@ Q
 
 /* ============================ UI: LIST =========================== */
 function countReports(jobNo){ return readRecv().filter(r=>r.jobNo===jobNo).length; }
-
 function renderJobs(){
   const rows=readJobs().sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
   const tb=$('jobsBody'); tb.innerHTML='';
@@ -217,10 +215,11 @@ function openMenu(jobNo){
   $('confirmBox').style.display='none'; $('zipNote').textContent='';
   const hasReports = countReports(job.jobNo) > 0;
   $('exportBtn').classList.toggle('hasReports', hasReports);
-  const ov=$('overlay'); ov.classList.add('open'); ov.classList.add('center-fallback'); // extra safety for mobile
+  $('overlay').classList.add('open');
+  document.body.classList.add('modal-open'); // lock scroll (prevents offset)
   $('closeBtn').focus();
 }
-function closeMenu(){ const ov=$('overlay'); ov.classList.remove('open'); ov.classList.remove('center-fallback'); current=null; }
+function closeMenu(){ $('overlay').classList.remove('open'); document.body.classList.remove('modal-open'); current=null; }
 $('closeBtn').onclick=closeMenu;
 $('overlay').addEventListener('click',(e)=>{ if(e.target===e.currentTarget) closeMenu(); });
 document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && $('overlay').classList.contains('open')) closeMenu(); });
@@ -262,14 +261,13 @@ $('exportBtn').onclick = async (ev) => {
     files.push({name:`${base}.pdf`, u8: pdfU8});
 
     let photoCount = 0;
-    // use for..of + await to support Blob/File/Uint8Array/dataURL
     for (let idx = 0; idx < entries.length; idx++) {
       const r = normalizeEntry(entries[idx]);
       const folder = `${sanitize(r.jobNo)}/${r.date || `ENTRY-${idx+1}`}/${sanitize(r.title || 'UNTITLED')}`;
       for (let i = 0; i < (r.photos||[]).length; i++) {
         const ph = r.photos[i];
         if (!ph) continue;
-        const u8 = await toU8(ph);
+        const u8 = await toU8(ph); // accepts dataURL/Blob/File/Uint8Array/object
         files.push({name:`${folder}/photo-${String(i+1).padStart(2,'0')}.jpg`, u8});
         photoCount++;
       }
@@ -289,14 +287,13 @@ $('exportBtn').onclick = async (ev) => {
     setProg(100);
     setNote(`Done — downloaded ${zips.length} ZIP file${zips.length>1?'s':''} with PDF and ${photoCount} photo${photoCount!==1?'s':''}.`, 'ok');
   } catch(e){
-    setNote(`Export failed: ${e?.message || e || 'Unexpected error.'}`, 'warn');
+    setNote(`Export failed: ${e?.message || 'Unexpected error.'}`, 'warn');
   }
 };
 
-/* ---------- PDF RENDER (letter portrait, centered columns) ------ */
+/* ---------- PDF RENDER (letter portrait) ------------------------ */
 async function renderReceivingPdfPages(entries){
-  const W=1275, H=1650, M=75;
-  const pages=[];
+  const W=1275, H=1650, M=75; const pages=[];
   for(const raw of entries){
     const r = normalizeEntry(raw);
     const c=document.createElement('canvas'); c.width=W; c.height=H;
@@ -320,9 +317,7 @@ async function renderReceivingPdfPages(entries){
     let y=M+40;
     text('IDENTIFICATION', M+6, y+18, 14, true);
     const IDH=124; box(M,y+24,W-2*M,IDH);
-
-    const rw=IDH/3;
-    const midX=M+(W-2*M)/2;
+    const rw=IDH/3; const midX=M+(W-2*M)/2;
     hln(M, y+24+rw, W-M); hln(M, y+24+2*rw, W-M); vln(midX, y+24, y+24+IDH);
 
     text('JOB NO.',   M+12, y+24+rw-8, 12, true); text(r.jobNo,   M+120, y+24+rw-8);
@@ -416,14 +411,29 @@ function normalizeEntry(r){
 
 /* ----------------------- U8 helpers ------------------------------ */
 function dataURLtoU8(d){ const i=d.indexOf(','); const bin=atob(d.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
-/* Accept dataURL | Blob/File | Uint8Array and return Uint8Array */
+function base64ToU8(b64){ const bin=atob(b64); const u8=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i); return u8; }
+
+/* Accept: dataURL | blob: URL | http(s) URL | Blob/File | Uint8Array | raw base64
+          | {dataUrl|dataURL|src|url|bytes|u8} */
 async function toU8(d){
   if (d == null) throw new Error('Empty photo');
   if (d instanceof Uint8Array) return d;
   if (d instanceof Blob) return new Uint8Array(await d.arrayBuffer());
   if (typeof d === 'string') {
     if (d.startsWith('data:')) return dataURLtoU8(d);
-    throw new Error('Unsupported string photo format');
+    if (d.startsWith('blob:') || d.startsWith('http://') || d.startsWith('https://')) {
+      const res = await fetch(d); const buf = await res.arrayBuffer(); return new Uint8Array(buf);
+    }
+    if (/^[A-Za-z0-9+/=]+$/.test(d)) return base64ToU8(d); // raw base64
+    throw new Error('Unsupported photo type (string)');
+  }
+  if (typeof d === 'object') {
+    if ('dataUrl' in d) return toU8(d.dataUrl);
+    if ('dataURL' in d) return toU8(d.dataURL);
+    if ('src' in d)     return toU8(d.src);
+    if ('url' in d)     return toU8(d.url);
+    if ('u8' in d && d.u8) return (d.u8 instanceof Uint8Array) ? d.u8 : new Uint8Array(d.u8);
+    if ('bytes' in d && d.bytes) return (d.bytes instanceof Uint8Array) ? d.bytes : new Uint8Array(d.bytes);
   }
   throw new Error('Unsupported photo type');
 }
@@ -445,7 +455,6 @@ function buildZipParts(files, baseName, maxBytes){
   }
   return parts;
 }
-
 function makeZipBlob(list, name){
   const enc=new TextEncoder(); const chunks=[]; let offset=0; const cdrecs=[];
   for(const f of list){
