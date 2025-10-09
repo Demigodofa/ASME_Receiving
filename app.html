@@ -10,25 +10,26 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png" />
   <style>
     :root{--bg:#0A0F1A;--card:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C}
-    *{box-sizing:border-box} html,body{height:100%;margin:0}
-    body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    html{scrollbar-gutter:stable both-edges}
+    body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;overflow-x:hidden}
     header{position:sticky;top:0;background:#0C1320CC;backdrop-filter:blur(6px);border-bottom:1px solid var(--border);z-index:10}
-    .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1080px;margin:0 auto}
+    .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1080px;margin-left:auto;margin-right:auto;
+         padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
     .brand{font-weight:900;letter-spacing:.02em}
     .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0F172A;border:1px solid var(--border);font-size:12px;font-weight:900}
     .pill.ready{border-color:#155e3b;background:#0d1f17;color:#b7f7d2}
-    main{max-width:1080px;margin:24px auto;padding:0 16px}
+    main{max-width:1080px;margin:24px auto;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
     .tile{display:block;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 16px;text-decoration:none;color:var(--fg);font-weight:900;letter-spacing:.04em;text-transform:uppercase}
     .tile:hover{outline:2px solid var(--accent)}
     .sub{display:block;color:var(--muted);font-size:12px;margin-top:6px;text-transform:none}
-    /* footer storage */
-    footer{max-width:760px;margin:28px auto 18px auto;padding:0 16px;text-align:center}
+    footer{max-width:760px;margin:28px auto 18px auto;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));text-align:center}
     .storage-label{font-weight:900;letter-spacing:.06em;color:var(--muted);margin-bottom:8px}
     .storage-outer{width:min(520px,100%);margin:0 auto;border:1px solid #155e3b;background:#062815;border-radius:12px;height:18px;overflow:hidden}
     .storage-inner{height:100%;width:0%;background:#26D07C}
     .storage-meta{margin-top:6px;color:#b7f7d2;font-size:12px}
-    .hidden{display:none!important}
   </style>
 </head>
 <body>
@@ -47,7 +48,6 @@
         <span class="sub">Create • Open • Export per job</span>
       </a>
 
-      <!-- Keep Receiving tile commented out if you want job-first flow -->
       <!-- <a class="tile" href="receiving.html">Receiving Reports
         <span class="sub">Direct access</span>
       </a> -->
@@ -62,7 +62,6 @@
     </div>
   </main>
 
-  <!-- FOOTER STORAGE BAR -->
   <footer>
     <div class="storage-label">STORAGE</div>
     <div class="storage-outer">
@@ -72,61 +71,46 @@
   </footer>
 
   <script>
-    /* ===== Offline badge (auto) ===== */
     const swBadge = document.getElementById('swBadge');
-    function markReady() {
-      swBadge.textContent = 'OFFLINE READY';
-      swBadge.classList.add('ready');
-    }
+    function markReady() { swBadge.textContent = 'OFFLINE READY'; swBadge.classList.add('ready'); }
     (async () => {
       if (!('serviceWorker' in navigator)) { swBadge.textContent = 'NO SERVICE WORKER'; return; }
       try {
         const reg = await navigator.serviceWorker.register('service_worker.js');
-        // immediately check for update and mark ready if controlled
         reg.update?.();
         if (navigator.serviceWorker.controller || reg.active) markReady();
         navigator.serviceWorker.addEventListener('controllerchange', markReady);
-      } catch {
-        swBadge.textContent = 'SW FAILED';
-      }
+      } catch { swBadge.textContent = 'SW FAILED'; }
     })();
 
-    /* ===== Storage bar (auto-updates) ===== */
     const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
     const inner = document.getElementById('storageInner');
     const meta  = document.getElementById('storageMeta');
-
     function bToMB(n){ return (n/1024/1024).toFixed(1); }
-
     function roughSizeOfLocalData(){
-      // Sum JSON length of our stores + base64 photo payloads
       let used = 0;
       const j = localStorage.getItem(JOBS_KEY)||'[]';
       const r = localStorage.getItem(RECV_KEY)||'[]';
       used += j.length + r.length;
-
       try {
         const rows = JSON.parse(r);
         for (const rec of rows) {
           for (const p of (rec.photos||[])) {
             const s = p?.dataUrl || '';
             const i = s.indexOf(',');
-            if (i>0) used += Math.max(0, (s.length - i - 1)) * 3/4; // base64->bytes
+            if (i>0) used += Math.max(0, (s.length - i - 1)) * 3/4;
           }
         }
       } catch {}
       return Math.round(used);
     }
-
     async function updateStorageBar(){
       try {
         const est = await navigator.storage?.estimate?.();
         const quota = est?.quota || 0;
         const usedCalc = roughSizeOfLocalData();
-        // Some browsers include all site data (cache + storage) in estimate. Show both if present.
         const usedBrowser = est?.usage || 0;
-        const used = Math.max(usedCalc, usedBrowser); // choose the bigger so bar never under-reports
-
+        const used = Math.max(usedCalc, usedBrowser);
         const pct = quota ? Math.min(100, Math.round((used / quota) * 100)) : 0;
         inner.style.width = pct + '%';
         meta.textContent = quota
@@ -138,12 +122,9 @@
         meta.textContent = `${bToMB(usedCalc)} MB (estimate)`;
       }
     }
-
-    // Update now and on common lifecycle events
     updateStorageBar();
     window.addEventListener('pageshow', updateStorageBar);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) updateStorageBar(); });
-    // When other pages finish actions they poke this key to trigger a storage event
     window.addEventListener('storage', (e) => { if (e.key === 'wh_last_change') updateStorageBar(); });
   </script>
 </body>
