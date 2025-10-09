@@ -9,17 +9,15 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png" />
   <style>
-    :root{
-      --bg:#0A0F1A;--card:#101826;--border:#223046;--fg:#E6EAF0;
-      --muted:#8FA3BD;--accent:#26D07C;--accentText:#052e16;
-    }
+    :root{--bg:#0A0F1A;--card:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C;--accentText:#052e16}
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
+    html{scrollbar-gutter:stable both-edges}
     body{
-      display:grid; place-items:center; /* perfect centering */
+      display:grid; place-items:center;
       background:var(--bg); color:var(--fg);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      padding:24px;
+      padding:24px; overflow-x:hidden;
     }
     .card{
       width:min(720px,100%);
@@ -27,14 +25,14 @@
       border-radius:22px; padding:32px;
       box-shadow:0 10px 30px rgba(0,0,0,.35);
       display:flex; flex-direction:column; align-items:center; gap:24px;
-      margin:0 auto; text-align:center; /* ensure perfect center */
+      margin:0 auto; text-align:center;
+      padding-inline:max(32px,env(safe-area-inset-left)) max(32px,env(safe-area-inset-right));
     }
     .logo{
-      width:300px; height:300px; 
+      width:300px; height:300px;
       border-radius:24px; display:block; object-fit:contain; margin:0 auto;
-      transform: translateX(-14px); /* <-- nudge left; tweak -10 to -20px as needed */
+      transform:none; /* remove skew */
     }
-    .title{margin:0; font-size:32px; font-weight:900; letter-spacing:.2px}
     .subtitle{margin:0; color:var(--muted)}
     .btn{
       appearance:none; border:0; border-radius:18px;
@@ -50,10 +48,7 @@
   <main class="card" role="main" aria-label="Landing">
     <img class="logo" src="assets/icons/icon-512.png" alt="App logo" />
     <p class="subtitle">Install once. Works offline.</p>
-
     <button class="btn primary" onclick="location.href='app.html'">Enter</button>
-
-    <!-- Optional install tips; auto-hidden when installed/standalone -->
     <div id="instructions" class="install-hint">
       <strong>Add to Home Screen:</strong><br/>
       <b>Android (Chrome)</b>: tap ⋮ → <em>Add to Home screen</em><br/>
@@ -62,16 +57,10 @@
   </main>
 
   <script>
-    // Silent SW register (no badge)
     (async () => {
       if (!('serviceWorker' in navigator)) return;
-      try {
-        const reg = await navigator.serviceWorker.register('service_worker.js');
-        reg.update?.();
-      } catch (e) { /* non-fatal */ }
+      try { const reg = await navigator.serviceWorker.register('service_worker.js'); reg.update?.(); } catch {}
     })();
-
-    // Hide tips if already installed / standalone
     function hideInstructionsIfInstalled() {
       const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator.standalone;
       const el = document.getElementById('instructions');
