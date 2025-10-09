@@ -1,4 +1,3 @@
-<!-- jobs.html — hard-centered actions, universal photo loader, same export UX -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -9,17 +8,20 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <style>
   :root{--bg:#0A0F1A;--panel:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C;--danger:#FF5A5F;--focus:#8AB4F8}
-  *{box-sizing:border-box} html,body{height:100%;margin:0}
-  body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;letter-spacing:.02em}
-  body.modal-open{overflow:hidden; touch-action:none;} /* why: prevent background scroll shifting modal */
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  html{scrollbar-gutter:stable both-edges}
+  body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;letter-spacing:.02em;overflow-x:hidden}
+  body.modal-open{overflow:hidden;touch-action:none}
   header{position:sticky;top:0;background:#0C1320CC;backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
-  .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1120px;margin:0 auto}
+  .nav{display:flex;gap:12px;align-items:center;padding:12px 16px;max-width:1120px;margin-left:auto;margin-right:auto;
+       padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
   .brand{font-weight:900}
   .btn{border:1px solid var(--border);background:#0F172A;color:#E6EAF0;padding:10px 14px;border-radius:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;text-decoration:none}
   .btn.primary{background:var(--accent);color:#052e16;border-color:#1B9E64}
   .btn.danger{background:var(--danger);border-color:#D83A3F}
   .btn:focus{outline:3px solid var(--focus);outline-offset:2px}
-  main{max-width:1120px;margin:24px auto;padding:0 16px}
+  main{max-width:1120px;margin:24px auto;padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
   label{font-size:12px;color:var(--muted);font-weight:800;display:block;margin-bottom:6px}
   input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid var(--border);background:#0D1424;color:#E6EAF0;text-transform:uppercase;font-weight:800}
@@ -33,21 +35,19 @@
   .badge.zero{opacity:.5}
   .btn.hasReports{color:#26D07C}
 
-  /* Overlay backdrop */
-  .overlay{
-    position:fixed; inset:0; background:rgba(0,0,0,.52);
-    z-index:50; padding:0; display:none;
-  }
-  .overlay.open{ display:block; }
+  /* Backdrop */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:50;display:none}
+  .overlay.open{display:block}
 
-  /* HARD-CENTERED sheet: works on Samsung S-series + iPhone */
+  /* Hard horizontal center + tighter width */
   .sheet{
-    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
-    width:min(480px,92vw);
+    position:fixed; left:50%; top:50svh; transform:translateX(-50%) translateY(-50%);
+    width:min(420px,92vw);
     max-height:calc(90svh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     overflow:auto;
     background:var(--panel); border:1px solid var(--border);
     border-radius:18px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.45);
+    margin-inline:env(safe-area-inset-left) env(safe-area-inset-right);
   }
   .sheet h2{margin:0 0 6px 0;font-size:20px;text-transform:uppercase;text-align:center}
   .meta{color:#E6EAF0;font-size:20px;font-weight:900;letter-spacing:.06em;margin:2px 0 10px 0;word-break:break-word;text-align:center}
@@ -121,8 +121,7 @@
 
 <script>
 /* ============================ CONFIG ============================ */
-const MAX_PHOTOS_ALLOWED = Number(localStorage.getItem('wh_max_photos') || '4');
-localStorage.setItem('wh_max_photos', String(MAX_PHOTOS_ALLOWED));
+localStorage.setItem('wh_max_photos','4'); // single source of truth
 
 /* ============================ STORAGE ============================ */
 const JOBS_KEY='wh_jobs_v1', RECV_KEY='wh_receiving_v1';
@@ -136,7 +135,47 @@ const writeRecv=(a)=>safeWrite(RECV_KEY,a);
 const today=()=>new Date().toISOString().slice(0,10);
 const sanitize=s=>(s||'').toUpperCase().replace(/[^A-Z0-9\-_. /]/g,'_').replace(/\s+/g,'-');
 
-/* ====================== PDF BUILDER (declared early) ============= */
+/* ============================ IndexedDB (read photos) =========== */
+const DB_NAME='wh_db', DB_VER=1, DB_PHOTOS='photos';
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(DB_NAME, DB_VER);
+    r.onupgradeneeded=()=>{ const db=r.result; if(!db.objectStoreNames.contains(DB_PHOTOS)){ db.createObjectStore(DB_PHOTOS,{keyPath:'id'}); } };
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  });
+}
+async function idbGetPhoto(id){
+  const db=await openDB();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(DB_PHOTOS,'readonly');
+    const rq=tx.objectStore(DB_PHOTOS).get(id);
+    rq.onsuccess=()=>res(rq.result||null);
+    rq.onerror=()=>rej(rq.error);
+  });
+}
+async function resolvePhotoU8(ph){
+  try{
+    if (ph && typeof ph==='object' && ph.store==='idb' && ph.id){
+      const rec = await idbGetPhoto(ph.id);
+      if (rec?.blob) return new Uint8Array(await rec.blob.arrayBuffer());
+    }
+    if (ph instanceof Uint8Array) return ph;
+    if (ph instanceof Blob) return new Uint8Array(await ph.arrayBuffer());
+    if (typeof ph === 'string'){
+      if (ph.startsWith('data:')) return dataURLtoU8(ph);
+      if (ph.startsWith('blob:') || ph.startsWith('http')) {
+        const res = await fetch(ph); return new Uint8Array(await res.arrayBuffer());
+      }
+      return null;
+    }
+    if (ph && typeof ph==='object' && ('dataUrl' in ph || 'url' in ph || 'src' in ph)){
+      return await resolvePhotoU8(ph.dataUrl||ph.url||ph.src);
+    }
+    return null;
+  }catch{ return null; }
+}
+
+/* ====================== PDF BUILDER (declared early) ============ */
 function buildPdfFromJpegsExact(pages, pageWpt=612, pageHpt=792){
   const parts=[]; const enc=new TextEncoder(); let offset=0; const xref=[null];
   const addS=s=>{const u8=enc.encode(s); parts.push(u8); offset+=u8.length;};
@@ -215,9 +254,7 @@ function openMenu(jobNo){
   $('confirmBox').style.display='none'; $('zipNote').textContent='';
   const hasReports = countReports(job.jobNo) > 0;
   $('exportBtn').classList.toggle('hasReports', hasReports);
-  $('overlay').classList.add('open');
-  document.body.classList.add('modal-open'); // lock scroll (prevents offset)
-  $('closeBtn').focus();
+  $('overlay').classList.add('open'); document.body.classList.add('modal-open'); $('closeBtn').focus();
 }
 function closeMenu(){ $('overlay').classList.remove('open'); document.body.classList.remove('modal-open'); current=null; }
 $('closeBtn').onclick=closeMenu;
@@ -252,7 +289,7 @@ $('exportBtn').onclick = async (ev) => {
     const canvases = await renderReceivingPdfPages(entries);
     const pages = canvases.map(c => ({ u8: dataURLtoU8(c.toDataURL('image/jpeg', 0.92)), w: c.width, h: c.height }));
     const pdfBlob  = buildPdfFromJpegsExact(pages, 612, 792);
-    const pdfU8 = await toU8(pdfBlob);
+    const pdfU8 = new Uint8Array(await pdfBlob.arrayBuffer());
 
     setNote('Preparing ZIP…'); setProg(55);
 
@@ -267,7 +304,8 @@ $('exportBtn').onclick = async (ev) => {
       for (let i = 0; i < (r.photos||[]).length; i++) {
         const ph = r.photos[i];
         if (!ph) continue;
-        const u8 = await toU8(ph); // accepts dataURL/Blob/File/Uint8Array/object
+        const u8 = await resolvePhotoU8(ph);  // IDB-aware
+        if (!u8) continue;
         files.push({name:`${folder}/photo-${String(i+1).padStart(2,'0')}.jpg`, u8});
         photoCount++;
       }
@@ -395,7 +433,6 @@ async function renderReceivingPdfPages(entries){
   return pages;
 }
 
-/* ---- Normalize entry ------------------------------------------- */
 function normalizeEntry(r){
   return {
     jobNo:(r.jobNo||''), date:(r.date||''), title:(r.title||''), qty:(r.qty||''),
@@ -411,32 +448,6 @@ function normalizeEntry(r){
 
 /* ----------------------- U8 helpers ------------------------------ */
 function dataURLtoU8(d){ const i=d.indexOf(','); const bin=atob(d.slice(i+1)); const u8=new Uint8Array(bin.length); for(let k=0;k<bin.length;k++) u8[k]=bin.charCodeAt(k); return u8; }
-function base64ToU8(b64){ const bin=atob(b64); const u8=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i); return u8; }
-
-/* Accept: dataURL | blob: URL | http(s) URL | Blob/File | Uint8Array | raw base64
-          | {dataUrl|dataURL|src|url|bytes|u8} */
-async function toU8(d){
-  if (d == null) throw new Error('Empty photo');
-  if (d instanceof Uint8Array) return d;
-  if (d instanceof Blob) return new Uint8Array(await d.arrayBuffer());
-  if (typeof d === 'string') {
-    if (d.startsWith('data:')) return dataURLtoU8(d);
-    if (d.startsWith('blob:') || d.startsWith('http://') || d.startsWith('https://')) {
-      const res = await fetch(d); const buf = await res.arrayBuffer(); return new Uint8Array(buf);
-    }
-    if (/^[A-Za-z0-9+/=]+$/.test(d)) return base64ToU8(d); // raw base64
-    throw new Error('Unsupported photo type (string)');
-  }
-  if (typeof d === 'object') {
-    if ('dataUrl' in d) return toU8(d.dataUrl);
-    if ('dataURL' in d) return toU8(d.dataURL);
-    if ('src' in d)     return toU8(d.src);
-    if ('url' in d)     return toU8(d.url);
-    if ('u8' in d && d.u8) return (d.u8 instanceof Uint8Array) ? d.u8 : new Uint8Array(d.u8);
-    if ('bytes' in d && d.bytes) return (d.bytes instanceof Uint8Array) ? d.bytes : new Uint8Array(d.bytes);
-  }
-  throw new Error('Unsupported photo type');
-}
 function triggerDownload(url, filename){ const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); }
 
 /* ----------------------- ZIP helpers ---------------------------- */
@@ -503,6 +514,9 @@ window.addEventListener('pageshow', () => {
   renderJobs();
 });
 window.addEventListener('storage', (e)=>{ if (e.key === JOBS_KEY || e.key===RECV_KEY) renderJobs(); });
+
+/* --------- Dev aid: surface runtime errors in console ------------- */
+window.addEventListener('error', e => console.error('[JS ERROR]', e.message, e.error || ''));
 </script>
 </body>
 </html>
