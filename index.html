@@ -1,3 +1,4 @@
+<!-- ======================== index.html — restored, centered ======================== -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -6,68 +7,30 @@
   <title>WELDERS HELPER — HOME</title>
   <meta name="theme-color" content="#0A0F1A" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-32.png" />
   <style>
     :root{--bg:#0A0F1A;--card:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C;--accentText:#052e16}
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0}
-    html{scrollbar-gutter:stable both-edges}
-    body{
-      display:grid; place-items:center;
-      background:var(--bg); color:var(--fg);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      padding:24px; overflow-x:hidden;
-    }
-    .card{
-      width:min(720px,100%);
-      background:var(--card); border:1px solid var(--border);
-      border-radius:22px; padding:32px;
-      box-shadow:0 10px 30px rgba(0,0,0,.35);
-      display:flex; flex-direction:column; align-items:center; gap:24px;
-      margin:0 auto; text-align:center;
-      padding-inline:max(32px,env(safe-area-inset-left)) max(32px,env(safe-area-inset-right));
-    }
-    .logo{
-      width:300px; height:300px;
-      border-radius:24px; display:block; object-fit:contain; margin:0 auto;
-      transform:none; /* remove skew */
-    }
-    .subtitle{margin:0; color:var(--muted)}
-    .btn{
-      appearance:none; border:0; border-radius:18px;
-      padding:26px 40px; font-size:24px;
-      font-weight:900; cursor:pointer; text-transform:uppercase;
-    }
-    .btn.primary{background:var(--accent); color:var(--accentText)}
-    .install-hint{color:var(--muted); font-size:14px; max-width:520px}
+    *{box-sizing:border-box} html,body{height:100%;margin:0}
+    body{display:grid;place-items:center;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:24px}
+    .card{width:min(720px,100%);background:var(--card);border:1px solid var(--border);border-radius:22px;padding:32px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center;margin:0 auto}
+    .logo{width:220px;height:220px;border-radius:18px;object-fit:contain}
+    .btn{appearance:none;border:0;border-radius:14px;padding:16px 28px;font-weight:900;cursor:pointer;text-transform:uppercase}
+    .btn.primary{background:var(--accent);color:var(--accentText)}
+    .install-hint{color:var(--muted);font-size:14px}
     .hidden{display:none!important}
   </style>
 </head>
 <body>
-  <main class="card" role="main" aria-label="Landing">
+  <main class="card">
     <img class="logo" src="assets/icons/icon-512.png" alt="App logo" />
-    <p class="subtitle">Install once. Works offline.</p>
+    <p class="install-hint">Install once. Works offline.</p>
     <button class="btn primary" onclick="location.href='app.html'">Enter</button>
     <div id="instructions" class="install-hint">
-      <strong>Add to Home Screen:</strong><br/>
-      <b>Android (Chrome)</b>: tap ⋮ → <em>Add to Home screen</em><br/>
-      <b>iPhone/iPad (Safari)</b>: tap <em>Share</em> → <em>Add to Home Screen</em>
+      <strong>Add to Home Screen:</strong> Android (⋮ → Add to Home screen) • iPhone (Share → Add to Home Screen)
     </div>
   </main>
-
   <script>
-    (async () => {
-      if (!('serviceWorker' in navigator)) return;
-      try { const reg = await navigator.serviceWorker.register('service_worker.js'); reg.update?.(); } catch {}
-    })();
-    function hideInstructionsIfInstalled() {
-      const standalone = window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator.standalone;
-      const el = document.getElementById('instructions');
-      if (standalone && el) el.classList.add('hidden');
-    }
-    hideInstructionsIfInstalled();
-    window.addEventListener('visibilitychange', hideInstructionsIfInstalled);
+    (async()=>{ if(!('serviceWorker'in navigator))return; try{const reg=await navigator.serviceWorker.register('service_worker.js'); reg.update?.();}catch{} })();
+    function hideIfInstalled(){ const s=window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator.standalone; const el=document.getElementById('instructions'); if(s && el) el.classList.add('hidden'); } hideIfInstalled(); document.addEventListener('visibilitychange',hideIfInstalled);
   </script>
 </body>
 </html>
