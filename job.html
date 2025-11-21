@@ -1,79 +1,108 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Welders Helper — Job</title>
-  <meta name="theme-color" content="#101828" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <style>
-    :root{--bg:#0b1120;--card:#111827;--border:#1f2937;--fg:#e5e7eb;--muted:#94a3b8;--accent:#22c55e}
-    *{box-sizing:border-box} html,body{height:100%;margin:0}
-    body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    header{position:sticky;top:0;background:rgba(17,24,39,.85);backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
-    .nav{display:flex;gap:10px;align-items:center;padding:10px 16px;max-width:980px;margin:0 auto}
-    .brand{font-weight:800}
-    main{max-width:980px;margin:24px auto;padding:0 16px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
-    .tile{display:block;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;text-decoration:none;color:var(--fg);font-weight:700}
-    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#0f172a;border:1px solid var(--border);font-size:12px}
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Job Details - ASME Receiving</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon-32.png" type="image/png" />
 </head>
+
 <body>
-  <header>
-    <nav class="nav">
-      <a class="tile" href="jobs.html" style="padding:8px 12px;border-radius:10px">← Jobs</a>
-      <div id="title" class="brand">Job</div>
-      <div style="flex:1"></div>
-      <a class="tile" href="app.html" style="padding:8px 12px;border-radius:10px">App</a>
-    </nav>
-  </header>
 
-  <main>
-    <section class="card">
-      <div id="jobMeta" class="pill">Loading…</div>
-    </section>
+    <header>
+        <img src="icon-32.png" alt="App Icon" />
+        <h1 id="jobTitle">Job Details</h1>
+    </header>
 
-    <section class="card">
-      <div class="grid">
-        <a id="recvBtn" class="tile" href="#">Receiving Reports</a>
-        <a id="hydroBtn" class="tile" href="#">Hydro Reports</a>
-      </div>
-    </section>
+    <main>
 
-    <section class="card">
-      <div id="stats" style="color:#94a3b8">No data yet.</div>
-    </section>
-  </main>
+        <div class="card">
+            <h2 class="center">Job Information</h2>
 
-  <script>
-    const JOBS_KEY='wh_jobs_v1';
-    const RECV_KEY='wh_receiving_v1';
-    const $=id=>document.getElementById(id);
-    const qs=new URLSearchParams(location.search);
-    const jobNo=qs.get('job');
+            <label for="jobNumber">Job Number</label>
+            <input id="jobNumber" type="text" readonly />
 
-    function readJobs(){ return JSON.parse(localStorage.getItem(JOBS_KEY)||'[]'); }
-    function readRecv(){ return JSON.parse(localStorage.getItem(RECV_KEY)||'[]'); }
+            <label for="jobDesc">Description</label>
+            <input id="jobDesc" type="text" placeholder="Job description" />
 
-    function load(){
-      if(!jobNo){ $('jobMeta').textContent='Missing job number.'; return; }
-      const job=readJobs().find(j=>j.jobNo===jobNo);
-      if(!job){ $('jobMeta').textContent=`Job ${jobNo} not found.`; return; }
+            <label for="jobNotes">Notes</label>
+            <textarea id="jobNotes" rows="3" placeholder="Optional notes"></textarea>
+        </div>
 
-      $('title').textContent=`Job ${job.jobNo}`;
-      $('jobMeta').textContent=`Job ${job.jobNo} — ${job.desc||'—'} — Start: ${job.startDate||'n/a'}`;
+        <div class="card">
+            <h2 class="center">Materials Received</h2>
 
-      $('recvBtn').href=`receiving.html?job=${encodeURIComponent(job.jobNo)}`;
-      $('hydroBtn').href=`hydro.html?job=${encodeURIComponent(job.jobNo)}`;
+            <table>
+                <thead>
+                    <tr>
+                        <th>Part #</th>
+                        <th>Qty</th>
+                        <th>Heat</th>
+                    </tr>
+                </thead>
+                <tbody id="materialTable">
+                    <!-- Populated dynamically -->
+                </tbody>
+            </table>
 
-      const recvCount=readRecv().filter(r=>r.jobNo===job.jobNo).length;
-      $('stats').textContent = `Receiving: ${recvCount} item(s).`;
-    }
+            <div class="spacer"></div>
+            <button class="btn" onclick="addMaterial()">Add Material</button>
+        </div>
 
-    (function init(){ load(); })();
-    (async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){console.error(e);} })();
-  </script>
+    </main>
+
+    <footer>
+        <a href="jobs.html" class="btn-secondary action-btn">Back</a>
+    </footer>
+
+    <script>
+        // Parse job number from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const jobParam = urlParams.get('job');
+        const isNew = urlParams.get('new') === 'true';
+
+        const jobNumberInput = document.getElementById('jobNumber');
+        const jobTitle = document.getElementById('jobTitle');
+
+        if (isNew) {
+            jobTitle.textContent = "New Job";
+            jobNumberInput.value = "(new)";
+        } else {
+            jobTitle.textContent = "Job " + jobParam;
+            jobNumberInput.value = jobParam;
+        }
+
+        // Sample material data (replace with real storage)
+        const sampleMaterials = [
+            { part: 'A123', qty: 4, heat: 'H1001' },
+            { part: 'B448', qty: 2, heat: 'H2250' }
+        ];
+
+        function renderMaterials() {
+            const table = document.getElementById('materialTable');
+            table.innerHTML = '';
+
+            sampleMaterials.forEach(m => {
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>${m.part}</td>
+                    <td>${m.qty}</td>
+                    <td>${m.heat}</td>
+                `;
+
+                table.appendChild(row);
+            });
+        }
+
+        function addMaterial() {
+            alert("Material entry screen coming soon.");
+        }
+
+        renderMaterials();
+    </script>
+
 </body>
 </html>

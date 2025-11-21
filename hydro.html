@@ -1,25 +1,104 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Welders Helper — Hydro Reports</title>
-  <meta name="theme-color" content="#101828" />
-  <link rel="manifest" href="manifest.webmanifest" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hydro Test - ASME Receiving</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon-32.png" type="image/png" />
 </head>
-<body style="font-family:system-ui;background:#0b1120;color:#e5e7eb;margin:0">
-  <div style="padding:16px;border-bottom:1px solid #1f2937;background:#111827;position:sticky;top:0">
-    <a href="jobs.html" style="color:#22c55e;text-decoration:none;padding:8px 12px;border:1px solid #1f2937;border-radius:8px;background:#0f172a">← Jobs</a>
-    <span id="hdr" style="margin-left:10px;font-weight:800">Hydro — Job</span>
-    <a href="app.html" style="float:right;color:#22c55e;text-decoration:none;padding:8px 12px;border:1px solid #1f2937;border-radius:8px;background:#0f172a">App</a>
-  </div>
-  <main style="padding:16px;max-width:980px;margin:0 auto">
-    <p style="color:#94a3b8">Coming soon. This page will record Hydro reports for this Job.</p>
-  </main>
-  <script>
-    const qs=new URLSearchParams(location.search);
-    document.getElementById('hdr').textContent = `Hydro — Job ${qs.get('job')||''}`;
-    (async()=>{ if(!('serviceWorker'in navigator))return; try{const r=await navigator.serviceWorker.register('service_worker.js'); if(r.waiting) r.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){console.error(e);} })();
-  </script>
+
+<body>
+
+    <header>
+        <img src="icon-32.png" alt="App Icon" />
+        <h1>Hydro Test</h1>
+    </header>
+
+    <main>
+
+        <div class="card">
+            <h2 class="center">Hydro Test Entry</h2>
+
+            <label for="jobNum">Job Number</label>
+            <input id="jobNum" type="text" placeholder="Enter job number" />
+
+            <label for="pressure">Test Pressure (PSI)</label>
+            <input id="pressure" type="number" min="0" placeholder="0" />
+
+            <label for="duration">Hold Time (Minutes)</label>
+            <input id="duration" type="number" min="0" placeholder="0" />
+
+            <label for="inspector">Inspector</label>
+            <input id="inspector" type="text" placeholder="Inspector name" />
+
+            <label for="notes">Notes</label>
+            <textarea id="notes" rows="3" placeholder="Optional notes"></textarea>
+        </div>
+
+        <div class="card">
+            <h2 class="center">Test Log</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Job #</th>
+                        <th>PSI</th>
+                        <th>Minutes</th>
+                        <th>Inspector</th>
+                    </tr>
+                </thead>
+                <tbody id="hydroTable">
+                    <!-- Filled dynamically -->
+                </tbody>
+            </table>
+
+        </div>
+
+    </main>
+
+    <footer>
+        <button class="btn action-btn" onclick="saveHydro()">Save Hydro Test</button>
+    </footer>
+
+    <script>
+        const sampleHydroTests = [
+            { job: '1001', psi: 2500, min: 30, insp: 'J. Smith' }
+        ];
+
+        function saveHydro() {
+            const job = document.getElementById('jobNum').value.trim();
+            const psi = document.getElementById('pressure').value.trim();
+            const min = document.getElementById('duration').value.trim();
+            const insp = document.getElementById('inspector').value.trim();
+
+            if (!job || !psi || !min || !insp) {
+                alert("Job #, PSI, Minutes, and Inspector are required.");
+                return;
+            }
+
+            alert("Hydro test saved!");
+        }
+
+        function renderHydro() {
+            const table = document.getElementById('hydroTable');
+            table.innerHTML = '';
+
+            sampleHydroTests.forEach(t => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${t.job}</td>
+                    <td>${t.psi}</td>
+                    <td>${t.min}</td>
+                    <td>${t.insp}</td>
+                `;
+                table.appendChild(row);
+            });
+        }
+
+        renderHydro();
+    </script>
+
 </body>
 </html>

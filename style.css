@@ -1,0 +1,209 @@
+
+/* ================================
+   GLOBAL RESET
+================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ================================
+   BASE COLORS & THEME
+================================== */
+:root {
+  --primary: #1E3A5F;
+  --primary-light: #2f4f77;
+  --text: #1F2937;
+  --bg: #F5F7FA;
+  --border: #D1D5DB;
+  --shadow: rgba(0,0,0,0.05);
+  --radius: 6px;
+  --padding: 16px;
+  --transition: 0.15s ease;
+  --header-height: 56px;
+  --footer-height: 64px;
+}
+
+/* ================================
+   PAGE LAYOUT
+================================== */
+body {
+  font-family: system-ui, -apple-system, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.4;
+  -webkit-text-size-adjust: 100%;
+}
+
+main {
+  padding: calc(var(--header-height) + 12px) var(--padding)
+           calc(var(--footer-height) + 12px);
+}
+
+html, body {
+  height: 100%;
+}
+
+/* ================================
+   HEADER BAR
+================================== */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: white;
+  box-shadow: 0 1px 4px var(--shadow);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--padding);
+  z-index: 1000;
+}
+
+header img {
+  height: 26px;
+  width: 26px;
+  margin-right: 12px;
+}
+
+header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.header-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+/* ================================
+   BOTTOM ACTION BAR
+================================== */
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--footer-height);
+  background: white;
+  box-shadow: 0 -1px 4px var(--shadow);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px var(--padding);
+  z-index: 1000;
+}
+
+footer .action-btn {
+  width: 100%;
+  max-width: 460px;
+}
+
+/* ================================
+   BUTTONS
+================================== */
+button, .btn {
+  width: 100%;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+}
+
+button:hover, .btn:hover {
+  background: var(--primary-light);
+}
+
+.btn-secondary {
+  background: #E5E7EB;
+  color: var(--text);
+}
+
+.btn-secondary:hover {
+  background: #d4d6d9;
+}
+
+/* ================================
+   FORMS
+================================== */
+input, select, textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+}
+
+label {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* ================================
+   CARDS
+================================== */
+.card {
+  background: white;
+  padding: var(--padding);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px var(--shadow);
+  margin-bottom: 20px;
+}
+
+/* ================================
+   TABLES
+================================== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+th {
+  background: var(--primary);
+  color: white;
+  padding: 10px;
+  font-weight: 600;
+}
+
+td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ================================
+   UTILITIES
+================================== */
+.center {
+  text-align: center;
+}
+
+.spacer {
+  margin-top: 24px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.hidden {
+  display: none !important;
+}

@@ -1,36 +1,48 @@
-<!-- ======================== index.html — restored, centered ======================== -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>WELDERS HELPER — HOME</title>
-  <meta name="theme-color" content="#0A0F1A" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <style>
-    :root{--bg:#0A0F1A;--card:#101826;--border:#223046;--fg:#E6EAF0;--muted:#8FA3BD;--accent:#26D07C;--accentText:#052e16}
-    *{box-sizing:border-box} html,body{height:100%;margin:0}
-    body{display:grid;place-items:center;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:24px}
-    .card{width:min(720px,100%);background:var(--card);border:1px solid var(--border);border-radius:22px;padding:32px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center;margin:0 auto}
-    .logo{width:220px;height:220px;border-radius:18px;object-fit:contain}
-    .btn{appearance:none;border:0;border-radius:14px;padding:16px 28px;font-weight:900;cursor:pointer;text-transform:uppercase}
-    .btn.primary{background:var(--accent);color:var(--accentText)}
-    .install-hint{color:var(--muted);font-size:14px}
-    .hidden{display:none!important}
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ASME Receiving</title>
+    <link rel="stylesheet" href="assets/style.css" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icons/icon-32.png" type="image/png" />
 </head>
+
 <body>
-  <main class="card">
-    <img class="logo" src="assets/icons/icon-512.png" alt="App logo" />
-    <p class="install-hint">Install once. Works offline.</p>
-    <button class="btn primary" onclick="location.href='app.html'">Enter</button>
-    <div id="instructions" class="install-hint">
-      <strong>Add to Home Screen:</strong> Android (⋮ → Add to Home screen) • iPhone (Share → Add to Home Screen)
-    </div>
-  </main>
-  <script>
-    (async()=>{ if(!('serviceWorker'in navigator))return; try{const reg=await navigator.serviceWorker.register('service_worker.js'); reg.update?.();}catch{} })();
-    function hideIfInstalled(){ const s=window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator.standalone; const el=document.getElementById('instructions'); if(s && el) el.classList.add('hidden'); } hideIfInstalled(); document.addEventListener('visibilitychange',hideIfInstalled);
-  </script>
+
+    <header>
+        <img src="assets/icons/icon-32.png" alt="App Icon" />
+        <h1>ASME Receiving</h1>
+    </header>
+
+    <main>
+
+        <div class="card center">
+            <h2>Welcome</h2>
+            <p style="margin-top:10px;">
+                Select an option below to continue.
+            </p>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="grid-2">
+            <a href="app.html" class="btn">Enter App</a>
+            <a href="lookup.html" class="btn-secondary">Lookup</a>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="card center">
+            <p>ASME Receiving PWA<br>Internal Use Only</p>
+        </div>
+
+    </main>
+
+    <footer>
+        <a href="app.html" class="btn action-btn">Continue</a>
+    </footer>
+
 </body>
 </html>
