@@ -1,28 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang='en'>
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
     <title>Jobs</title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel='stylesheet' href='style.css' />
 </head>
 
 <body>
 
-<header class="card header-bar">
-    <button class="back-btn" onclick="window.history.back()">
+<header class='card header-bar'>
+    <button class='back-btn' onclick='window.history.back()'>
         ← Back
     </button>
-    <h1 class="title">Jobs</h1>
+    <h1 class='title'>Jobs</h1>
 </header>
 
 <main>
 
-    <section class="card">
+    <section class='card'>
         <h2>Job List</h2>
         <p>Select a job to view details.</p>
 
-        <table class="table">
+        <table class='table'>
             <thead>
                 <tr>
                     <th>Job #</th>
@@ -30,33 +30,37 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody id="jobsTable"></tbody>
+            <tbody id='jobsTable'></tbody>
         </table>
 
     </section>
 
 </main>
 
-<script>
-// Placeholder until IndexedDB hookup
-const demoJobs = [
-    { num: "1001", desc: "Heat Exchanger" },
-    { num: "1002", desc: "Steam Drum" },
-    { num: "1003", desc: "Tube Bundle" }
-];
+<script src="https://cdn.jsdelivr.net/npm/dexie@3.2.3/dist/dexie.min.js"></script>
+<script src='db.js'></script>
 
-function loadJobs() {
+<script>
+// Load all jobs from IndexedDB
+async function loadJobs() {
+    const jobs = await db.jobs.toArray();
     const table = document.getElementById("jobsTable");
+
     table.innerHTML = "";
 
-    demoJobs.forEach(j => {
+    if (!jobs.length) {
+        table.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:12px;'>No jobs saved.</td></tr>";
+        return;
+    }
+
+    jobs.forEach(job => {
         const tr = document.createElement("tr");
 
         tr.innerHTML = `
-            <td>${j.num}</td>
-            <td>${j.desc}</td>
+            <td>${job.jobNumber}</td>
+            <td>${job.description || ""}</td>
             <td>
-                <button class="link-btn" onclick="openJob('${j.num}')">Open</button>
+                <button class='link-btn' onclick="openJob('${job.jobNumber}')">Open</button>
             </td>
         `;
 
@@ -65,7 +69,7 @@ function loadJobs() {
 }
 
 function openJob(jobNum) {
-    window.location.href = "job.html?job=" + jobNum;
+    window.location.href = "job.html?job=" + encodeURIComponent(jobNum);
 }
 
 loadJobs();
