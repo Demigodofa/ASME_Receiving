@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add Material</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+<header class="card header-bar">
+    <button class="back-btn" onclick="window.history.back()">
+        ← Back
+    </button>
+    <h1 class="title">Add Material</h1>
+</header>
+
+<main>
+    <section class="card">
+
+        <label>Part Number</label>
+        <input id="part" type="text" />
+
+        <label>Description</label>
+        <input id="description" type="text" />
+
+        <label>Quantity</label>
+        <input id="qty" type="number" />
+
+        <label>Heat Number</label>
+        <input id="heat" type="text" />
+
+        <button class="primary-btn" onclick="saveMaterial()">Save Material</button>
+
+    </section>
+</main>
+
+<script src="db.js"></script>
+
+<script>
+// Get job number from URL
+const params = new URLSearchParams(window.location.search);
+const jobNumber = params.get("job");
+
+async function saveMaterial() {
+    const mat = {
+        jobNumber: jobNumber,
+        part: document.getElementById("part").value.trim(),
+        description: document.getElementById("description").value.trim(),
+        qty: Number(document.getElementById("qty").value),
+        heat: document.getElementById("heat").value.trim()
+    };
+
+    if (!mat.part || !mat.qty) {
+        alert("Part # and Quantity are required.");
+        return;
+    }
+
+    await saveMaterialToDB(mat);
+}
+
+// Call DB function
+async function saveMaterialToDB(mat) {
+    await saveMaterial(mat);
+    window.location.href = "job.html?job=" + encodeURIComponent(jobNumber);
+}
+</script>
+
+</body>
+</html>

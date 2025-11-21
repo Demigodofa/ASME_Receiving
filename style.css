@@ -1,209 +1,122 @@
-
-/* ================================
-   GLOBAL RESET
-================================== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ==== GLOBAL RESET ==== */
+body, h1, h2, h3, p, table, input, textarea, button {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
 }
 
-/* ================================
-   BASE COLORS & THEME
-================================== */
-:root {
-  --primary: #1E3A5F;
-  --primary-light: #2f4f77;
-  --text: #1F2937;
-  --bg: #F5F7FA;
-  --border: #D1D5DB;
-  --shadow: rgba(0,0,0,0.05);
-  --radius: 6px;
-  --padding: 16px;
-  --transition: 0.15s ease;
-  --header-height: 56px;
-  --footer-height: 64px;
-}
-
-/* ================================
-   PAGE LAYOUT
-================================== */
 body {
-  font-family: system-ui, -apple-system, Roboto, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.4;
-  -webkit-text-size-adjust: 100%;
+    background: #f5f7fa;
+    color: #003366;
 }
 
-main {
-  padding: calc(var(--header-height) + 12px) var(--padding)
-           calc(var(--footer-height) + 12px);
-}
-
-html, body {
-  height: 100%;
-}
-
-/* ================================
-   HEADER BAR
-================================== */
-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--header-height);
-  background: white;
-  box-shadow: 0 1px 4px var(--shadow);
-  display: flex;
-  align-items: center;
-  padding: 0 var(--padding);
-  z-index: 1000;
-}
-
-header img {
-  height: 26px;
-  width: 26px;
-  margin-right: 12px;
-}
-
-header h1 {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--primary);
-}
-
-.header-btn {
-  margin-left: auto;
-  background: none;
-  border: none;
-  font-size: 18px;
-  color: var(--primary);
-  cursor: pointer;
-}
-
-/* ================================
-   BOTTOM ACTION BAR
-================================== */
-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: var(--footer-height);
-  background: white;
-  box-shadow: 0 -1px 4px var(--shadow);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 8px var(--padding);
-  z-index: 1000;
-}
-
-footer .action-btn {
-  width: 100%;
-  max-width: 460px;
-}
-
-/* ================================
-   BUTTONS
-================================== */
-button, .btn {
-  width: 100%;
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 14px;
-  font-size: 16px;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: var(--transition);
-  text-align: center;
-}
-
-button:hover, .btn:hover {
-  background: var(--primary-light);
-}
-
-.btn-secondary {
-  background: #E5E7EB;
-  color: var(--text);
-}
-
-.btn-secondary:hover {
-  background: #d4d6d9;
-}
-
-/* ================================
-   FORMS
-================================== */
-input, select, textarea {
-  width: 100%;
-  padding: 12px;
-  margin-top: 8px;
-  margin-bottom: 20px;
-  font-size: 15px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: white;
-}
-
-label {
-  font-weight: 600;
-  font-size: 15px;
-}
-
-/* ================================
-   CARDS
-================================== */
+/* ==== CARD CONTAINERS ==== */
 .card {
-  background: white;
-  padding: var(--padding);
-  border-radius: var(--radius);
-  box-shadow: 0 1px 3px var(--shadow);
-  margin-bottom: 20px;
+    background: white;
+    margin: 16px;
+    padding: 18px;
+    border-radius: 10px;
+    box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
 }
 
-/* ================================
-   TABLES
-================================== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 16px;
-  font-size: 14px;
+/* ==== HEADER BAR WITH LOGO ==== */
+.header-bar {
+    display: flex;
+    align-items: center;
+    background: #003366;
+    color: white;
+    padding: 14px 18px;
+    border-radius: 0;
+    margin: 0;
+    box-shadow: 0px 2px 6px rgba(0,0,0,0.3);
 }
 
-th {
-  background: var(--primary);
-  color: white;
-  padding: 10px;
-  font-weight: 600;
+.header-bar img {
+    width: 40px;
+    margin-right: 12px;
 }
 
-td {
-  padding: 10px;
-  border-bottom: 1px solid var(--border);
+/* Page title inside header */
+.title {
+    font-size: 22px;
+    font-weight: bold;
 }
 
-/* ================================
-   UTILITIES
-================================== */
-.center {
-  text-align: center;
+/* ==== BUTTONS (Option 2: elevated card-style) ==== */
+
+.primary-btn, .link-btn {
+    background: #004a99;
+    color: white;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    width: 100%;
+    font-size: 18px;
+    margin-top: 12px;
+    box-shadow: 0px 2px 6px rgba(0,0,0,0.25);
+    cursor: pointer;
 }
 
-.spacer {
-  margin-top: 24px;
+.primary-btn:hover, .link-btn:hover {
+    background: #0061cc;
 }
 
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+/* ===== BACK BUTTON ===== */
+.back-btn {
+    background: #ddd;
+    padding: 12px 18px;
+    border-radius: 10px;
+    width: 110px;
+    margin: 16px;
+    text-align: center;
+    color: #003366;
+    font-weight: bold;
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+    cursor: pointer;
 }
 
-.hidden {
-  display: none !important;
+/* Back button text spacing */
+.back-btn span {
+    margin-right: 6px;
+}
+
+/* ==== FORMS ==== */
+label {
+    display: block;
+    font-size: 18px;
+    margin-bottom: 6px;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 18px;
+    font-size: 18px;
+    border-radius: 8px;
+    border: 1px solid #888;
+}
+
+/* ==== TABLE ==== */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+}
+
+.table th {
+    background: #003366;
+    color: white;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.table td {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    font-size: 16px;
+}
+
+.table tr:hover {
+    background: #e0eaff;
+    cursor: pointer;
 }

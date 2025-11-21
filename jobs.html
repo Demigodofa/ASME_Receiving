@@ -3,27 +3,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jobs - ASME Receiving</title>
+    <title>Jobs</title>
     <link rel="stylesheet" href="style.css" />
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="icon-32.png" type="image/png" />
 </head>
 
 <body>
 
-    <header>
-        <img src="icon-32.png" alt="App Icon" />
-        <h1>Jobs</h1>
-    </header>
+<header class="card header-bar">
+    <button class="back-btn" onclick="window.history.back()">
+        ← Back
+    </button>
+    <h1 class="title">Jobs</h1>
+</header>
 
-    <main>
+<main>
 
-        <div class="card center">
-            <h2>Job List</h2>
-            <p style="margin-top:10px;">Select a job to view details.</p>
-        </div>
+    <section class="card">
+        <h2>Job List</h2>
+        <p>Select a job to view details.</p>
 
-        <table>
+        <table class="table">
             <thead>
                 <tr>
                     <th>Job #</th>
@@ -31,53 +30,46 @@
                     <th></th>
                 </tr>
             </thead>
-
-            <tbody id="jobTable">
-                <!-- Filled dynamically later -->
-            </tbody>
+            <tbody id="jobsTable"></tbody>
         </table>
 
-        <div class="spacer"></div>
+    </section>
 
-        <button class="btn" onclick="newJob()">Create New Job</button>
+</main>
 
-    </main>
+<script>
+// Placeholder until IndexedDB hookup
+const demoJobs = [
+    { num: "1001", desc: "Heat Exchanger" },
+    { num: "1002", desc: "Steam Drum" },
+    { num: "1003", desc: "Tube Bundle" }
+];
 
-    <footer>
-        <a href="app.html" class="btn-secondary action-btn">Back</a>
-    </footer>
+function loadJobs() {
+    const table = document.getElementById("jobsTable");
+    table.innerHTML = "";
 
-    <script>
-        // Placeholder job list
-        const sampleJobs = [
-            { job: '1001', desc: 'Heat Exchanger' },
-            { job: '1002', desc: 'Steam Drum' },
-            { job: '1003', desc: 'Tube Bundle' }
-        ];
+    demoJobs.forEach(j => {
+        const tr = document.createElement("tr");
 
-        function renderJobs() {
-            const table = document.getElementById('jobTable');
-            table.innerHTML = '';
+        tr.innerHTML = `
+            <td>${j.num}</td>
+            <td>${j.desc}</td>
+            <td>
+                <button class="link-btn" onclick="openJob('${j.num}')">Open</button>
+            </td>
+        `;
 
-            sampleJobs.forEach(j => {
-                const row = document.createElement('tr');
+        table.appendChild(tr);
+    });
+}
 
-                row.innerHTML = `
-                    <td>${j.job}</td>
-                    <td>${j.desc}</td>
-                    <td><a class="btn-secondary" href="job.html?job=${j.job}">Open</a></td>
-                `;
+function openJob(jobNum) {
+    window.location.href = "job.html?job=" + jobNum;
+}
 
-                table.appendChild(row);
-            });
-        }
-
-        function newJob() {
-            window.location.href = 'job.html?new=true';
-        }
-
-        renderJobs();
-    </script>
+loadJobs();
+</script>
 
 </body>
 </html>

@@ -3,106 +3,88 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Job Details - ASME Receiving</title>
+    <title>Job Details</title>
     <link rel="stylesheet" href="style.css" />
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="icon-32.png" type="image/png" />
 </head>
 
 <body>
 
-    <header>
-        <img src="icon-32.png" alt="App Icon" />
-        <h1 id="jobTitle">Job Details</h1>
-    </header>
+<header class="card header-bar">
+    <button class="back-btn" onclick="window.history.back()">
+        ← Back
+    </button>
+    <h1 class="title">Job Details</h1>
+</header>
 
-    <main>
+<main>
 
-        <div class="card">
-            <h2 class="center">Job Information</h2>
+    <section class="card">
+        <h2 id="jobHeader"></h2>
+    </section>
 
-            <label for="jobNumber">Job Number</label>
-            <input id="jobNumber" type="text" readonly />
+    <section class="card">
 
-            <label for="jobDesc">Description</label>
-            <input id="jobDesc" type="text" placeholder="Job description" />
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Part #</th>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>Heat</th>
+                </tr>
+            </thead>
+            <tbody id="materialTable"></tbody>
+        </table>
 
-            <label for="jobNotes">Notes</label>
-            <textarea id="jobNotes" rows="3" placeholder="Optional notes"></textarea>
-        </div>
+        <button class="primary-btn" onclick="addMaterial()">Add Material</button>
 
-        <div class="card">
-            <h2 class="center">Materials Received</h2>
+    </section>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Part #</th>
-                        <th>Qty</th>
-                        <th>Heat</th>
-                    </tr>
-                </thead>
-                <tbody id="materialTable">
-                    <!-- Populated dynamically -->
-                </tbody>
-            </table>
+</main>
 
-            <div class="spacer"></div>
-            <button class="btn" onclick="addMaterial()">Add Material</button>
-        </div>
+<script src="db.js"></script>
 
-    </main>
+<script>
+// URL params
+const params = new URLSearchParams(window.location.search);
+const jobNumber = params.get("job");
 
-    <footer>
-        <a href="jobs.html" class="btn-secondary action-btn">Back</a>
-    </footer>
+// Header
+document.getElementById("jobHeader").textContent = "Job: " + jobNumber;
 
-    <script>
-        // Parse job number from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const jobParam = urlParams.get('job');
-        const isNew = urlParams.get('new') === 'true';
+// Load materials for this job
+async function loadMaterials() {
+    const mats = await getMaterials(jobNumber);
+    const tbody = document.getElementById("materialTable");
+    tbody.innerHTML = "";
 
-        const jobNumberInput = document.getElementById('jobNumber');
-        const jobTitle = document.getElementById('jobTitle');
+    mats.forEach(mat => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${mat.part}</td>
+            <td>${mat.description}</td>
+            <td>${mat.qty}</td>
+            <td>${mat.heat}</td>
+        `;
+        tr.onclick = () => editMaterial(mat.id);
+        tbody.appendChild(tr);
+    });
+}
 
-        if (isNew) {
-            jobTitle.textContent = "New Job";
-            jobNumberInput.value = "(new)";
-        } else {
-            jobTitle.textContent = "Job " + jobParam;
-            jobNumberInput.value = jobParam;
-        }
+function addMaterial() {
+    window.location.href = "add_material.html?job=" + encodeURIComponent(jobNumber);
+}
 
-        // Sample material data (replace with real storage)
-        const sampleMaterials = [
-            { part: 'A123', qty: 4, heat: 'H1001' },
-            { part: 'B448', qty: 2, heat: 'H2250' }
-        ];
+function editMaterial(id) {
+    window.location.href =
+        "edit_material.html?job=" +
+        encodeURIComponent(jobNumber) +
+        "&id=" +
+        encodeURIComponent(id);
+}
 
-        function renderMaterials() {
-            const table = document.getElementById('materialTable');
-            table.innerHTML = '';
-
-            sampleMaterials.forEach(m => {
-                const row = document.createElement('tr');
-
-                row.innerHTML = `
-                    <td>${m.part}</td>
-                    <td>${m.qty}</td>
-                    <td>${m.heat}</td>
-                `;
-
-                table.appendChild(row);
-            });
-        }
-
-        function addMaterial() {
-            alert("Material entry screen coming soon.");
-        }
-
-        renderMaterials();
-    </script>
+loadMaterials();
+</script>
 
 </body>
 </html>

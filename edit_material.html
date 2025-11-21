@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Material</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+<header class="card header-bar">
+    <button class="back-btn" onclick="window.history.back()">
+        ← Back
+    </button>
+    <h1 class="title">Edit Material</h1>
+</header>
+
+<main>
+    <section class="card">
+
+        <label>Part Number</label>
+        <input id="part" type="text" />
+
+        <label>Description</label>
+        <input id="description" type="text" />
+
+        <label>Quantity</label>
+        <input id="qty" type="number" />
+
+        <label>Heat Number</label>
+        <input id="heat" type="text" />
+
+        <button class="primary-btn" onclick="saveChanges()">Save Changes</button>
+
+        <button class="primary-btn" style="background:#990000" onclick="deleteMat()">
+            Delete Material
+        </button>
+
+    </section>
+</main>
+
+<script src="db.js"></script>
+
+<script>
+// URL params
+const params = new URLSearchParams(window.location.search);
+const jobNumber = params.get("job");
+const matId = Number(params.get("id"));
+
+let materialObj = null;
+
+// Load material info
+async function loadMaterial() {
+    const mats = await getMaterials(jobNumber);
+    materialObj = mats.find(m => m.id === matId);
+
+    if (!materialObj) {
+        alert("Material not found.");
+        window.history.back();
+        return;
+    }
+
+    document.getElementById("part").value = materialObj.part;
+    document.getElementById("description").value = materialObj.description;
+    document.getElementById("qty").value = materialObj.qty;
+    document.getElementById("heat").value = materialObj.heat;
+}
+
+// Save changes
+async function saveChanges() {
+    materialObj.part = document.getElementById("part").value.trim();
+    materialObj.description = document.getElementById("description").value.trim();
+    materialObj.qty = Number(document.getElementById("qty").value);
+    materialObj.heat = document.getElementById("heat").value.trim();
+
+    await saveMaterial(materialObj);
+
+    window.location.href = "job.html?job=" + encodeURIComponent(jobNumber);
+}
+
+// Delete material
+async function deleteMat() {
+    if (!confirm("Delete this material?")) return;
+
+    await deleteMaterial(matId);
+
+    window.location.href = "job.html?job=" + encodeURIComponent(jobNumber);
+}
+
+loadMaterial();
+</script>
+
+</body>
+</html>

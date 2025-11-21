@@ -1,48 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ASME Receiving</title>
-    <link rel="stylesheet" href="assets/style.css" />
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="assets/icons/icon-32.png" type="image/png" />
-</head>
+<meta charset="UTF-8">
+<title>ASME Receiving</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
 
+<style>
+/* Ensure clean centered layout */
+body {
+    background: #f5f7fa;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.header {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.header img {
+    width: 42px;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+.header-title {
+    font-size: 26px;
+    font-weight: bold;
+    color: #003366;
+    vertical-align: middle;
+}
+
+.main-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.button-green {
+    background: #228B22;
+    color: white;
+    padding: 16px 30px;
+    font-size: 20px;
+    border-radius: 10px;
+    border: none;
+    width: 70%;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.25);
+}
+
+.offline-status {
+    text-align: center;
+    margin-bottom: 35px;
+    color: #555;
+    font-size: 14px;
+}
+</style>
+
+</head>
 <body>
 
-    <header>
-        <img src="assets/icons/icon-32.png" alt="App Icon" />
-        <h1>ASME Receiving</h1>
-    </header>
+<div class="header">
+    <img src="assets/icons/icon-192.png" alt="Logo">
+    <span class="header-title">ASME Receiving</span>
+</div>
 
-    <main>
+<div class="main-area">
+    <button class="button-green" onclick="location.href='app.html'">Enter App</button>
+</div>
 
-        <div class="card center">
-            <h2>Welcome</h2>
-            <p style="margin-top:10px;">
-                Select an option below to continue.
-            </p>
-        </div>
+<div class="offline-status">
+    Ready for Offline Use
+</div>
 
-        <div class="spacer"></div>
-
-        <div class="grid-2">
-            <a href="app.html" class="btn">Enter App</a>
-            <a href="lookup.html" class="btn-secondary">Lookup</a>
-        </div>
-
-        <div class="spacer"></div>
-
-        <div class="card center">
-            <p>ASME Receiving PWA<br>Internal Use Only</p>
-        </div>
-
-    </main>
-
-    <footer>
-        <a href="app.html" class="btn action-btn">Continue</a>
-    </footer>
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service_worker.js');
+}
+</script>
 
 </body>
 </html>
