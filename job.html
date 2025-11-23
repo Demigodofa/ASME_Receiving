@@ -10,7 +10,7 @@
 <body>
 
 <header class="card header-bar">
-    <button class="back-btn" onclick="window.history.back()">
+    <button class="back-btn" onclick="window.location.href='jobs.html'">
         ← Back
     </button>
     <h1 class="title">Job Details</h1>
@@ -20,10 +20,21 @@
 
     <section class="card">
         <h2 id="jobHeader"></h2>
+        <button id="editBtn" class="primary-btn" onclick="enterEditMode()">Edit Job</button>
+
+        <div id="editSection" style="display:none; margin-top:15px;">
+            <label>Job Number</label>
+            <input id="editJobNumber" class="input" />
+
+            <label>Description</label>
+            <textarea id="editDescription" class="input" rows="4"></textarea>
+
+            <button class="primary-btn" style="margin-top:10px;" onclick="saveJobEdits()">Save Changes</button>
+            <button class="secondary-btn" style="margin-top:10px;" onclick="cancelEdit()">Cancel</button>
+        </div>
     </section>
 
-    <section class="card">
-
+    <section class="card" id="materialsSection">
         <table class="table">
             <thead>
                 <tr>
@@ -37,7 +48,6 @@
         </table>
 
         <button class="primary-btn" onclick="addMaterial()">Add Material</button>
-
     </section>
 
 </main>
@@ -48,30 +58,106 @@
 <script>
 // URL params
 const params = new URLSearchParams(window.location.search);
-const jobNumber = params.get("job");
+let jobNumber = params.get("job");
+let currentJob = null;
 
-// Header
-document.getElementById("jobHeader").textContent = "Job: " + jobNumber;
+// Load job + materials
+async function loadJob() {
+    currentJob = await db.jobs.get(jobNumber);
 
-// Load materials for this job
+    document.getElementById("jobHeader").textContent =
+        "Job: " + jobNumber + " — " + (currentJob?.description || "");
+
+    loadMaterials();
+}
+
+// Load materials
 async function loadMaterials() {
-    const mats = await getMaterials(jobNumber);
+    const mats = await db.materials.where("jobNumber").equals(jobNumber).toArray();
     const tbody = document.getElementById("materialTable");
     tbody.innerHTML = "";
 
     mats.forEach(mat => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${mat.part}</td>
-            <td>${mat.description}</td>
-            <td>${mat.qty}</td>
-            <td>${mat.heat}</td>
+            <td>${mat.partNumber || ""}</td>
+            <td>${mat.description || ""}</td>
+            <td>${mat.qty || ""}</td>
+            <td>${mat.heat || ""}</td>
         `;
         tr.onclick = () => editMaterial(mat.id);
         tbody.appendChild(tr);
     });
 }
 
+// Enter edit mode
+function enterEditMode() {
+    document.getElementById("editSection").style.display = "block";
+    document.getElementById("materialsSection").style.display = "none";
+    document.getElementById("editBtn").style.display = "none";
+
+    document.getElementById("editJobNumber").value = currentJob.jobNumber;
+    document.getElementById("editDescription").value = currentJob.description || "";
+}
+
+// Cancel edit
+function cancelEdit() {
+    document.getElementById("editSection").style.display = "none";
+    document.getElementById("materialsSection").style.display = "block";
+    document.getElementById("editBtn").style.display = "block";
+}
+
+// Save job edits (includes job number change + material remap)
+async function saveJobEdits() {
+    const newJob = document.getElementById("editJobNumber").value.trim();
+    const newDesc = document.getElementById("editDescription").value.trim();
+
+    if (!newJob) {
+        alert("Job number cannot be empty.");
+        return;
+    }
+
+    // If job number changed, remap everything
+    if (newJob !== jobNumber) {
+        const oldJob = await db.jobs.get(jobNumber);
+
+        await db.transaction("rw", db.jobs, db.materials, async () => {
+            await db.jobs.put({
+                jobNumber: newJob,
+                description: newDesc,
+                createdAt: oldJob.createdAt
+            });
+
+            const mats = await db.materials.where("jobNumber").equals(jobNumber).toArray();
+
+            for (const mat of mats) {
+                mat.jobNumber = newJob;
+                await db.materials.put(mat);
+            }
+
+            await db.jobs.delete(jobNumber);
+        });
+
+        window.location.href = "job.html?job=" + encodeURIComponent(newJob);
+        return;
+    }
+
+    // If only description changed
+    await db.jobs.put({
+        jobNumber: jobNumber,
+        description: newDesc,
+        createdAt: currentJob.createdAt
+    });
+
+    currentJob.description = newDesc;
+
+    document.getElementById("jobHeader").textContent =
+        "Job: " + jobNumber + " — " + newDesc;
+
+    cancelEdit();
+}
+
+// Navigation buttons
 function addMaterial() {
     window.location.href = "add_material.html?job=" + encodeURIComponent(jobNumber);
 }
@@ -84,7 +170,7 @@ function editMaterial(id) {
         encodeURIComponent(id);
 }
 
-loadMaterials();
+loadJob();
 </script>
 
 </body>
