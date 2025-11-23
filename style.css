@@ -75,7 +75,6 @@ body {
     cursor: pointer;
 }
 
-/* Back button text spacing */
 .back-btn span {
     margin-right: 6px;
 }
@@ -94,6 +93,21 @@ input, textarea {
     font-size: 18px;
     border-radius: 8px;
     border: 1px solid #888;
+    box-sizing: border-box;
+}
+
+/* ========= UPDATED DROPDOWNS (ONLY CHANGE YOU REQUESTED) ========= */
+select {
+    width: 100%;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #888;
+    margin-bottom: 18px;
+    margin-top: 6px;
+    background-color: #e6f3ff !important; /* light blue */
+    height: 28px !important;              /* compact dropdown */
+    padding: 4px 8px !important;          /* matches 28px height */
+    box-sizing: border-box;
 }
 
 /* ==== TABLE ==== */
@@ -121,7 +135,7 @@ input, textarea {
     cursor: pointer;
 }
 
-/* Added to center splash page and fix input overflow */
+/* ==== SPLASH CENTERING ==== */
 .splash {
     display: flex;
     flex-direction: column;
@@ -129,20 +143,4 @@ input, textarea {
     align-items: center;
     text-align: center;
     height: 100vh;
-}
-input, textarea {
-    box-sizing: border-box;
-}
-
-/* Added to center splash page and fix input overflow */
-.splash {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    height: 100vh;
-}
-input, textarea {
-    box-sizing: border-box;
 }

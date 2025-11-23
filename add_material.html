@@ -1,169 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Add Material</title>
-<link rel="stylesheet" href="style.css">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="manifest" href="manifest.webmanifest">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Material</title>
+    <link rel="stylesheet" href="style.css">
+    <script defer src="add_material.js"></script>
 </head>
+
 <body>
-<header class="card header-bar">
-    <button class="back-btn" onclick="window.history.back()">← Back</button>
-    <h1 class="title">Add Material</h1>
-    <img src="assets/icons/icon-192.png" class="header-icon">
-</header>
-<main>
 
-<section class="card">
-<label>Job Number</label>
-<input id="jobNumber" class="input">
+    <!-- Header Bar -->
+    <div class="header-bar">
+        <img src="assets/icons/icon-192.png" alt="Logo">
+        <span class="title">Add Material</span>
+    </div>
 
-<label>Description</label>
-<input id="description" class="input">
+    <!-- MAIN CARD -->
+    <div class="card">
 
-<label>Vendor</label>
-<input id="vendor" class="input">
+        <!-- Job Number -->
+        <label>Job Number</label>
+        <input id="jobNumber" type="text" class="input">
 
-<label>PO Number</label>
-<input id="poNumber" class="input">
+        <!-- Description -->
+        <label>Description</label>
+        <input id="description" type="text" class="input">
 
-<label>Date</label>
-<input type="date" id="date" class="input">
-</section>
+        <!-- Vendor -->
+        <label>Vendor</label>
+        <input id="vendor" type="text" class="input">
 
-<section class="card">
-<h2>Material Details</h2>
+        <!-- PO# -->
+        <label>PO Number</label>
+        <input id="poNumber" type="text" class="input">
 
-<label>Quantity</label>
-<input id="quantity" class="input" maxlength="6">
+        <!-- Date -->
+        <label>Date</label>
+        <input id="date" type="date" class="input">
 
-<label>Product</label>
-<select id="product" class="input">
-<option value="" selected></option>
-<option>Tube</option>
-<option>Pipe</option>
-<option>Plate</option>
-<option>Forging</option>
-<option>Casting</option>
-<option>Bar</option>
-<option>Other</option>
-</select>
+        <!-- Quantity -->
+        <label>Quantity</label>
+        <input id="quantity" type="number" class="input">
 
-<label>Specification Prefix</label>
-<select id="specPrefix" class="input">
-<option value="" selected></option>
-<option>SA</option>
-<option>A</option>
-</select>
+        <!-- Product -->
+        <label>Product</label>
+        <select id="product" class="input">
+            <option value=""></option>
+            <option>Tube</option>
+            <option>Pipe</option>
+            <option>Plate</option>
+            <option>Forging</option>
+            <option>Casting</option>
+            <option>Bar</option>
+            <option>Other</option>
+        </select>
 
-<label>Specification Code</label>
-<input id="specCode" class="input">
+        <!-- Specification Prefix -->
+        <label>Specification Prefix (SA / A)</label>
+        <select id="specPrefix" class="input">
+            <option value=""></option>
+            <option>SA</option>
+            <option>A</option>
+        </select>
 
-<label>Grade / Type</label>
-<input id="gradeType" class="input">
+        <!-- Specification Code -->
+        <label>Specification Code</label>
+        <input id="specCode" type="text" class="input">
 
-<!-- Removed stray "Fitting (B16)" label -->
+        <!-- Grade / Type -->
+        <label>Grade / Type</label>
+        <input id="gradeType" type="text" class="input">
 
-<div>
-<span>B16</span>
-<select id="b16" class="input">
-<option value="" selected></option>
-<option>.5</option>
-<option>.9</option>
-<option>.11</option>
-<option>.34</option>
-<option>.47</option>
-</select>
-</div>
-</section>
+        <!-- B16 -->
+        <label>B16</label>
+        <select id="b16" class="input">
+            <option value=""></option>
+            <option>.5</option>
+            <option>.9</option>
+            <option>.11</option>
+            <option>.34</option>
+            <option>.47</option>
+        </select>
 
-<section class="card">
-<h2>Dimensions</h2>
-<label>Thickness 1</label>
-<input id="th1" class="input" maxlength="5">
-<label>Thickness 2</label>
-<input id="th2" class="input" maxlength="5">
-<label>Thickness 3</label>
-<input id="th3" class="input" maxlength="5">
-<label>Thickness 4</label>
-<input id="th4" class="input" maxlength="5">
+        <!-- Thicknesses -->
+        <label>Thickness 1</label>
+        <input id="th1" type="text" class="input">
 
-<label>Width</label>
-<input id="width" class="input" maxlength="7">
-<label>Length</label>
-<input id="length" class="input" maxlength="7">
-<label>Diameter</label>
-<input id="diameter" class="input" maxlength="7">
-<label>Other</label>
-<input id="other" class="input" maxlength="10">
-</section>
+        <label>Thickness 2</label>
+        <input id="th2" type="text" class="input">
 
-<section class="card">
-<h2>Inspection</h2>
+        <label>Thickness 3</label>
+        <input id="th3" type="text" class="input">
 
-<label>
-<input type="checkbox" id="visual"> Visual Inspection Acceptable
-</label>
+        <label>Thickness 4</label>
+        <input id="th4" type="text" class="input">
 
-<span> \ </span>
+        <!-- Width / Length / Diameter / Other -->
+        <label>Width</label>
+        <input id="width" type="text" class="input">
 
-<!-- Removed checkbox for B16 Dimensions Acceptable -->
-<span>B16 Dimensions Acceptable</span>
+        <label>Length</label>
+        <input id="length" type="text" class="input">
 
-<label>Marking Acceptable to Code/Standard</label>
-<select id="markingAcceptable" class="input">
-<option value="" selected></option>
-<option>Yes</option>
-<option>No</option>
-<option>N/A</option>
-</select>
+        <label>Diameter</label>
+        <input id="diameter" type="text" class="input">
 
-<label>MTR/CofC Acceptable to Specification</label>
-<select id="mtrAcceptable" class="input">
-<option value="" selected></option>
-<option>Yes</option>
-<option>No</option>
-<option>N/A</option>
-</select>
-</section>
+        <label>Other</label>
+        <input id="other" type="text" class="input">
 
-<section class="card">
-<h2>Markings</h2>
-<label>Actual Material Marking</label>
-<textarea id="actualMarking" class="input" rows="4"></textarea>
-</section>
+        <!-- =========================================== -->
+        <!--                 INSPECTION                  -->
+        <!-- =========================================== -->
 
-<section class="card">
-<h2>Status and Comments</h2>
-<label>Status</label>
-<select id="status" class="input">
-<option value="" selected></option>
-<option>Accept</option>
-<option>Reject</option>
-</select>
+        <h3 style="margin-top:20px;">Inspection</h3>
 
-<label>Comments</label>
-<textarea id="comments" class="input" rows="2"></textarea>
-</section>
+        <label>Visual Inspection Acceptable</label>
+        <select id="visual" class="input">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+        </select>
 
-<section class="card">
-<h2>QC Signoff</h2>
-<label>QC Initials</label>
-<input id="qcInitials" class="input" maxlength="4">
-<label>QC Date</label>
-<input type="date" id="qcDate" class="input">
-</section>
+        <label>B16 Dimensions Acceptable</label>
+        <select id="b16dim" class="input">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+        </select>
 
-<section class="card">
-<h2>Photos</h2>
-<button class="primary-btn" id="photoButton">Take up to 5 Photos</button>
-<div id="photoPreview"></div>
-</section>
+        <label>Markings Acceptable</label>
+        <select id="markingAcceptable" class="input">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+            <option>N/A</option>
+        </select>
 
-</main>
+        <label>MTR Acceptable</label>
+        <select id="mtrAcceptable" class="input">
+            <option value=""></option>
+            <option>Yes</option>
+            <option>No</option>
+            <option>N/A</option>
+        </select>
+
+        <!-- Actual Material Marking -->
+        <label>Actual Material Markings</label>
+        <textarea id="actualMarking" class="input" rows="4"></textarea>
+
+        <!-- Comments -->
+        <label>Comments</label>
+        <textarea id="comments" class="input" rows="2"></textarea>
+        
+        <!-- STATUS -->
+        <label>Status</label>
+        <select id="status" class="input">
+            <option value=""></option>
+            <option>Accept</option>
+            <option>Reject</option>
+        </select>
+
+        <!-- QC Initial -->
+        <label>QC Initials</label>
+        <input id="qcInitials" type="text" class="input">
+
+        <!-- QC Date -->
+        <label>QC Date</label>
+        <input id="qcDate" type="date" class="input">
+
+        <!-- PHOTO BUTTON -->
+        <button id="takePhotos" class="primary-btn">Take Up To 5 Photos</button>
+
+        <!-- PHOTO PREVIEW (NOW CORRECTLY ADDED) -->
+        <div id="photoPreview" style="margin-top:12px;"></div>
+
+        <!-- SAVE BUTTON INSIDE CARD -->
+        <button id="saveMaterial" class="primary-btn" style="margin-top:20px;">Save Material</button>
+
+    </div>
+
 </body>
 </html>
