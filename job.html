@@ -1,185 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Job Details</title>
 
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.webmanifest">
 
-    <!-- iOS home screen -->
+    <!-- iOS PWA -->
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-    <!-- Android PWA -->
-    <link rel="manifest" href="manifest.webmanifest">
+    <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.min.js"></script>
 </head>
 
 <body>
-
-<header class="card header-bar">
-    <button class="back-btn" onclick="window.location.href='jobs.html'">← Back</button>
-    <h1 class="title">Job Details</h1>
+<header class="header">
+    <button class="back-btn" onclick="history.back()">←</button>
+    <h1>Job Details</h1>
     <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
 
 <main>
+    <div class="card">
+        <h2 id="jobNumberDisplay"></h2>
 
-    <section class="card">
-        <h2 id="jobHeader"></h2>
+        <button class="primary-btn" onclick="window.location.href='add_material.html?job=' + jobNumber;">
+            Add Material
+        </button>
+    </div>
 
-        <button id="editBtn" class="primary-btn" onclick="enterEditMode()">Edit Job</button>
+    <!-- DARK BAR HEADER -->
+    <div class="dark-header">
+        RECEIVING INSPECTION REPORTS
+    </div>
 
-        <div id="editSection" style="display:none; margin-top:15px;">
-            <label>Job Number</label>
-            <input id="editJobNumber" class="input" />
-
-            <label>Description</label>
-            <textarea id="editDescription" class="input" rows="4"></textarea>
-
-            <button class="primary-btn" style="margin-top:10px;" onclick="saveJobEdits()">Save Changes</button>
-            <button class="secondary-btn" style="margin-top:10px;" onclick="cancelEdit()">Cancel</button>
-        </div>
-    </section>
-
-    <section class="card" id="materialsSection">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Part #</th>
-                    <th>Description</th>
-                    <th>Qty</th>
-                    <th>Heat</th>
-                </tr>
-            </thead>
-            <tbody id="materialTable"></tbody>
-        </table>
-
-        <button class="primary-btn" onclick="addMaterial()">Add Material</button>
-    </section>
-
+    <div id="materialsList"></div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/dexie@3.2.3/dist/dexie.min.js"></script>
-<script src="db.js"></script>
-
 <script>
-// URL params
-const params = new URLSearchParams(window.location.search);
-let jobNumber = params.get("job");
-let currentJob = null;
+// ===============================
+//   GET JOB NUMBER
+// ===============================
+const urlParams = new URLSearchParams(window.location.search);
+const jobNumber = urlParams.get("job");
 
-// Load job + materials
-async function loadJob() {
-    currentJob = await db.jobs.get(jobNumber);
+document.getElementById("jobNumberDisplay").textContent = "Job #" + jobNumber;
 
-    document.getElementById("jobHeader").textContent =
-        "Job: " + jobNumber + " — " + (currentJob?.description || "");
+// ===============================
+//   DEXIE SETUP
+// ===============================
+const db = new Dexie("WeldersHelperDB");
+db.version(1).stores({
+    jobs: "jobNumber, description",
+    materials: "++id, jobNumber"
+});
 
-    loadMaterials();
-}
-
-// Load materials
+// ===============================
+//   LOAD MATERIALS FOR JOB
+// ===============================
 async function loadMaterials() {
-    const mats = await db.materials.where("jobNumber").equals(jobNumber).toArray();
-    const tbody = document.getElementById("materialTable");
-    tbody.innerHTML = "";
+    const materials = await db.materials.where("jobNumber").equals(jobNumber).toArray();
+    const container = document.getElementById("materialsList");
+    container.innerHTML = "";
 
-    mats.forEach(mat => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${mat.partNumber || ""}</td>
-            <td>${mat.description || ""}</td>
-            <td>${mat.qty || ""}</td>
-            <td>${mat.heat || ""}</td>
+    if (materials.length === 0) {
+        container.innerHTML = "<p style='text-align:center; color:#777;'>No receiving reports yet.</p>";
+        return;
+    }
+
+    materials.forEach(mat => {
+        const card = document.createElement("div");
+        card.className = "card material-card";
+
+        const spec = `${mat.specPrefix || ""}${mat.specPrefix && mat.specCode ? "-" : ""}${mat.specCode || ""}`;
+
+        card.innerHTML = `
+            <p><strong>Description:</strong> ${mat.description || ""}</p>
+            <p><strong>Spec:</strong> ${spec}</p>
+            <p><strong>Grade/Type:</strong> ${mat.gradeType || ""}</p>
+
+            <button class="secondary-btn" style="margin-top:10px;"
+                onclick="window.location.href='edit_material.html?id=${mat.id}&job=${jobNumber}'">
+                Edit Material
+            </button>
         `;
-        tr.onclick = () => editMaterial(mat.id);
-        tbody.appendChild(tr);
+
+        container.appendChild(card);
     });
 }
 
-// Enter edit mode
-function enterEditMode() {
-    document.getElementById("editSection").style.display = "block";
-    document.getElementById("materialsSection").style.display = "none";
-    document.getElementById("editBtn").style.display = "none";
-
-    document.getElementById("editJobNumber").value = currentJob.jobNumber;
-    document.getElementById("editDescription").value = currentJob.description || "";
-}
-
-// Cancel edit
-function cancelEdit() {
-    document.getElementById("editSection").style.display = "none";
-    document.getElementById("materialsSection").style.display = "block";
-    document.getElementById("editBtn").style.display = "block";
-}
-
-// Save job edits — includes job number remapping
-async function saveJobEdits() {
-    const newJob = document.getElementById("editJobNumber").value.trim();
-    const newDesc = document.getElementById("editDescription").value.trim();
-
-    if (!newJob) {
-        alert("Job number cannot be empty.");
-        return;
-    }
-
-    // If job number changed → remap materials + recreate job entry
-    if (newJob !== jobNumber) {
-        const oldJob = await db.jobs.get(jobNumber);
-
-        await db.transaction("rw", db.jobs, db.materials, async () => {
-            await db.jobs.put({
-                jobNumber: newJob,
-                description: newDesc,
-                createdAt: oldJob.createdAt
-            });
-
-            const mats = await db.materials.where("jobNumber").equals(jobNumber).toArray();
-
-            for (const mat of mats) {
-                mat.jobNumber = newJob;
-                await db.materials.put(mat);
-            }
-
-            await db.jobs.delete(jobNumber);
-        });
-
-        window.location.href = "job.html?job=" + encodeURIComponent(newJob);
-        return;
-    }
-
-    // Only description changed
-    await db.jobs.put({
-        jobNumber: jobNumber,
-        description: newDesc,
-        createdAt: currentJob.createdAt
-    });
-
-    currentJob.description = newDesc;
-
-    document.getElementById("jobHeader").textContent =
-        "Job: " + jobNumber + " — " + newDesc;
-
-    cancelEdit();
-}
-
-// Navigation
-function addMaterial() {
-    window.location.href = "add_material.html?job=" + encodeURIComponent(jobNumber);
-}
-
-function editMaterial(id) {
-    window.location.href =
-        "edit_material.html?job=" +
-        encodeURIComponent(jobNumber) +
-        "&id=" +
-        encodeURIComponent(id);
-}
-
-loadJob();
+loadMaterials();
 </script>
 
 </body>

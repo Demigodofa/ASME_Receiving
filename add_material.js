@@ -113,47 +113,25 @@ cameraInput.addEventListener("change", function () {
 });
 
 
-// ======================================================
-//      AUTO-ADD PHOTO PREVIEW DIV IF NOT IN HTML
-// ======================================================
-if (!document.getElementById("photoPreview")) {
-    const previewDiv = document.createElement("div");
-    previewDiv.id = "photoPreview";
-    previewDiv.style.margin = "16px";
-    document.body.appendChild(previewDiv);
-}
-
-
-// ===============================================
-//     INJECT SAVE BUTTON AT BOTTOM OF PAGE
-// ===============================================
-const saveBtn = document.createElement("button");
-saveBtn.textContent = "Save Material";
-saveBtn.id = "saveMaterial";
-saveBtn.className = "primary-btn";
-saveBtn.style.margin = "20px";
-document.body.appendChild(saveBtn);
-
-
 // ===============================================
 //          SAVE MATERIAL HANDLER
 // ===============================================
+const saveBtn = document.getElementById("saveMaterial");
+
 saveBtn.addEventListener("click", async () => {
 
     const material = {
-        jobNumber: document.getElementById("jobNumber").value,
+        jobNumber: document.getElementById("jobNumber").value || "",
         description: document.getElementById("description").value || "",
         vendor: document.getElementById("vendor").value || "",
         poNumber: document.getElementById("poNumber").value || "",
         date: document.getElementById("date").value || "",
-
         quantity: document.getElementById("quantity").value || "",
         product: document.getElementById("product").value || "",
         specPrefix: document.getElementById("specPrefix").value || "",
         specCode: document.getElementById("specCode").value || "",
         gradeType: document.getElementById("gradeType").value || "",
         b16: document.getElementById("b16").value || "",
-
         th1: document.getElementById("th1").value || "",
         th2: document.getElementById("th2").value || "",
         th3: document.getElementById("th3").value || "",
@@ -162,13 +140,18 @@ saveBtn.addEventListener("click", async () => {
         length: document.getElementById("length").value || "",
         diameter: document.getElementById("diameter").value || "",
         other: document.getElementById("other").value || "",
-
-        // NEW: all 4 inspection dropdowns as STRINGS
+        
+        // INSPECTION DROPDOWNS
         visual: document.getElementById("visual").value || "",
         b16dim: document.getElementById("b16dim").value || "",
         markingAcceptable: document.getElementById("markingAcceptable").value || "",
         mtrAcceptable: document.getElementById("mtrAcceptable").value || "",
 
+        actualMarking: document.getElementById("actualMarking").value || "",
+        comments: document.getElementById("comments").value || "",
+        status: document.getElementById("status").value || "",
+        qcInitials: document.getElementById("qcInitials").value || "",
+        qcDate: document.getElementById("qcDate").value || "",
         photos: photos
     };
 

@@ -3,182 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Add Material</title>
+
     <link rel="stylesheet" href="style.css">
-    <script defer src="add_material.js"></script>
+    <link rel="manifest" href="manifest.webmanifest">
+
+    <!-- iOS PWA support -->
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.min.js"></script>
 </head>
 
 <body>
+    <!-- HEADER -->
+    <header class="header">
+        <button class="back-btn" onclick="history.back()">←</button>
+        <h1>Add Material</h1>
+        <img src="assets/icons/icon-192.png" class="header-icon">
+    </header>
 
-    <!-- Header Bar -->
-    <div class="header-bar">
-        <img src="assets/icons/icon-192.png" alt="Logo">
-        <span class="title">Add Material</span>
-    </div>
+    <main>
+        <div class="card">
 
-    <!-- MAIN CARD -->
-    <div class="card">
+            <!-- JOB NUMBER -->
+            <label class="input-label">Job Number</label>
+            <input id="jobNumber" type="text" class="input-field" readonly>
 
-        <!-- Job Number -->
-        <label>Job Number</label>
-        <input id="jobNumber" type="text" class="input">
+            <!-- DESCRIPTION -->
+            <label class="input-label">Description</label>
+            <input id="description" type="text" class="input-field">
 
-        <!-- Description -->
-        <label>Description</label>
-        <input id="description" type="text" class="input">
+            <!-- VENDOR -->
+            <label class="input-label">Vendor</label>
+            <input id="vendor" type="text" class="input-field">
 
-        <!-- Vendor -->
-        <label>Vendor</label>
-        <input id="vendor" type="text" class="input">
+            <!-- PO NUMBER -->
+            <label class="input-label">PO Number</label>
+            <input id="poNumber" type="text" class="input-field">
 
-        <!-- PO# -->
-        <label>PO Number</label>
-        <input id="poNumber" type="text" class="input">
+            <!-- DATE -->
+            <label class="input-label">Date Received</label>
+            <input id="date" type="date" class="input-field">
 
-        <!-- Date -->
-        <label>Date</label>
-        <input id="date" type="date" class="input">
+            <!-- QTY -->
+            <label class="input-label">Quantity</label>
+            <input id="quantity" type="number" class="input-field">
 
-        <!-- Quantity -->
-        <label>Quantity</label>
-        <input id="quantity" type="number" class="input">
+            <!-- PRODUCT -->
+            <label class="input-label">Product Type</label>
+            <select id="product" class="dropdown">
+                <option value=""></option>
+                <option value="Tube">Tube</option>
+                <option value="Pipe">Pipe</option>
+                <option value="Plate">Plate</option>
+                <option value="Forging">Forging</option>
+                <option value="Casting">Casting</option>
+                <option value="Bar">Bar</option>
+                <option value="Other">Other</option>
+            </select>
 
-        <!-- Product -->
-        <label>Product</label>
-        <select id="product" class="input">
-            <option value=""></option>
-            <option>Tube</option>
-            <option>Pipe</option>
-            <option>Plate</option>
-            <option>Forging</option>
-            <option>Casting</option>
-            <option>Bar</option>
-            <option>Other</option>
-        </select>
+            <!-- SPEC PREFIX -->
+            <label class="input-label">Specification Prefix</label>
+            <select id="specPrefix" class="dropdown">
+                <option value=""></option>
+                <option value="SA">SA</option>
+                <option value="A">A</option>
+            </select>
 
-        <!-- Specification Prefix -->
-        <label>Specification Prefix (SA / A)</label>
-        <select id="specPrefix" class="input">
-            <option value=""></option>
-            <option>SA</option>
-            <option>A</option>
-        </select>
+            <!-- SPEC CODE -->
+            <label class="input-label">Specification Code</label>
+            <input id="specCode" type="text" class="input-field">
 
-        <!-- Specification Code -->
-        <label>Specification Code</label>
-        <input id="specCode" type="text" class="input">
+            <!-- GRADE / TYPE -->
+            <label class="input-label">Grade / Type</label>
+            <input id="gradeType" type="text" class="input-field">
 
-        <!-- Grade / Type -->
-        <label>Grade / Type</label>
-        <input id="gradeType" type="text" class="input">
+            <!-- B16 -->
+            <label class="input-label">Fitting B16 (optional)</label>
+            <select id="b16" class="dropdown">
+                <option value=""></option>
+                <option>.5</option>
+                <option>.9</option>
+                <option>.11</option>
+                <option>.34</option>
+                <option>.47</option>
+            </select>
 
-        <!-- B16 -->
-        <label>B16</label>
-        <select id="b16" class="input">
-            <option value=""></option>
-            <option>.5</option>
-            <option>.9</option>
-            <option>.11</option>
-            <option>.34</option>
-            <option>.47</option>
-        </select>
+            <!-- DIMENSIONS -->
+            <label class="input-label">Thickness 1</label>
+            <input id="th1" type="text" class="input-field">
 
-        <!-- Thicknesses -->
-        <label>Thickness 1</label>
-        <input id="th1" type="text" class="input">
+            <label class="input-label">Thickness 2</label>
+            <input id="th2" type="text" class="input-field">
 
-        <label>Thickness 2</label>
-        <input id="th2" type="text" class="input">
+            <label class="input-label">Thickness 3</label>
+            <input id="th3" type="text" class="input-field">
 
-        <label>Thickness 3</label>
-        <input id="th3" type="text" class="input">
+            <label class="input-label">Thickness 4</label>
+            <input id="th4" type="text" class="input-field">
 
-        <label>Thickness 4</label>
-        <input id="th4" type="text" class="input">
+            <label class="input-label">Width</label>
+            <input id="width" type="text" class="input-field">
 
-        <!-- Width / Length / Diameter / Other -->
-        <label>Width</label>
-        <input id="width" type="text" class="input">
+            <label class="input-label">Length</label>
+            <input id="length" type="text" class="input-field">
 
-        <label>Length</label>
-        <input id="length" type="text" class="input">
+            <label class="input-label">Diameter</label>
+            <input id="diameter" type="text" class="input-field">
 
-        <label>Diameter</label>
-        <input id="diameter" type="text" class="input">
+            <label class="input-label">Other</label>
+            <input id="other" type="text" class="input-field">
 
-        <label>Other</label>
-        <input id="other" type="text" class="input">
+            <!-- INSPECTION -->
+            <h3 class="section-title">Inspection</h3>
 
-        <!-- =========================================== -->
-        <!--                 INSPECTION                  -->
-        <!-- =========================================== -->
+            <label class="input-label">Visual Inspection Acceptable</label>
+            <select id="visual" class="dropdown">
+                <option value=""></option>
+                <option>Yes</option>
+                <option>No</option>
+            </select>
 
-        <h3 style="margin-top:20px;">Inspection</h3>
+            <label class="input-label">B16 Dimensions Acceptable</label>
+            <select id="b16dim" class="dropdown">
+                <option value=""></option>
+                <option>Yes</option>
+                <option>No</option>
+            </select>
 
-        <label>Visual Inspection Acceptable</label>
-        <select id="visual" class="input">
-            <option value=""></option>
-            <option>Yes</option>
-            <option>No</option>
-        </select>
+            <label class="input-label">Markings Acceptable</label>
+            <select id="markingAcceptable" class="dropdown">
+                <option value=""></option>
+                <option>Yes</option>
+                <option>No</option>
+                <option>N/A</option>
+            </select>
 
-        <label>B16 Dimensions Acceptable</label>
-        <select id="b16dim" class="input">
-            <option value=""></option>
-            <option>Yes</option>
-            <option>No</option>
-        </select>
+            <label class="input-label">MTR Acceptable</label>
+            <select id="mtrAcceptable" class="dropdown">
+                <option value=""></option>
+                <option>Yes</option>
+                <option>No</option>
+                <option>N/A</option>
+            </select>
 
-        <label>Markings Acceptable</label>
-        <select id="markingAcceptable" class="input">
-            <option value=""></option>
-            <option>Yes</option>
-            <option>No</option>
-            <option>N/A</option>
-        </select>
+            <!-- MARKINGS -->
+            <label class="input-label">Actual Material Markings</label>
+            <textarea id="actualMarking" class="textarea"></textarea>
 
-        <label>MTR Acceptable</label>
-        <select id="mtrAcceptable" class="input">
-            <option value=""></option>
-            <option>Yes</option>
-            <option>No</option>
-            <option>N/A</option>
-        </select>
+            <!-- COMMENTS -->
+            <label class="input-label">Comments</label>
+            <textarea id="comments" class="textarea"></textarea>
 
-        <!-- Actual Material Marking -->
-        <label>Actual Material Markings</label>
-        <textarea id="actualMarking" class="input" rows="4"></textarea>
+            <!-- STATUS -->
+            <label class="input-label">Status</label>
+            <select id="status" class="dropdown">
+                <option value=""></option>
+                <option>Accept</option>
+                <option>Reject</option>
+            </select>
 
-        <!-- Comments -->
-        <label>Comments</label>
-        <textarea id="comments" class="input" rows="2"></textarea>
-        
-        <!-- STATUS -->
-        <label>Status</label>
-        <select id="status" class="input">
-            <option value=""></option>
-            <option>Accept</option>
-            <option>Reject</option>
-        </select>
+            <!-- QC -->
+            <label class="input-label">QC Initials</label>
+            <input id="qcInitials" type="text" class="input-field">
 
-        <!-- QC Initial -->
-        <label>QC Initials</label>
-        <input id="qcInitials" type="text" class="input">
+            <label class="input-label">QC Date</label>
+            <input id="qcDate" type="date" class="input-field">
 
-        <!-- QC Date -->
-        <label>QC Date</label>
-        <input id="qcDate" type="date" class="input">
+            <!-- PHOTOS -->
+            <button id="takePhotos" class="primary-btn">Take Up To 5 Photos</button>
 
-        <!-- PHOTO BUTTON -->
-        <button id="takePhotos" class="primary-btn">Take Up To 5 Photos</button>
+            <!-- PHOTO PREVIEW (NEW — placed directly under button) -->
+            <div id="photoPreview" style="margin-top: 10px;"></div>
 
-        <!-- PHOTO PREVIEW (NOW CORRECTLY ADDED) -->
-        <div id="photoPreview" style="margin-top:12px;"></div>
+            <!-- SAVE BUTTON -->
+            <button id="saveMaterial" class="primary-btn" style="margin-top: 20px;">
+                Save Material
+            </button>
+        </div>
+    </main>
 
-        <!-- SAVE BUTTON INSIDE CARD -->
-        <button id="saveMaterial" class="primary-btn" style="margin-top:20px;">Save Material</button>
-
-    </div>
-
+    <script src="add_material.js"></script>
 </body>
 </html>
