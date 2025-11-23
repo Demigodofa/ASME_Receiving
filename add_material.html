@@ -1,82 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Material</title>
-
-    <link rel="stylesheet" href="style.css">
-
-    <!-- iOS home screen -->
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-    <!-- Android PWA -->
-    <link rel="manifest" href="manifest.webmanifest">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Material</title>
+<link rel="stylesheet" href="style.css">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
 </head>
-
 <body>
-
 <header class="card header-bar">
     <button class="back-btn" onclick="window.history.back()">← Back</button>
     <h1 class="title">Add Material</h1>
     <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
-
 <main>
 
-    <section class="card">
+<section class="card">
+<label>Job Number</label>
+<input id="jobNumber" class="input">
 
-        <label>Part Number</label>
-        <input id="partNumber" class="input" />
+<label>Description</label>
+<input id="description" class="input">
 
-        <label>Description</label>
-        <textarea id="description" class="input" rows="3"></textarea>
+<label>Vendor</label>
+<input id="vendor" class="input">
 
-        <label>Quantity</label>
-        <input type="number" id="qty" class="input" />
+<label>PO Number</label>
+<input id="poNumber" class="input">
 
-        <label>Heat Number</label>
-        <input id="heat" class="input" />
+<label>Date</label>
+<input type="date" id="date" class="input">
+</section>
 
-        <button class="primary-btn" onclick="saveMaterial()">Save Material</button>
+<section class="card">
+<h2>Material Details</h2>
 
-    </section>
+<label>Quantity</label>
+<input id="quantity" class="input" maxlength="6">
+
+<label>Product</label>
+<select id="product" class="input">
+<option value="" selected></option>
+<option>Tube</option>
+<option>Pipe</option>
+<option>Plate</option>
+<option>Forging</option>
+<option>Casting</option>
+<option>Bar</option>
+<option>Other</option>
+</select>
+
+<label>Specification Prefix</label>
+<select id="specPrefix" class="input">
+<option value="" selected></option>
+<option>SA</option>
+<option>A</option>
+</select>
+
+<label>Specification Code</label>
+<input id="specCode" class="input">
+
+<label>Grade / Type</label>
+<input id="gradeType" class="input">
+
+<!-- Removed stray "Fitting (B16)" label -->
+
+<div>
+<span>B16</span>
+<select id="b16" class="input">
+<option value="" selected></option>
+<option>.5</option>
+<option>.9</option>
+<option>.11</option>
+<option>.34</option>
+<option>.47</option>
+</select>
+</div>
+</section>
+
+<section class="card">
+<h2>Dimensions</h2>
+<label>Thickness 1</label>
+<input id="th1" class="input" maxlength="5">
+<label>Thickness 2</label>
+<input id="th2" class="input" maxlength="5">
+<label>Thickness 3</label>
+<input id="th3" class="input" maxlength="5">
+<label>Thickness 4</label>
+<input id="th4" class="input" maxlength="5">
+
+<label>Width</label>
+<input id="width" class="input" maxlength="7">
+<label>Length</label>
+<input id="length" class="input" maxlength="7">
+<label>Diameter</label>
+<input id="diameter" class="input" maxlength="7">
+<label>Other</label>
+<input id="other" class="input" maxlength="10">
+</section>
+
+<section class="card">
+<h2>Inspection</h2>
+
+<label>
+<input type="checkbox" id="visual"> Visual Inspection Acceptable
+</label>
+
+<span> \ </span>
+
+<!-- Removed checkbox for B16 Dimensions Acceptable -->
+<span>B16 Dimensions Acceptable</span>
+
+<label>Marking Acceptable to Code/Standard</label>
+<select id="markingAcceptable" class="input">
+<option value="" selected></option>
+<option>Yes</option>
+<option>No</option>
+<option>N/A</option>
+</select>
+
+<label>MTR/CofC Acceptable to Specification</label>
+<select id="mtrAcceptable" class="input">
+<option value="" selected></option>
+<option>Yes</option>
+<option>No</option>
+<option>N/A</option>
+</select>
+</section>
+
+<section class="card">
+<h2>Markings</h2>
+<label>Actual Material Marking</label>
+<textarea id="actualMarking" class="input" rows="4"></textarea>
+</section>
+
+<section class="card">
+<h2>Status and Comments</h2>
+<label>Status</label>
+<select id="status" class="input">
+<option value="" selected></option>
+<option>Accept</option>
+<option>Reject</option>
+</select>
+
+<label>Comments</label>
+<textarea id="comments" class="input" rows="2"></textarea>
+</section>
+
+<section class="card">
+<h2>QC Signoff</h2>
+<label>QC Initials</label>
+<input id="qcInitials" class="input" maxlength="4">
+<label>QC Date</label>
+<input type="date" id="qcDate" class="input">
+</section>
+
+<section class="card">
+<h2>Photos</h2>
+<button class="primary-btn" id="photoButton">Take up to 5 Photos</button>
+<div id="photoPreview"></div>
+</section>
 
 </main>
-
-<script src="https://cdn.jsdelivr.net/npm/dexie@3.2.3/dist/dexie.min.js"></script>
-<script src="db.js"></script>
-
-<script>
-// URL params
-const params = new URLSearchParams(window.location.search);
-const jobNumber = params.get("job");
-
-// Save material
-async function saveMaterial() {
-    const part = document.getElementById("partNumber").value.trim();
-    const desc = document.getElementById("description").value.trim();
-    const qty = document.getElementById("qty").value.trim();
-    const heat = document.getElementById("heat").value.trim();
-
-    if (!part || !qty) {
-        alert("Part number and quantity are required.");
-        return;
-    }
-
-    await db.materials.add({
-        jobNumber: jobNumber,
-        partNumber: part,
-        description: desc,
-        qty: qty,
-        heat: heat
-    });
-
-    window.location.href = "job.html?job=" + encodeURIComponent(jobNumber);
-}
-</script>
-
 </body>
 </html>
