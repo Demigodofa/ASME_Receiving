@@ -120,3 +120,16 @@ input, textarea {
     background: #e0eaff;
     cursor: pointer;
 }
+
+/* Added to center splash page and fix input overflow */
+.splash {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 100vh;
+}
+input, textarea {
+    box-sizing: border-box;
+}
