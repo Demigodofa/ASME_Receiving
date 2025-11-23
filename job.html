@@ -4,22 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Job Details</title>
+
     <link rel="stylesheet" href="style.css" />
+
+    <!-- iOS home screen -->
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Android PWA -->
+    <link rel="manifest" href="manifest.webmanifest">
 </head>
 
 <body>
 
 <header class="card header-bar">
-    <button class="back-btn" onclick="window.location.href='jobs.html'">
-        ← Back
-    </button>
+    <button class="back-btn" onclick="window.location.href='jobs.html'">← Back</button>
     <h1 class="title">Job Details</h1>
+    <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
 
 <main>
 
     <section class="card">
         <h2 id="jobHeader"></h2>
+
         <button id="editBtn" class="primary-btn" onclick="enterEditMode()">Edit Job</button>
 
         <div id="editSection" style="display:none; margin-top:15px;">
@@ -107,7 +116,7 @@ function cancelEdit() {
     document.getElementById("editBtn").style.display = "block";
 }
 
-// Save job edits (includes job number change + material remap)
+// Save job edits — includes job number remapping
 async function saveJobEdits() {
     const newJob = document.getElementById("editJobNumber").value.trim();
     const newDesc = document.getElementById("editDescription").value.trim();
@@ -117,7 +126,7 @@ async function saveJobEdits() {
         return;
     }
 
-    // If job number changed, remap everything
+    // If job number changed → remap materials + recreate job entry
     if (newJob !== jobNumber) {
         const oldJob = await db.jobs.get(jobNumber);
 
@@ -142,7 +151,7 @@ async function saveJobEdits() {
         return;
     }
 
-    // If only description changed
+    // Only description changed
     await db.jobs.put({
         jobNumber: jobNumber,
         description: newDesc,
@@ -157,7 +166,7 @@ async function saveJobEdits() {
     cancelEdit();
 }
 
-// Navigation buttons
+// Navigation
 function addMaterial() {
     window.location.href = "add_material.html?job=" + encodeURIComponent(jobNumber);
 }

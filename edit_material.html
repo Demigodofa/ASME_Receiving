@@ -1,43 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Material</title>
-    <link rel="stylesheet" href="style.css" />
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- iOS home screen -->
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Android PWA -->
+    <link rel="manifest" href="manifest.webmanifest">
 </head>
 
 <body>
 
 <header class="card header-bar">
-    <button class="back-btn" onclick="window.history.back()">
-        ← Back
-    </button>
+    <button class="back-btn" onclick="window.history.back()">← Back</button>
     <h1 class="title">Edit Material</h1>
+    <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
 
 <main>
+
     <section class="card">
 
         <label>Part Number</label>
-        <input id="part" type="text" />
+        <input id="partNumber" class="input" />
 
         <label>Description</label>
-        <input id="description" type="text" />
+        <textarea id="description" class="input" rows="3"></textarea>
 
         <label>Quantity</label>
-        <input id="qty" type="number" />
+        <input type="number" id="qty" class="input" />
 
         <label>Heat Number</label>
-        <input id="heat" type="text" />
+        <input id="heat" class="input" />
 
-        <button class="primary-btn" onclick="saveChanges()">Save Changes</button>
-
-        <button class="primary-btn" style="background:#990000" onclick="deleteMat()">
-            Delete Material
-        </button>
+        <button class="primary-btn" onclick="saveMaterial()">Save Changes</button>
+        <button class="secondary-btn" onclick="deleteMaterial()" style="margin-top:10px;">Delete Material</button>
 
     </section>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.3/dist/dexie.min.js"></script>
@@ -49,43 +56,45 @@ const params = new URLSearchParams(window.location.search);
 const jobNumber = params.get("job");
 const matId = Number(params.get("id"));
 
-let materialObj = null;
-
-// Load material info
+// Load material
 async function loadMaterial() {
-    const mats = await getMaterials(jobNumber);
-    materialObj = mats.find(m => m.id === matId);
+    const mat = await db.materials.get(matId);
 
-    if (!materialObj) {
-        alert("Material not found.");
-        window.history.back();
+    document.getElementById("partNumber").value = mat.partNumber || "";
+    document.getElementById("description").value = mat.description || "";
+    document.getElementById("qty").value = mat.qty || "";
+    document.getElementById("heat").value = mat.heat || "";
+}
+
+// Save edits
+async function saveMaterial() {
+    const part = document.getElementById("partNumber").value.trim();
+    const desc = document.getElementById("description").value.trim();
+    const qty = document.getElementById("qty").value.trim();
+    const heat = document.getElementById("heat").value.trim();
+
+    if (!part || !qty) {
+        alert("Part number and quantity are required.");
         return;
     }
 
-    document.getElementById("part").value = materialObj.part;
-    document.getElementById("description").value = materialObj.description;
-    document.getElementById("qty").value = materialObj.qty;
-    document.getElementById("heat").value = materialObj.heat;
-}
-
-// Save changes
-async function saveChanges() {
-    materialObj.part = document.getElementById("part").value.trim();
-    materialObj.description = document.getElementById("description").value.trim();
-    materialObj.qty = Number(document.getElementById("qty").value);
-    materialObj.heat = document.getElementById("heat").value.trim();
-
-    await saveMaterial(materialObj);
+    await db.materials.put({
+        id: matId,
+        jobNumber: jobNumber,
+        partNumber: part,
+        description: desc,
+        qty: qty,
+        heat: heat
+    });
 
     window.location.href = "job.html?job=" + encodeURIComponent(jobNumber);
 }
 
 // Delete material
-async function deleteMat() {
+async function deleteMaterial() {
     if (!confirm("Delete this material?")) return;
 
-    await deleteMaterial(matId);
-
+    await db.materials.delete(matId);
     window.location.href = "job.html?job=" + encodeURIComponent(jobNumber);
 }
 

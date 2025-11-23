@@ -1,39 +1,48 @@
 <!DOCTYPE html>
 <html lang='en'>
 <head>
-    <meta charset='UTF-8' />
-    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Create Job</title>
-    <link rel='stylesheet' href='style.css' />
+
+    <link rel='stylesheet' href='style.css'>
+
+    <!-- iOS home screen icon -->
+    <link rel='apple-touch-icon' sizes='180x180' href='assets/icons/icon-180.png'>
+    <meta name='apple-mobile-web-app-capable' content='yes'>
+    <meta name='apple-mobile-web-app-status-bar-style' content='default'>
+
+    <!-- PWA manifest -->
+    <link rel='manifest' href='manifest.webmanifest'>
 </head>
 
 <body>
 
-<header class='card header-bar'>
-    <button class='back-btn' id='backBtn'>← Back</button>
-    <h1 class='title'>Create Job</h1>
+<header class="card header-bar">
+    <button class="back-btn" onclick="window.location.href='jobs.html'">← Back</button>
+    <h1 class="title">Create Job</h1>
+    <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
 
 <main>
 
-    <section class='card'>
+    <section class="card">
+
         <label>Job Number</label>
-        <input type='text' id='jobNumber' />
+        <input type="text" id="jobNumber" class="input">
 
         <label>Description</label>
-        <input type='text' id='description' />
+        <textarea id="description" class="input" rows="4"></textarea>
 
-        <label>Notes</label>
-        <textarea id='notes'></textarea>
+        <button class="primary-btn" id="saveJobBtn">Save Job</button>
 
-        <button class='primary-btn' id='saveJobBtn'>Save Job</button>
     </section>
 
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.3/dist/dexie.min.js"></script>
-<script src='db.js'></script>
-<script src='create_job.js'></script>
+<script src="db.js"></script>
+<script src="create_job.js"></script>
 
 </body>
 </html>

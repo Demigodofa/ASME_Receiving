@@ -1,28 +1,36 @@
 <!DOCTYPE html>
 <html lang='en'>
 <head>
-    <meta charset='UTF-8' />
-    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Jobs</title>
-    <link rel='stylesheet' href='style.css' />
+
+    <link rel='stylesheet' href='style.css'>
+
+    <!-- iOS home screen icon -->
+    <link rel='apple-touch-icon' sizes='180x180' href='assets/icons/icon-180.png'>
+    <meta name='apple-mobile-web-app-capable' content='yes'>
+    <meta name='apple-mobile-web-app-status-bar-style' content='default'>
+
+    <!-- PWA manifest -->
+    <link rel='manifest' href='manifest.webmanifest'>
 </head>
 
 <body>
 
-<header class='card header-bar'>
-    <button class='back-btn' onclick='window.history.back()'>
-        ← Back
-    </button>
-    <h1 class='title'>Jobs</h1>
+<header class="card header-bar">
+    <button class="back-btn" onclick="window.location.href='app.html'">← Back</button>
+    <h1 class="title">Jobs</h1>
+    <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
 
 <main>
 
-    <section class='card'>
+    <section class="card">
         <h2>Job List</h2>
         <p>Select a job to view details.</p>
 
-        <table class='table'>
+        <table class="table">
             <thead>
                 <tr>
                     <th>Job #</th>

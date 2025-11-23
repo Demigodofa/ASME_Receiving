@@ -1,88 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>ASME Receiving</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ASME Receiving</title>
 
-<style>
-/* Ensure clean centered layout */
-body {
-    background: #f5f7fa;
-    margin: 0;
-    font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-}
+    <link rel="stylesheet" href="style.css" />
 
-.header {
-    text-align: center;
-    margin-top: 40px;
-}
+    <!-- iOS home screen support -->
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-.header img {
-    width: 42px;
-    vertical-align: middle;
-    margin-right: 10px;
-}
-
-.header-title {
-    font-size: 26px;
-    font-weight: bold;
-    color: #003366;
-    vertical-align: middle;
-}
-
-.main-area {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.button-green {
-    background: #228B22;
-    color: white;
-    padding: 16px 30px;
-    font-size: 20px;
-    border-radius: 10px;
-    border: none;
-    width: 70%;
-    text-align: center;
-    cursor: pointer;
-    box-shadow: 0px 2px 5px rgba(0,0,0,0.25);
-}
-
-.offline-status {
-    text-align: center;
-    margin-bottom: 35px;
-    color: #555;
-    font-size: 14px;
-}
-</style>
-
+    <!-- Manifest for Android -->
+    <link rel="manifest" href="manifest.webmanifest">
 </head>
+
 <body>
 
-<div class="header">
-    <img src="assets/icons/icon-192.png" alt="Logo">
-    <span class="header-title">ASME Receiving</span>
-</div>
-
-<div class="main-area">
-    <button class="button-green" onclick="location.href='app.html'">Enter App</button>
-</div>
-
-<div class="offline-status">
-    Ready for Offline Use
+<div class="splash">
+    <img src="assets/icons/icon-192.png" class="splash-icon" />
+    <h1 class="title">ASME Receiving</h1>
 </div>
 
 <script>
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service_worker.js');
-}
+    // Splash redirect logic
+    setTimeout(() => {
+        window.location.href = "app.html";
+    }, 1500);
 </script>
 
 </body>

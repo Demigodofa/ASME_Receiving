@@ -1,69 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Material</title>
-    <link rel="stylesheet" href="style.css" />
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- iOS home screen -->
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Android PWA -->
+    <link rel="manifest" href="manifest.webmanifest">
 </head>
 
 <body>
 
 <header class="card header-bar">
-    <button class="back-btn" onclick="window.history.back()">
-        ← Back
-    </button>
+    <button class="back-btn" onclick="window.history.back()">← Back</button>
     <h1 class="title">Add Material</h1>
+    <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
 
 <main>
+
     <section class="card">
 
         <label>Part Number</label>
-        <input id="part" type="text" />
+        <input id="partNumber" class="input" />
 
         <label>Description</label>
-        <input id="description" type="text" />
+        <textarea id="description" class="input" rows="3"></textarea>
 
         <label>Quantity</label>
-        <input id="qty" type="number" />
+        <input type="number" id="qty" class="input" />
 
         <label>Heat Number</label>
-        <input id="heat" type="text" />
+        <input id="heat" class="input" />
 
         <button class="primary-btn" onclick="saveMaterial()">Save Material</button>
 
     </section>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.3/dist/dexie.min.js"></script>
 <script src="db.js"></script>
 
 <script>
-// Get job number from URL
+// URL params
 const params = new URLSearchParams(window.location.search);
 const jobNumber = params.get("job");
 
+// Save material
 async function saveMaterial() {
-    const mat = {
-        jobNumber: jobNumber,
-        part: document.getElementById("part").value.trim(),
-        description: document.getElementById("description").value.trim(),
-        qty: Number(document.getElementById("qty").value),
-        heat: document.getElementById("heat").value.trim()
-    };
+    const part = document.getElementById("partNumber").value.trim();
+    const desc = document.getElementById("description").value.trim();
+    const qty = document.getElementById("qty").value.trim();
+    const heat = document.getElementById("heat").value.trim();
 
-    if (!mat.part || !mat.qty) {
-        alert("Part # and Quantity are required.");
+    if (!part || !qty) {
+        alert("Part number and quantity are required.");
         return;
     }
 
-    await saveMaterialToDB(mat);
-}
+    await db.materials.add({
+        jobNumber: jobNumber,
+        partNumber: part,
+        description: desc,
+        qty: qty,
+        heat: heat
+    });
 
-// Call DB function
-async function saveMaterialToDB(mat) {
-    await saveMaterial(mat);
     window.location.href = "job.html?job=" + encodeURIComponent(jobNumber);
 }
 </script>
