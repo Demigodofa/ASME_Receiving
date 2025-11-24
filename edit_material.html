@@ -19,7 +19,7 @@
 
 <body>
 <header class="header">
-    <button class="back-btn" onclick="history.back()">←</button>
+    <button class="back-btn" onclick="history.back()">← Back</button>
     <h1>Edit Material</h1>
     <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
@@ -202,7 +202,6 @@ db.version(1).stores({
 
 let photos = [];
 
-
 // ============================================
 //          LOAD MATERIAL DATA
 // ============================================
@@ -266,7 +265,6 @@ function renderThumbnails() {
 
 loadMaterial();
 
-
 // ============================================
 //       CAMERA INPUT FOR EXTRA PHOTOS
 // ============================================
@@ -296,7 +294,6 @@ cameraInput.onchange = function () {
     };
     reader.readAsDataURL(file);
 };
-
 
 // ============================================
 //          SAVE EDITED MATERIAL
@@ -343,7 +340,7 @@ document.getElementById("saveEdited").onclick = async () => {
     });
 
     alert("Material updated.");
-    window.location.href = `job.html?job=${jobNumber}`;
+    window.location.replace(`job.html?job=${jobNumber}`);
 };
 </script>
 

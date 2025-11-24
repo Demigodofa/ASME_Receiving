@@ -158,5 +158,7 @@ saveBtn.addEventListener("click", async () => {
     await db.materials.add(material);
 
     alert("Material Saved.");
-    window.location.href = `job.html?job=${jobNumber}`;
+
+    // FIX: Use replace() so BACK button doesn't bounce through the edit/add page again
+    window.location.replace(`job.html?job=${jobNumber}`);
 });
