@@ -1,195 +1,131 @@
-/* EXPORT JOB ENGINE */
-/* ------------------------------------------------------------ */
-/* Generates portrait PDFs (no logo), separate Photos folder,   */
-/* filenames based on Material Description, ZIP export, and     */
-/* navigator.share() fallback. Fully offline.                   */
-/* ------------------------------------------------------------ */
+const db = new Dexie("ASMEReceivingDB");
+db.version(1).stores({
+    jobs: "jobNumber, description, notes, createdAt",
+    materials: "++id, jobNumber"
+});
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("exportJob");
+    if (btn) btn.onclick = exportJob;
+});
 
-    const db = new Dexie("welders_helper_db");
-    db.version(1).stores({
-        jobs: "++id, jobNumber, description",
-        materials: "++id, jobNumber, description, photos"
-    });
+function base64ToBin(b64) {
+    const raw = atob(b64.split(",")[1]);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+}
 
-    const params = new URLSearchParams(window.location.search);
-    const jobNumber = params.get("job");
+async function generatePDF(mat) {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: "pt", format: "letter" });
 
-    const exportButton = document.getElementById("exportJobButton");
-    if (!exportButton) return;
+    let y = 40;
+    pdf.setFont("Helvetica", "bold");
+    pdf.setFontSize(18);
+    pdf.text("RECEIVING REPORT", pdf.internal.pageSize.getWidth() / 2, y, { align: "center" });
+    y += 30;
 
-    exportButton.addEventListener("click", () => exportJob(jobNumber));
+    pdf.setFont("Helvetica", "normal");
+    pdf.setFontSize(12);
 
-    /* ------------------------------------------------------------ */
-    /* Build PDF for each Material                                  */
-    /* ------------------------------------------------------------ */
-    async function generatePDF(material) {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
+    function row(label, val) {
+        pdf.text(`${label}: ${val || ""}`, 40, y);
+        y += 16;
+    }
 
-        let y = 40;
+    row("Description", mat.description);
+    row("Vendor", mat.vendor);
+    row("PO Number", mat.poNumber);
+    row("Date", mat.date);
+    row("Quantity", mat.quantity);
+    row("Product", mat.product);
+    row("Spec", `${mat.specPrefix} ${mat.specCode}`);
+    row("Grade", mat.grade);
+    row("B16 Dim", mat.b16dim);
 
-        /* ----- Centered Title ----- */
-        pdf.setFont("Helvetica", "bold");
-        pdf.setFontSize(18);
-        pdf.text("RECEIVING REPORT", pdf.internal.pageSize.getWidth() / 2, y, { align: "center" });
-        y += 25;
+    row("Thickness", mat.th1);
+    row("Width", mat.th2);
+    row("Length", mat.th3);
+    row("Diameter", mat.th4);
+    row("Other", mat.other);
 
-        /* ----- Left Aligned Job + Material ----- */
-        pdf.setFontSize(12);
-        pdf.setFont("Helvetica", "normal");
-        pdf.text(`Job: ${material.jobNumber}`, 40, y);  y += 18;
-        pdf.text(`Material: ${material.description}`, 40, y); y += 25;
+    row("Visual", mat.visual);
+    row("Marking Acceptable", mat.markingAcceptable);
+    row("MTR Acceptable", mat.mtrAcceptable);
 
-        /* ----- Centered Section Header ----- */
-        function section(label) {
-            pdf.setFont("Helvetica", "bold");
-            pdf.setFontSize(13);
-            pdf.text(label, pdf.internal.pageSize.getWidth() / 2, y, { align: "center" });
-            y += 15;
-            pdf.setFont("Helvetica", "normal");
-            pdf.setFontSize(11);
-        }
+    pdf.text("Actual Marking:", 40, y);
+    y += 16;
+    const markText = pdf.splitTextToSize(mat.actualMarking || "", 500);
+    pdf.text(markText, 40, y);
+    y += markText.length * 14 + 10;
 
-        /* ----- Draw Row Helper ----- */
-        function row(label, value) {
-            pdf.text(`${label}: ${value || ""}`, 40, y);
-            y += 15;
-        }
+    pdf.text("Comments:", 40, y);
+    y += 16;
+    const commentText = pdf.splitTextToSize(mat.comments || "", 500);
+    pdf.text(commentText, 40, y);
+    y += commentText.length * 14 + 20;
 
-        /* -------------------- MATERIAL DETAILS -------------------- */
-        section("MATERIAL DETAILS");
+    row("QC Initials", mat.qcInitials);
+    row("QC Date", mat.qcDate);
 
-        row("Vendor", material.vendor);
-        row("PO Number", material.poNumber);
-        row("Date Received", material.date);
-        row("Product", material.product);
-        row("Specification", material.specFormatted);
-        row("Grade/Type", material.gradeType);
-        row("B16 Dim", material.b16);
-
-        /* -------------------- MEASUREMENTS ------------------------ */
-        section("MEASUREMENTS");
-
-        row("T1", material.th1);
-        row("T2", material.th2);
-        row("T3", material.th3);
-        row("T4", material.th4);
-        row("Width", material.width);
-        row("Length", material.length);
-        row("Diameter", material.diameter);
-        row("Other", material.other);
-
-        /* -------------------- INSPECTION -------------------------- */
-        section("INSPECTION");
-
-        row("Visual Acceptable", material.visual ? "Yes" : "No");
-        row("Markings Acceptable", material.markingAcceptable);
-        row("MTR / CofC Acceptable", material.mtrAcceptable);
-
-        /* -------------------- MARKINGS ---------------------------- */
-        section("MARKINGS");
-
-        pdf.text(`Actual Marking:`, 40, y); y += 15;
-        const split = pdf.splitTextToSize(material.actualMarking || "", 500);
-        pdf.text(split, 40, y);
-        y += split.length * 12 + 10;
-
-        /* -------------------- COMMENTS ---------------------------- */
-        section("COMMENTS");
-
-        const comments = pdf.splitTextToSize(material.comments || "", 500);
-        pdf.text(comments, 40, y);
-        y += comments.length * 12 + 20;
-
-        /* -------------------- STATUS ------------------------------ */
-        row("Status", material.status);
-
-        /* -------------------- QC ---------------------------------- */
-        y += 10;
-        row("QC Initials", material.qcInitials);
-        row("QC Date", material.qcDate);
-
-        /* Signature line */
+    if (mat.photos?.length) {
         y += 20;
-        pdf.text("Signature: _______________________________", 40, y);
+        const imgW = 160, imgH = 120, gap = 20;
+        let x = 40;
 
-        return pdf;
-    }
-
-    /* ------------------------------------------------------------ */
-    /* Build ZIP with PDFs + Photos                                 */
-    /* ------------------------------------------------------------ */
-    async function exportJob(jobNum) {
-        const materials = await db.materials.where("jobNumber").equals(jobNum).toArray();
-        if (materials.length === 0) {
-            alert("No materials found for this job.");
-            return;
-        }
-
-        const zip = new JSZip();
-        const root = zip.folder(`Job_${jobNum}`);
-        const photoFolder = root.folder("Photos");
-
-        for (let mat of materials) {
-            /* Generate PDF */
-            const pdf = await generatePDF(mat);
-            const pdfData = pdf.output("arraybuffer");
-
-            const safeName = sanitizeFilename(mat.description || "Material");
-
-            root.file(`${safeName}.pdf`, pdfData);
-
-            if (Array.isArray(mat.photos)) {
-                for (let i = 0; i < mat.photos.length; i++) {
-                    const ph = mat.photos[i];
-                    const blob = ph.blob;
-
-                    const buffer = await blobToArrayBuffer(blob);
-                    photoFolder.file(`${safeName}_${i+1}.jpg`, buffer);
-                }
+        mat.photos.forEach((p, i) => {
+            pdf.addImage(p, "JPEG", x, y, imgW, imgH);
+            x += imgW + gap;
+            if ((i + 1) % 3 === 0) {
+                x = 40;
+                y += imgH + gap;
             }
-        }
-
-        /* Try Web Share API */
-        const blobZip = await zip.generateAsync({ type: "blob" });
-
-        if (navigator.canShare && navigator.canShare({ files: [new File([blobZip], `Job_${jobNum}.zip`)] })) {
-            const file = new File([blobZip], `Job_${jobNum}.zip`);
-            try {
-                await navigator.share({
-                    title: `Job ${jobNum}`,
-                    files: [file]
-                });
-                return;
-            } catch (err) {
-                console.log("Share failed, falling back to download:", err);
-            }
-        }
-
-        /* Fallback — download ZIP */
-        const url = URL.createObjectURL(blobZip);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Job_${jobNum}.zip`;
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    /* ------------------------------------------------------------ */
-    /* Helpers                                                      */
-    /* ------------------------------------------------------------ */
-    function sanitizeFilename(name) {
-        return name.replace(/[\\/:*?"<>|]/g, "").trim();
-    }
-
-    function blobToArrayBuffer(blob) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.readAsArrayBuffer(blob);
         });
     }
 
-});
+    return pdf.output("arraybuffer");
+}
+
+async function exportJob() {
+    const jobNum = new URLSearchParams(location.search).get("job");
+    const job = await db.jobs.get(jobNum);
+    const mats = await db.materials.where("jobNumber").equals(jobNum).toArray();
+
+    if (!mats.length) {
+        alert("No materials found.");
+        return;
+    }
+
+    const zip = new JSZip();
+    const root = zip.folder(`Job_${jobNum}`);
+    const matFolder = root.folder("Materials");
+    const photoFolder = root.folder("Photos");
+
+    for (const m of mats) {
+        const pdf = await generatePDF(m);
+        matFolder.file(`Material_${m.id}.pdf`, pdf);
+
+        if (m.photos?.length) {
+            m.photos.forEach((p, idx) => {
+                photoFolder.file(`Material_${m.id}_${idx + 1}.jpg`, base64ToBin(p));
+            });
+        }
+    }
+
+    const blob = await zip.generateAsync({ type: "blob" });
+    const filename = `Job_${jobNum}.zip`;
+    const file = new File([blob], filename, { type: "application/zip" });
+
+    if (navigator.canShare?.({ files: [file] })) {
+        try {
+            await navigator.share({ title: filename, files: [file] });
+            return;
+        } catch (err) {}
+    }
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+}

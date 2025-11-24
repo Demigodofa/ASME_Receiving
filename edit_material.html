@@ -3,107 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Edit Material</title>
-
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.webmanifest">
-
-    <!-- iOS PWA -->
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-    <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.js"></script>
     <script defer src="edit_material.js"></script>
 </head>
 
 <body>
 
-<header class="card header-bar">
-    <div class="header-row">
-        <button class="back-btn" onclick="history.back()">← Back</button>
-    </div>
-    <div class="header-row main-header-row">
-        <h1 class="header-title">Edit Material</h1>
-        <img src="assets/icons/icon-192.png" class="header-icon">
-    </div>
+<header class="header-bar">
+    <button class="back-btn" onclick="window.history.back()">← Back</button>
+    <h1 class="title">Edit Material</h1>
+    <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
 
-<main>
+<div class="container">
 
-    <div class="card">
+<form id="materialForm">
 
-        <label>Description</label>
-        <input id="description" type="text">
+    <input type="hidden" id="materialId">
 
-        <label>Vendor</label>
-        <input id="vendor" type="text">
+    <label>Description</label>
+    <input type="text" id="description">
 
-        <label>PO #</label>
-        <input id="po" type="text">
+    <label>Vendor</label>
+    <input type="text" id="vendor">
 
-        <label>Date</label>
-        <input id="date" type="date">
+    <label>PO Number</label>
+    <input type="text" id="poNumber">
 
-        <label>Quantity</label>
-        <input id="qty" type="number">
+    <label>Date</label>
+    <input type="date" id="date">
 
-        <label>Product Type</label>
-        <select id="product"></select>
+    <label>Quantity</label>
+    <input type="number" id="quantity">
 
-        <label>Specification Prefix</label>
-        <select id="specPrefix"></select>
+    <label>Product</label>
+    <select id="product">
+        <option>Plate</option>
+        <option>Pipe</option>
+        <option>Tube</option>
+        <option>Fitting</option>
+        <option>Other</option>
+    </select>
 
-        <label>Specification Code</label>
-        <input id="specCode" type="text">
+    <label>Spec Prefix</label>
+    <input type="text" id="specPrefix">
 
-        <label>Grade / Type</label>
-        <input id="gradeType" type="text">
+    <label>Spec Code</label>
+    <input type="text" id="specCode">
 
-        <label>Thickness</label>
-        <input id="thickness" type="text">
+    <label>Grade</label>
+    <input type="text" id="grade">
 
-        <label>Width</label>
-        <input id="width" type="text">
+    <label>B16 Size</label>
+    <input type="text" id="b16dim">
 
-        <label>Length</label>
-        <input id="length" type="text">
+    <label>Thickness</label>
+    <input type="text" id="th1">
 
-        <label>Diameter</label>
-        <input id="diameter" type="text">
+    <label>Width</label>
+    <input type="text" id="th2">
 
-        <label>Other</label>
-        <input id="otherDim" type="text">
+    <label>Length</label>
+    <input type="text" id="th3">
 
-        <h3>Inspection</h3>
+    <label>Diameter</label>
+    <input type="text" id="th4">
 
-        <label>Visual Inspection Acceptable</label>
-        <select id="visual"></select>
+    <label>Other</label>
+    <input type="text" id="other">
 
-        <label>B16 Dimensions Acceptable</label>
-        <select id="b16"></select>
+    <label>Visual Acceptable?</label>
+    <select id="visual">
+        <option>Yes</option>
+        <option>No</option>
+    </select>
 
-        <label>Markings Acceptable</label>
-        <select id="markings"></select>
+    <label>Marking Acceptable?</label>
+    <select id="markingAcceptable">
+        <option>Yes</option>
+        <option>No</option>
+    </select>
 
-        <label>MTR / CofC Acceptable</label>
-        <select id="mtr"></select>
+    <label>MTR Acceptable?</label>
+    <select id="mtrAcceptable">
+        <option>Yes</option>
+        <option>No</option>
+    </select>
 
-        <label>Actual Material Markings</label>
-        <textarea id="actualMarkings" rows="3"></textarea>
+    <label>Actual Marking</label>
+    <textarea id="actualMarking"></textarea>
 
-        <label>Comments</label>
-        <textarea id="comments" rows="2"></textarea>
+    <label>Comments</label>
+    <textarea id="comments"></textarea>
 
-        <label>Status</label>
-        <select id="status"></select>
+    <label>QC Initials</label>
+    <input type="text" id="qcInitials">
 
-        <button class="primary-btn save-btn" id="saveChanges">Save Changes</button>
+    <label>QC Date</label>
+    <input type="date" id="qcDate">
 
-    </div>
+    <label>Photos</label>
+    <button type="button" id="takePhotos" class="primary-btn">Add Photo</button>
 
-</main>
+    <div id="photoPreview" class="photo-preview"></div>
 
+    <button type="button" id="saveChanges" class="primary-btn full-btn">Save Changes</button>
+
+</form>
+
+</div>
 </body>
 </html>

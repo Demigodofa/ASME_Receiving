@@ -3,98 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Job Details</title>
-
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.webmanifest">
-
-    <!-- iOS PWA -->
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-    <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.js"></script>
+    <script defer src="export_job.js"></script>
+    <script defer src="delete_job.js"></script>
+    <script defer src="job.js"></script>
 </head>
 
 <body>
 
-<header class="card header-bar">
-    <div class="header-row">
-        <button class="back-btn" onclick="history.back()">← Back</button>
-    </div>
-    <div class="header-row main-header-row">
-        <h1 class="header-title">Job Details</h1>
-        <img src="assets/icons/icon-192.png" class="header-icon">
-    </div>
+<!-- ======= HEADER (New Universal Layout) ======= -->
+<header class="header-bar">
+    <button class="back-btn" onclick="window.history.back()">← Back</button>
+    <h1 class="title">Receiving Inspection Reports</h1>
+    <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
 
-<main>
 
-    <div class="card">
-        <h2 id="jobNumberDisplay"></h2>
+<div class="container">
 
-        <button class="primary-btn" onclick="window.location.href='add_material.html?job=' + jobNumber;">
-            Add Material
-        </button>
+    <div class="card job-info">
+        <h2 id="jobTitle">Job ###</h2>
+        <p id="jobDescription"></p>
+        <p id="jobNotes"></p>
+        <p id="jobDate"></p>
     </div>
 
-    <div class="dark-header centered">
-        RECEIVING INSPECTION REPORTS
-    </div>
+    <!-- ======= Export Job Button ======= -->
+    <button id="exportJob" class="primary-btn full-btn">Export Job</button>
 
-    <div id="materialsList"></div>
 
-</main>
+    <h2 class="section-title">Materials</h2>
 
-<script>
-const urlParams = new URLSearchParams(window.location.search);
-const jobNumber = urlParams.get("job");
+    <div id="materialsList" class="materials-list"></div>
 
-document.getElementById("jobNumberDisplay").textContent = "Job #" + jobNumber;
+    <!-- ======= Add Material ======= -->
+    <a href="#" id="addMaterialLink">
+        <button class="primary-btn full-btn">Add Material</button>
+    </a>
 
-const db = new Dexie("WeldersHelperDB");
-db.version(1).stores({
-    jobs: "jobNumber, description",
-    materials: "++id, jobNumber"
-});
+    <!-- ======= Delete Job (Bottom Red Button) ======= -->
+    <button class="danger-btn full-btn" onclick="deleteJob()">Delete Job</button>
 
-async function loadMaterials() {
-    const materials = await db.materials.where("jobNumber").equals(jobNumber).toArray();
-    const container = document.getElementById("materialsList");
-    container.innerHTML = "";
-
-    if (materials.length === 0) {
-        container.innerHTML = "<p style='text-align:center; color:#777;'>No receiving reports yet.</p>";
-        return;
-    }
-
-    materials.forEach(mat => {
-        const card = document.createElement("div");
-        card.className = "card material-card";
-
-        const spec =
-            `${mat.specPrefix || ""}` +
-            `${mat.specPrefix && mat.specCode ? "-" : ""}` +
-            `${mat.specCode || ""}`;
-
-        card.innerHTML = `
-            <p><strong>Description:</strong> ${mat.description || ""}</p>
-            <p><strong>Spec:</strong> ${spec}</p>
-            <p><strong>Grade/Type:</strong> ${mat.gradeType || ""}</p>
-
-            <button class="secondary-btn" style="margin-top:10px;"
-                onclick="window.location.href='edit_material.html?id=${mat.id}&job=${jobNumber}'">
-                Edit Material
-            </button>
-        `;
-
-        container.appendChild(card);
-    });
-}
-
-loadMaterials();
-</script>
+</div>
 
 </body>
 </html>

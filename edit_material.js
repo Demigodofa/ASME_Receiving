@@ -8,40 +8,83 @@ db.version(1).stores({
 });
 
 // ===============================================
-//   GET JOB NUMBER
+//   GET MATERIAL ID
 // ===============================================
 const params = new URLSearchParams(window.location.search);
-const jobNumber = params.get("job");
-document.getElementById("jobNumber").value = jobNumber;
+const materialId = parseInt(params.get("id"));
+let currentPhotos = [];
+
+document.addEventListener("DOMContentLoaded", loadMaterial);
+
+
+// ===============================================
+//   LOAD MATERIAL
+// ===============================================
+async function loadMaterial() {
+    const m = await db.materials.get(materialId);
+
+    if (!m) return alert("Material not found.");
+
+    document.getElementById("materialId").value = m.id;
+
+    description.value = m.description;
+    vendor.value = m.vendor;
+    poNumber.value = m.poNumber;
+    date.value = m.date;
+    quantity.value = m.quantity;
+
+    product.value = m.product;
+    specPrefix.value = m.specPrefix;
+    specCode.value = m.specCode;
+    grade.value = m.grade;
+    b16dim.value = m.b16dim;
+
+    th1.value = m.th1;
+    th2.value = m.th2;
+    th3.value = m.th3;
+    th4.value = m.th4;
+    other.value = m.other;
+
+    visual.value = m.visual;
+    markingAcceptable.value = m.markingAcceptable;
+    mtrAcceptable.value = m.mtrAcceptable;
+
+    actualMarking.value = m.actualMarking;
+    comments.value = m.comments;
+
+    qcInitials.value = m.qcInitials;
+    qcDate.value = m.qcDate;
+
+    currentPhotos = Array.isArray(m.photos) ? [...m.photos] : [];
+    renderPhotos();
+}
 
 
 // ===============================================
 //   PHOTO HANDLING
 // ===============================================
-let photos = [];
-
-const fileInput = document.createElement("input");
-fileInput.type = "file";
-fileInput.accept = "image/*";
-fileInput.capture = "environment";
-fileInput.style.display = "none";
-document.body.appendChild(fileInput);
+let editFileInput = document.createElement("input");
+editFileInput.type = "file";
+editFileInput.accept = "image/*";
+editFileInput.capture = "environment";
+editFileInput.style.display = "none";
+document.body.appendChild(editFileInput);
 
 document.getElementById("takePhotos").onclick = () => {
-    if (photos.length >= 5) {
-        alert("Maximum of 5 photos.");
+    if (currentPhotos.length >= 5) {
+        alert("Max photos reached.");
         return;
     }
-    fileInput.click();
+    editFileInput.click();
 };
 
-fileInput.addEventListener("change", () => {
-    const file = fileInput.files[0];
+editFileInput.addEventListener("change", () => {
+    const file = editFileInput.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = e => {
-        photos.push(e.target.result);
+        currentPhotos.push(e.target.result);
         renderPhotos();
     };
     reader.readAsDataURL(file);
@@ -51,7 +94,7 @@ function renderPhotos() {
     const area = document.getElementById("photoPreview");
     area.innerHTML = "";
 
-    photos.forEach((src, index) => {
+    currentPhotos.forEach((src, idx) => {
         const wrap = document.createElement("div");
         wrap.style.position = "relative";
 
@@ -63,7 +106,7 @@ function renderPhotos() {
         del.className = "photo-delete";
         del.textContent = "×";
         del.onclick = () => {
-            photos.splice(index, 1);
+            currentPhotos.splice(idx, 1);
             renderPhotos();
         };
 
@@ -75,12 +118,11 @@ function renderPhotos() {
 
 
 // ===============================================
-//   SAVE MATERIAL
+//   SAVE CHANGES
 // ===============================================
-document.getElementById("saveMaterial").onclick = async () => {
+document.getElementById("saveChanges").onclick = async () => {
 
-    const mat = {
-        jobNumber,
+    await db.materials.update(materialId, {
         description: description.value,
         vendor: vendor.value,
         poNumber: poNumber.value,
@@ -109,10 +151,9 @@ document.getElementById("saveMaterial").onclick = async () => {
         qcInitials: qcInitials.value,
         qcDate: qcDate.value,
 
-        photos
-    };
+        photos: currentPhotos
+    });
 
-    await db.materials.add(mat);
-
-    window.location.replace(`job.html?job=${jobNumber}`);
+    const m = await db.materials.get(materialId);
+    window.location.replace(`job.html?job=${m.jobNumber}`);
 };

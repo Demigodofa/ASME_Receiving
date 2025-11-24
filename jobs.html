@@ -1,86 +1,91 @@
 <!DOCTYPE html>
-<html lang='en'>
+<html lang="en">
 <head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jobs</title>
-
-    <link rel='stylesheet' href='style.css'>
-
-    <!-- iOS home screen icon -->
-    <link rel='apple-touch-icon' sizes='180x180' href='assets/icons/icon-180.png'>
-    <meta name='apple-mobile-web-app-capable' content='yes'>
-    <meta name='apple-mobile-web-app-status-bar-style' content='default'>
-
-    <!-- PWA manifest -->
-    <link rel='manifest' href='manifest.webmanifest'>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.js"></script>
+    <script defer src="jobs.js"></script>
+    <script defer src="delete_job.js"></script>
 </head>
 
 <body>
 
-<header class="card header-bar">
-    <button class="back-btn" onclick="window.location.href='app.html'">← Back</button>
+<!-- ======= HEADER ======= -->
+<header class="header-bar">
+    <button class="back-btn" onclick="window.history.back()">← Back</button>
     <h1 class="title">Jobs</h1>
     <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
 
-<main>
 
-    <section class="card">
-        <h2>Job List</h2>
-        <p>Select a job to view details.</p>
+<div class="container">
 
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Job #</th>
-                    <th>Description</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody id='jobsTable'></tbody>
-        </table>
+    <h2 class="section-title">Existing Jobs</h2>
+    <div id="jobsList" class="jobs-list"></div>
 
-    </section>
+    <!-- Add New Job -->
+    <a href="create_job.html">
+        <button class="primary-btn full-btn">Create New Job</button>
+    </a>
 
-</main>
-
-<script src="https://cdn.jsdelivr.net/npm/dexie@3.2.3/dist/dexie.min.js"></script>
-<script src='db.js'></script>
+</div>
 
 <script>
-// Load all jobs from IndexedDB
+/* Build the jobs list with OPEN + DELETE buttons side-by-side */
+
+const db = new Dexie("ASMEReceivingDB");
+db.version(1).stores({
+    jobs: "jobNumber, description, notes, createdAt",
+    materials: "++id, jobNumber"
+});
+
+document.addEventListener("DOMContentLoaded", loadJobs);
+
 async function loadJobs() {
+    const list = document.getElementById("jobsList");
+    list.innerHTML = "";
+
     const jobs = await db.jobs.toArray();
-    const table = document.getElementById("jobsTable");
 
-    table.innerHTML = "";
-
-    if (!jobs.length) {
-        table.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:12px;'>No jobs saved.</td></tr>";
+    if (jobs.length === 0) {
+        list.innerHTML = "<p>No jobs found.</p>";
         return;
     }
 
     jobs.forEach(job => {
-        const tr = document.createElement("tr");
+        const card = document.createElement("div");
+        card.className = "job-card";
 
-        tr.innerHTML = `
-            <td>${job.jobNumber}</td>
-            <td>${job.description || ""}</td>
-            <td>
-                <button class='link-btn' onclick="openJob('${job.jobNumber}')">Open</button>
-            </td>
-        `;
+        const title = document.createElement("h3");
+        title.textContent = `Job ${job.jobNumber}`;
+        card.appendChild(title);
 
-        table.appendChild(tr);
+        const desc = document.createElement("p");
+        desc.textContent = job.description || "";
+        card.appendChild(desc);
+
+        const btnRow = document.createElement("div");
+        btnRow.className = "job-btn-row";
+
+        const openBtn = document.createElement("button");
+        openBtn.className = "primary-btn job-open-btn";
+        openBtn.textContent = "OPEN";
+        openBtn.onclick = () => window.location.href = `job.html?job=${job.jobNumber}`;
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "danger-btn job-del-btn";
+        delBtn.textContent = "DELETE";
+        delBtn.onclick = () => deleteJob(job.jobNumber);
+
+        btnRow.appendChild(openBtn);
+        btnRow.appendChild(delBtn);
+
+        card.appendChild(btnRow);
+        list.appendChild(card);
     });
 }
-
-function openJob(jobNum) {
-    window.location.href = "job.html?job=" + encodeURIComponent(jobNum);
-}
-
-loadJobs();
 </script>
 
 </body>
