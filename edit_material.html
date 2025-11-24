@@ -15,334 +15,95 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
     <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.min.js"></script>
+    <script defer src="edit_material.js"></script>
 </head>
 
 <body>
-<header class="header">
-    <button class="back-btn" onclick="history.back()">← Back</button>
-    <h1>Edit Material</h1>
-    <img src="assets/icons/icon-192.png" class="header-icon">
+
+<header class="card header-bar">
+    <div class="header-row">
+        <button class="back-btn" onclick="history.back()">← Back</button>
+    </div>
+    <div class="header-row main-header-row">
+        <h1 class="header-title">Edit Material</h1>
+        <img src="assets/icons/icon-192.png" class="header-icon">
+    </div>
 </header>
 
 <main>
+
     <div class="card">
 
-        <!-- JOB -->
-        <label class="input-label">Job Number</label>
-        <input id="jobNumber" type="text" class="input-field" readonly>
+        <label>Description</label>
+        <input id="description" type="text">
 
-        <!-- DESCRIPTION -->
-        <label class="input-label">Description</label>
-        <input id="description" type="text" class="input-field">
+        <label>Vendor</label>
+        <input id="vendor" type="text">
 
-        <!-- VENDOR -->
-        <label class="input-label">Vendor</label>
-        <input id="vendor" type="text" class="input-field">
+        <label>PO #</label>
+        <input id="po" type="text">
 
-        <!-- PO NUMBER -->
-        <label class="input-label">PO Number</label>
-        <input id="poNumber" type="text" class="input-field">
+        <label>Date</label>
+        <input id="date" type="date">
 
-        <!-- DATE -->
-        <label class="input-label">Date Received</label>
-        <input id="date" type="date" class="input-field">
+        <label>Quantity</label>
+        <input id="qty" type="number">
 
-        <!-- QUANTITY -->
-        <label class="input-label">Quantity</label>
-        <input id="quantity" type="number" class="input-field">
+        <label>Product Type</label>
+        <select id="product"></select>
 
-        <!-- PRODUCT -->
-        <label class="input-label">Product Type</label>
-        <select id="product" class="dropdown">
-            <option value=""></option>
-            <option value="Tube">Tube</option>
-            <option value="Pipe">Pipe</option>
-            <option value="Plate">Plate</option>
-            <option value="Forging">Forging</option>
-            <option value="Casting">Casting</option>
-            <option value="Bar">Bar</option>
-            <option value="Other">Other</option>
-        </select>
+        <label>Specification Prefix</label>
+        <select id="specPrefix"></select>
 
-        <!-- SPECIFICATION -->
-        <label class="input-label">Specification Prefix</label>
-        <select id="specPrefix" class="dropdown">
-            <option value=""></option>
-            <option value="SA">SA</option>
-            <option value="A">A</option>
-        </select>
+        <label>Specification Code</label>
+        <input id="specCode" type="text">
 
-        <label class="input-label">Specification Code</label>
-        <input id="specCode" type="text" class="input-field">
+        <label>Grade / Type</label>
+        <input id="gradeType" type="text">
 
-        <!-- GRADE -->
-        <label class="input-label">Grade / Type</label>
-        <input id="gradeType" type="text" class="input-field">
+        <label>Thickness</label>
+        <input id="thickness" type="text">
 
-        <!-- B16 -->
-        <label class="input-label">Fitting B16</label>
-        <select id="b16" class="dropdown">
-            <option value=""></option>
-            <option>.5</option>
-            <option>.9</option>
-            <option>.11</option>
-            <option>.34</option>
-            <option>.47</option>
-        </select>
+        <label>Width</label>
+        <input id="width" type="text">
 
-        <!-- DIMENSIONS -->
-        <label class="input-label">Thickness 1</label>
-        <input id="th1" type="text" class="input-field">
+        <label>Length</label>
+        <input id="length" type="text">
 
-        <label class="input-label">Thickness 2</label>
-        <input id="th2" type="text" class="input-field">
+        <label>Diameter</label>
+        <input id="diameter" type="text">
 
-        <label class="input-label">Thickness 3</label>
-        <input id="th3" type="text" class="input-field">
+        <label>Other</label>
+        <input id="otherDim" type="text">
 
-        <label class="input-label">Thickness 4</label>
-        <input id="th4" type="text" class="input-field">
+        <h3>Inspection</h3>
 
-        <label class="input-label">Width</label>
-        <input id="width" type="text" class="input-field">
+        <label>Visual Inspection Acceptable</label>
+        <select id="visual"></select>
 
-        <label class="input-label">Length</label>
-        <input id="length" type="text" class="input-field">
+        <label>B16 Dimensions Acceptable</label>
+        <select id="b16"></select>
 
-        <label class="input-label">Diameter</label>
-        <input id="diameter" type="text" class="input-field">
+        <label>Markings Acceptable</label>
+        <select id="markings"></select>
 
-        <label class="input-label">Other</label>
-        <input id="other" type="text" class="input-field">
+        <label>MTR / CofC Acceptable</label>
+        <select id="mtr"></select>
 
-        <!-- INSPECTION -->
-        <h3 class="section-title">Inspection</h3>
+        <label>Actual Material Markings</label>
+        <textarea id="actualMarkings" rows="3"></textarea>
 
-        <label class="input-label">Visual Inspection Acceptable</label>
-        <select id="visual" class="dropdown">
-            <option value=""></option>
-            <option>Yes</option>
-            <option>No</option>
-        </select>
+        <label>Comments</label>
+        <textarea id="comments" rows="2"></textarea>
 
-        <label class="input-label">B16 Dimensions Acceptable</label>
-        <select id="b16dim" class="dropdown">
-            <option value=""></option>
-            <option>Yes</option>
-            <option>No</option>
-        </select>
+        <label>Status</label>
+        <select id="status"></select>
 
-        <label class="input-label">Markings Acceptable</label>
-        <select id="markingAcceptable" class="dropdown">
-            <option value=""></option>
-            <option>Yes</option>
-            <option>No</option>
-            <option>N/A</option>
-        </select>
-
-        <label class="input-label">MTR Acceptable</label>
-        <select id="mtrAcceptable" class="dropdown">
-            <option value=""></option>
-            <option>Yes</option>
-            <option>No</option>
-            <option>N/A</option>
-        </select>
-
-        <!-- MARKINGS -->
-        <label class="input-label">Actual Material Markings</label>
-        <textarea id="actualMarking" class="textarea"></textarea>
-
-        <!-- COMMENTS -->
-        <label class="input-label">Comments</label>
-        <textarea id="comments" class="textarea"></textarea>
-
-        <!-- STATUS -->
-        <label class="input-label">Status</label>
-        <select id="status" class="dropdown">
-            <option value=""></option>
-            <option>Accept</option>
-            <option>Reject</option>
-        </select>
-
-        <!-- QC -->
-        <label class="input-label">QC Initials</label>
-        <input id="qcInitials" type="text" class="input-field">
-
-        <label class="input-label">QC Date</label>
-        <input id="qcDate" type="date" class="input-field">
-
-        <!-- PHOTOS -->
-        <button id="takePhotos" class="primary-btn">Add More Photos</button>
-        <div id="photoPreview" style="margin-top:10px;"></div>
-
-        <!-- SAVE BUTTON -->
-        <button id="saveEdited" class="primary-btn" style="margin-top:20px;">
-            Save Changes
-        </button>
+        <button class="primary-btn save-btn" id="saveChanges">Save Changes</button>
 
     </div>
+
 </main>
-
-<script>
-// ============================================
-//              URL PARAMS
-// ============================================
-const urlParams = new URLSearchParams(window.location.search);
-const jobNumber = urlParams.get("job");
-const materialId = Number(urlParams.get("id"));
-
-// ============================================
-//              DEXIE SETUP
-// ============================================
-const db = new Dexie("WeldersHelperDB");
-db.version(1).stores({
-    jobs: "jobNumber, description",
-    materials: "++id, jobNumber"
-});
-
-let photos = [];
-
-// ============================================
-//          LOAD MATERIAL DATA
-// ============================================
-async function loadMaterial() {
-    const mat = await db.materials.get(materialId);
-    if (!mat) return;
-
-    document.getElementById("jobNumber").value = mat.jobNumber;
-    document.getElementById("description").value = mat.description;
-    document.getElementById("vendor").value = mat.vendor;
-    document.getElementById("poNumber").value = mat.poNumber;
-    document.getElementById("date").value = mat.date;
-    document.getElementById("quantity").value = mat.quantity;
-    document.getElementById("product").value = mat.product;
-
-    document.getElementById("specPrefix").value = mat.specPrefix;
-    document.getElementById("specCode").value = mat.specCode;
-
-    document.getElementById("gradeType").value = mat.gradeType;
-    document.getElementById("b16").value = mat.b16;
-
-    document.getElementById("th1").value = mat.th1;
-    document.getElementById("th2").value = mat.th2;
-    document.getElementById("th3").value = mat.th3;
-    document.getElementById("th4").value = mat.th4;
-
-    document.getElementById("width").value = mat.width;
-    document.getElementById("length").value = mat.length;
-    document.getElementById("diameter").value = mat.diameter;
-    document.getElementById("other").value = mat.other;
-
-    document.getElementById("visual").value = mat.visual;
-    document.getElementById("b16dim").value = mat.b16dim;
-    document.getElementById("markingAcceptable").value = mat.markingAcceptable;
-    document.getElementById("mtrAcceptable").value = mat.mtrAcceptable;
-
-    document.getElementById("actualMarking").value = mat.actualMarking;
-    document.getElementById("comments").value = mat.comments;
-    document.getElementById("status").value = mat.status;
-
-    document.getElementById("qcInitials").value = mat.qcInitials;
-    document.getElementById("qcDate").value = mat.qcDate;
-
-    photos = mat.photos || [];
-    renderThumbnails();
-}
-
-function renderThumbnails() {
-    const container = document.getElementById("photoPreview");
-    container.innerHTML = "";
-    photos.forEach((p, i) => {
-        const img = document.createElement("img");
-        img.src = p;
-        img.style.width = "80px";
-        img.style.height = "80px";
-        img.style.objectFit = "cover";
-        img.style.margin = "6px";
-        container.appendChild(img);
-    });
-}
-
-loadMaterial();
-
-// ============================================
-//       CAMERA INPUT FOR EXTRA PHOTOS
-// ============================================
-const cameraInput = document.createElement("input");
-cameraInput.type = "file";
-cameraInput.accept = "image/*";
-cameraInput.capture = "environment";
-cameraInput.style.display = "none";
-document.body.appendChild(cameraInput);
-
-document.getElementById("takePhotos").onclick = () => {
-    if (photos.length >= 5) {
-        alert("Max 5 photos allowed.");
-        return;
-    }
-    cameraInput.click();
-};
-
-cameraInput.onchange = function () {
-    const file = this.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = e => {
-        photos.push(e.target.result);
-        renderThumbnails();
-    };
-    reader.readAsDataURL(file);
-};
-
-// ============================================
-//          SAVE EDITED MATERIAL
-// ============================================
-document.getElementById("saveEdited").onclick = async () => {
-
-    await db.materials.update(materialId, {
-        description: document.getElementById("description").value,
-        vendor: document.getElementById("vendor").value,
-        poNumber: document.getElementById("poNumber").value,
-        date: document.getElementById("date").value,
-        quantity: document.getElementById("quantity").value,
-        product: document.getElementById("product").value,
-
-        specPrefix: document.getElementById("specPrefix").value,
-        specCode: document.getElementById("specCode").value,
-
-        gradeType: document.getElementById("gradeType").value,
-        b16: document.getElementById("b16").value,
-
-        th1: document.getElementById("th1").value,
-        th2: document.getElementById("th2").value,
-        th3: document.getElementById("th3").value,
-        th4: document.getElementById("th4").value,
-
-        width: document.getElementById("width").value,
-        length: document.getElementById("length").value,
-        diameter: document.getElementById("diameter").value,
-        other: document.getElementById("other").value,
-
-        visual: document.getElementById("visual").value,
-        b16dim: document.getElementById("b16dim").value,
-        markingAcceptable: document.getElementById("markingAcceptable").value,
-        mtrAcceptable: document.getElementById("mtrAcceptable").value,
-
-        actualMarking: document.getElementById("actualMarking").value,
-        comments: document.getElementById("comments").value,
-        status: document.getElementById("status").value,
-
-        qcInitials: document.getElementById("qcInitials").value,
-        qcDate: document.getElementById("qcDate").value,
-
-        photos: photos
-    });
-
-    alert("Material updated.");
-    window.location.replace(`job.html?job=${jobNumber}`);
-};
-</script>
 
 </body>
 </html>
