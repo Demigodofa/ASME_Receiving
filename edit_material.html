@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Material</title>
+
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.js"></script>
+
+    <script defer src="db.js"></script>
     <script defer src="edit_material.js"></script>
 </head>
 
@@ -19,100 +21,105 @@
 
 <div class="container">
 
-<form id="materialForm">
+    <div class="card">
 
-    <input type="hidden" id="materialId">
+        <!-- Description -->
+        <label>Description</label>
+        <input id="description" type="text">
 
-    <label>Description</label>
-    <input type="text" id="description">
+        <label>Vendor</label>
+        <input id="vendor" type="text">
 
-    <label>Vendor</label>
-    <input type="text" id="vendor">
+        <label>PO Number</label>
+        <input id="poNumber" type="text">
 
-    <label>PO Number</label>
-    <input type="text" id="poNumber">
+        <label>Date Received</label>
+        <input id="date" type="date">
 
-    <label>Date</label>
-    <input type="date" id="date">
+        <label>Quantity</label>
+        <input id="quantity" type="number">
 
-    <label>Quantity</label>
-    <input type="number" id="quantity">
+        <label>Product</label>
+        <input id="product" type="text">
 
-    <label>Product</label>
-    <select id="product">
-        <option>Plate</option>
-        <option>Pipe</option>
-        <option>Tube</option>
-        <option>Fitting</option>
-        <option>Other</option>
-    </select>
+        <label>Spec Prefix</label>
+        <input id="specPrefix" type="text">
 
-    <label>Spec Prefix</label>
-    <input type="text" id="specPrefix">
+        <label>Spec Code</label>
+        <input id="specCode" type="text">
 
-    <label>Spec Code</label>
-    <input type="text" id="specCode">
+        <label>Grade</label>
+        <input id="grade" type="text">
 
-    <label>Grade</label>
-    <input type="text" id="grade">
+        <label>B16 Dimensions</label>
+        <input id="b16dim" type="text">
 
-    <label>B16 Size</label>
-    <input type="text" id="b16dim">
+        <label>Thickness 1</label>
+        <input id="th1" type="text">
 
-    <label>Thickness</label>
-    <input type="text" id="th1">
+        <label>Thickness 2</label>
+        <input id="th2" type="text">
 
-    <label>Width</label>
-    <input type="text" id="th2">
+        <label>Thickness 3</label>
+        <input id="th3" type="text">
 
-    <label>Length</label>
-    <input type="text" id="th3">
+        <label>Thickness 4</label>
+        <input id="th4" type="text">
 
-    <label>Diameter</label>
-    <input type="text" id="th4">
+        <label>Other Info</label>
+        <textarea id="other"></textarea>
 
-    <label>Other</label>
-    <input type="text" id="other">
+        <label>Visual</label>
+        <select id="visual">
+            <option value="">Select...</option>
+            <option value="Acceptable">Acceptable</option>
+            <option value="Reject">Reject</option>
+        </select>
 
-    <label>Visual Acceptable?</label>
-    <select id="visual">
-        <option>Yes</option>
-        <option>No</option>
-    </select>
+        <label>Marking Acceptable?</label>
+        <select id="markingAcceptable">
+            <option value="">Select...</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
 
-    <label>Marking Acceptable?</label>
-    <select id="markingAcceptable">
-        <option>Yes</option>
-        <option>No</option>
-    </select>
+        <label>MTR Acceptable?</label>
+        <select id="mtrAcceptable">
+            <option value="">Select...</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+        </select>
 
-    <label>MTR Acceptable?</label>
-    <select id="mtrAcceptable">
-        <option>Yes</option>
-        <option>No</option>
-    </select>
+        <label>Actual Marking</label>
+        <input id="actualMarking" type="text">
 
-    <label>Actual Marking</label>
-    <textarea id="actualMarking"></textarea>
+        <label>Comments</label>
+        <textarea id="comments"></textarea>
 
-    <label>Comments</label>
-    <textarea id="comments"></textarea>
+        <label>QC Initials</label>
+        <input id="qcInitials" type="text">
 
-    <label>QC Initials</label>
-    <input type="text" id="qcInitials">
+        <label>QC Date</label>
+        <input id="qcDate" type="date">
 
-    <label>QC Date</label>
-    <input type="date" id="qcDate">
+        <!-- PHOTOS -->
+        <h3 style="margin-top:20px;">Photos</h3>
 
-    <label>Photos</label>
-    <button type="button" id="takePhotos" class="primary-btn">Add Photo</button>
+        <input 
+            type="file"
+            id="photoInput"
+            accept="image/*"
+            capture="environment"
+            style="margin-bottom:20px;"
+        >
 
-    <div id="photoPreview" class="photo-preview"></div>
+        <div id="photoPreview" class="photo-preview"></div>
 
-    <button type="button" id="saveChanges" class="primary-btn full-btn">Save Changes</button>
+        <button id="saveMaterialBtn" class="primary-btn">Save Changes</button>
 
-</form>
+    </div>
 
 </div>
+
 </body>
 </html>

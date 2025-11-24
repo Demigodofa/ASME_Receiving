@@ -4,89 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jobs</title>
+
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.js"></script>
+
+    <!-- Unified DB + logic -->
+    <script defer src="db.js"></script>
     <script defer src="jobs.js"></script>
-    <script defer src="delete_job.js"></script>
 </head>
 
 <body>
 
-<!-- ======= HEADER ======= -->
+<!-- UNIVERSAL NAVY HEADER -->
 <header class="header-bar">
     <button class="back-btn" onclick="window.history.back()">← Back</button>
-    <h1 class="title">Jobs</h1>
+    <h1 class="title">Browse Jobs</h1>
     <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
 
-
 <div class="container">
 
-    <h2 class="section-title">Existing Jobs</h2>
-    <div id="jobsList" class="jobs-list"></div>
+    <button class="primary-btn" onclick="window.location.href='create_job.html'">
+        + Create New Job
+    </button>
 
-    <!-- Add New Job -->
-    <a href="create_job.html">
-        <button class="primary-btn full-btn">Create New Job</button>
-    </a>
+    <div id="jobsList"></div>
 
 </div>
-
-<script>
-/* Build the jobs list with OPEN + DELETE buttons side-by-side */
-
-const db = new Dexie("ASMEReceivingDB");
-db.version(1).stores({
-    jobs: "jobNumber, description, notes, createdAt",
-    materials: "++id, jobNumber"
-});
-
-document.addEventListener("DOMContentLoaded", loadJobs);
-
-async function loadJobs() {
-    const list = document.getElementById("jobsList");
-    list.innerHTML = "";
-
-    const jobs = await db.jobs.toArray();
-
-    if (jobs.length === 0) {
-        list.innerHTML = "<p>No jobs found.</p>";
-        return;
-    }
-
-    jobs.forEach(job => {
-        const card = document.createElement("div");
-        card.className = "job-card";
-
-        const title = document.createElement("h3");
-        title.textContent = `Job ${job.jobNumber}`;
-        card.appendChild(title);
-
-        const desc = document.createElement("p");
-        desc.textContent = job.description || "";
-        card.appendChild(desc);
-
-        const btnRow = document.createElement("div");
-        btnRow.className = "job-btn-row";
-
-        const openBtn = document.createElement("button");
-        openBtn.className = "primary-btn job-open-btn";
-        openBtn.textContent = "OPEN";
-        openBtn.onclick = () => window.location.href = `job.html?job=${job.jobNumber}`;
-
-        const delBtn = document.createElement("button");
-        delBtn.className = "danger-btn job-del-btn";
-        delBtn.textContent = "DELETE";
-        delBtn.onclick = () => deleteJob(job.jobNumber);
-
-        btnRow.appendChild(openBtn);
-        btnRow.appendChild(delBtn);
-
-        card.appendChild(btnRow);
-        list.appendChild(card);
-    });
-}
-</script>
 
 </body>
 </html>

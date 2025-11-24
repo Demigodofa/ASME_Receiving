@@ -4,47 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Job Details</title>
+
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.js"></script>
-    <script defer src="export_job.js"></script>
-    <script defer src="delete_job.js"></script>
+
+    <!-- Core logic -->
+    <script defer src="db.js"></script>
     <script defer src="job.js"></script>
+    <script defer src="export_job.js"></script>
 </head>
 
 <body>
 
-<!-- ======= HEADER (New Universal Layout) ======= -->
+<!-- UNIVERSAL HEADER -->
 <header class="header-bar">
-    <button class="back-btn" onclick="window.history.back()">← Back</button>
+    <button class="back-btn" onclick="window.location.href='jobs.html'">← Back</button>
     <h1 class="title">Receiving Inspection Reports</h1>
     <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
 
-
 <div class="container">
 
-    <div class="card job-info">
-        <h2 id="jobTitle">Job ###</h2>
+    <div class="card" id="jobInfoCard">
+        <h2 id="jobNumberDisplay">Job #</h2>
         <p id="jobDescription"></p>
-        <p id="jobNotes"></p>
-        <p id="jobDate"></p>
+
+        <button class="primary-btn" onclick="exportJob()">Export Job</button>
+        <button class="primary-btn" onclick="addMaterial()">Add Material</button>
     </div>
-
-    <!-- ======= Export Job Button ======= -->
-    <button id="exportJob" class="primary-btn full-btn">Export Job</button>
-
 
     <h2 class="section-title">Materials</h2>
 
-    <div id="materialsList" class="materials-list"></div>
-
-    <!-- ======= Add Material ======= -->
-    <a href="#" id="addMaterialLink">
-        <button class="primary-btn full-btn">Add Material</button>
-    </a>
-
-    <!-- ======= Delete Job (Bottom Red Button) ======= -->
-    <button class="danger-btn full-btn" onclick="deleteJob()">Delete Job</button>
+    <div id="materialsList"></div>
 
 </div>
 

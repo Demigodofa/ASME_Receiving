@@ -1,39 +1,28 @@
-// ========== CREATE JOB (Original App Behavior) ==========
-// Uses Dexie DB ('ASMEReceivingDB') from db.js
+// create_job.js
+// FINAL VERSION — Works with unified ASMEReceivingDB
 
 document.addEventListener("DOMContentLoaded", () => {
-
-    const jobInput = document.getElementById("jobNumber");
-    const descInput = document.getElementById("description");
-    const notesInput = document.getElementById("notes");
-    const saveBtn = document.getElementById("saveJobBtn");
-    const backBtn = document.getElementById("backBtn");
-
-    // ---- Save Job ----
-    saveBtn.addEventListener("click", async () => {
-        const jobNum = jobInput.value.trim();
-        const desc = descInput.value.trim();
-        const notes = notesInput.value.trim();
-
-        if (!jobNum) {
-            // Original behavior: do nothing if job number is blank
-            return;
-        }
-
-        // Silent overwrite if job already exists
-        await db.jobs.put({
-            jobNumber: jobNum,
-            description: desc,
-            notes: notes,
-            created: Date.now()
-        });
-
-        // Navigate back to job list (original flow)
-        window.location.href = "jobs.html";
-    });
-
-    // ---- Back Button ----
-    backBtn.addEventListener("click", () => {
-        window.location.href = "app.html";
-    });
+    document.getElementById("saveJobBtn").addEventListener("click", saveJob);
 });
+
+async function saveJob() {
+    const jobNumber = document.getElementById("jobNumber").value.trim();
+    const description = document.getElementById("description").value.trim();
+    const notes = document.getElementById("notes").value.trim();
+
+    if (!jobNumber) {
+        alert("Job Number is required.");
+        return;
+    }
+
+    // Write job to unified DB
+    await db.jobs.put({
+        jobNumber,
+        description,
+        notes,
+        createdAt: new Date().toISOString()
+    });
+
+    // Redirect to job details
+    window.location.href = `job.html?job=${jobNumber}`;
+}

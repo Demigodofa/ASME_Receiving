@@ -1,48 +1,41 @@
 <!DOCTYPE html>
-<html lang='en'>
+<html lang="en">
 <head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Job</title>
-
-    <link rel='stylesheet' href='style.css'>
-
-    <!-- iOS home screen icon -->
-    <link rel='apple-touch-icon' sizes='180x180' href='assets/icons/icon-180.png'>
-    <meta name='apple-mobile-web-app-capable' content='yes'>
-    <meta name='apple-mobile-web-app-status-bar-style' content='default'>
-
-    <!-- PWA manifest -->
-    <link rel='manifest' href='manifest.webmanifest'>
+    <link rel="stylesheet" href="style.css">
+    <script defer src="db.js"></script>
+    <script defer src="create_job.js"></script>
 </head>
 
 <body>
 
-<header class="card header-bar">
-    <button class="back-btn" onclick="window.location.href='jobs.html'">← Back</button>
+<!-- UNIVERSAL HEADER (Hybrid) -->
+<header class="header-bar">
+    <button class="back-btn" onclick="window.history.back()">← Back</button>
     <h1 class="title">Create Job</h1>
     <img src="assets/icons/icon-192.png" class="header-icon">
 </header>
 
-<main>
+<div class="container">
 
-    <section class="card">
+    <div class="card">
+        <h2>Create New Job</h2>
 
         <label>Job Number</label>
-        <input type="text" id="jobNumber" class="input">
+        <input type="text" id="jobNumber" placeholder="e.g., 24015">
 
         <label>Description</label>
-        <textarea id="description" class="input" rows="4"></textarea>
+        <input type="text" id="description">
 
-        <button class="primary-btn" id="saveJobBtn">Save Job</button>
+        <label>Notes</label>
+        <textarea id="notes"></textarea>
 
-    </section>
+        <button id="saveJobBtn" class="primary-btn">Save Job</button>
+    </div>
 
-</main>
-
-<script src="https://cdn.jsdelivr.net/npm/dexie@3.2.3/dist/dexie.min.js"></script>
-<script src="db.js"></script>
-<script src="create_job.js"></script>
+</div>
 
 </body>
 </html>
