@@ -1,42 +1,74 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Details</title>
+let jobNumber;
 
-    <link rel="stylesheet" href="style.css">
+window.onload = async () => {
+    const params = new URLSearchParams(window.location.search);
+    jobNumber = params.get("job");
 
-    <!-- Core logic -->
-    <script defer src="db.js"></script>
-    <script defer src="job.js"></script>
-    <script defer src="export_job.js"></script>
-</head>
+    if (!jobNumber) {
+        alert("Error: Job number missing.");
+        window.location.href = "jobs.html";
+        return;
+    }
 
-<body>
+    loadJob();
+    loadMaterials();
 
-<!-- UNIVERSAL HEADER -->
-<header class="header-bar">
-    <button class="back-btn" onclick="window.location.href='jobs.html'">← Back</button>
-    <h1 class="title">Receiving Inspection Reports</h1>
-    <img src="assets/icons/icon-192.png" class="header-icon">
-</header>
+    document.getElementById("addMaterialBtn").onclick = () => {
+        window.location.href = `add_material.html?job=${jobNumber}`;
+    };
 
-<div class="container">
+    document.getElementById("exportJobBtn").onclick = () => {
+        exportJobData(jobNumber);
+    };
 
-    <div class="card" id="jobInfoCard">
-        <h2 id="jobNumberDisplay">Job #</h2>
-        <p id="jobDescription"></p>
+    document.getElementById("deleteJobBtn").onclick = deleteJob;
+};
 
-        <button class="primary-btn" onclick="exportJob()">Export Job</button>
-        <button class="primary-btn" onclick="addMaterial()">Add Material</button>
-    </div>
+async function loadJob() {
+    const job = await db.jobs.where("jobNumber").equals(jobNumber).first();
+    if (!job) return;
 
-    <h2 class="section-title">Materials</h2>
+    document.getElementById("jobInfo").innerHTML = `
+        <h2>Job #${job.jobNumber}</h2>
+        <p>${job.description || ""}</p>
+        <p>${job.notes || ""}</p>
+    `;
+}
 
-    <div id="materialsList"></div>
+async function loadMaterials() {
+    const materials = await db.materials.where("jobNumber").equals(jobNumber).toArray();
+    const container = document.getElementById("materialsList");
+    container.innerHTML = "";
 
-</div>
+    materials.forEach((m) => {
+        const div = document.createElement("div");
+        div.className = "material-card";
 
-</body>
-</html>
+        div.innerHTML = `
+            <h3>${m.description}</h3>
+            <button class="primary-btn" onclick="editMaterial('${m.id}')">Edit</button>
+            <button class="danger-btn" onclick="deleteMaterial('${m.id}')">Delete</button>
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+function editMaterial(id) {
+    window.location.href = `edit_material.html?id=${id}`;
+}
+
+async function deleteMaterial(id) {
+    if (!confirm("Delete this material?")) return;
+    await db.materials.delete(id);
+    loadMaterials();
+}
+
+async function deleteJob() {
+    if (!confirm(`Delete Job #${jobNumber}? This removes ALL materials.`)) return;
+
+    await db.materials.where("jobNumber").equals(jobNumber).delete();
+    await db.jobs.where("jobNumber").equals(jobNumber).delete();
+
+    window.location.href = "jobs.html";
+}

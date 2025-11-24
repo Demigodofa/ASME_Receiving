@@ -1,178 +1,208 @@
 // ============================================================================
-//  export_job.js — FINAL VERSION
-//  Generates ZIP with PDFs + Photos, fully offline
+//  export_job.js — TOTAL CLEAN REWRITE
+//  Fully Offline ZIP + PDF Export System (iOS + Android Compatible)
 // ============================================================================
 
 async function exportJobData(jobNumber) {
     if (!jobNumber) {
-        alert("Missing job number.");
+        alert("Error: No job number provided for export.");
         return;
     }
 
+    // Load job and materials
     const job = await db.jobs.where("jobNumber").equals(jobNumber).first();
     const materials = await db.materials.where("jobNumber").equals(jobNumber).toArray();
 
     if (!job) {
-        alert("Job not found.");
+        alert("Error: Job not found.");
         return;
     }
 
-    // Load libraries
+    // Load JSZip and jsPDF
     const zip = new JSZip();
     const { jsPDF } = window.jspdf;
 
-    // Root folder
+    // Root folder structure
     const rootFolder = zip.folder(`Job_${jobNumber}`);
+    const materialsFolder = rootFolder.folder("Materials");
+    const photosFolder = rootFolder.folder("Photos");
 
-    // Materials + Photos folders
-    const matFolder = rootFolder.folder("Materials");
-    const photoFolder = rootFolder.folder("Photos");
-
-    // ------------------------------------------------------------
+    // ========================================================================
     // 1. CREATE JOB SUMMARY PDF
-    // ------------------------------------------------------------
-    const summary = new jsPDF({ unit: "pt", format: "letter" });
+    // ========================================================================
+    let summary = new jsPDF({ unit: "pt", format: "letter" });
 
-    let y = 40;
-
+    let y = 50;
     summary.setFont("Helvetica", "bold");
     summary.setFontSize(18);
-    summary.text(`Receiving Inspection Report`, 50, y);
-    y += 30;
+    summary.text("Receiving Inspection Report", 50, y);
+    y += 28;
 
     summary.setFontSize(14);
     summary.text(`Job Number: ${job.jobNumber}`, 50, y);
     y += 22;
 
     summary.setFont("Helvetica", "normal");
-    summary.text(`Description: ${job.description || ""}`, 50, y);
-    y += 22;
+    if (job.description) {
+        summary.text(`Description: ${job.description}`, 50, y);
+        y += 20;
+    }
+    if (job.notes) {
+        summary.text(`Notes: ${job.notes}`, 50, y);
+        y += 20;
+    }
 
-    summary.text(`Notes: ${job.notes || ""}`, 50, y);
-    y += 30;
-
+    y += 10;
     summary.setFont("Helvetica", "bold");
-    summary.text("Materials:", 50, y);
-    y += 22;
+    summary.text("Materials Included:", 50, y);
+    y += 18;
 
     summary.setFont("Helvetica", "normal");
-
     if (materials.length === 0) {
-        summary.text("No materials added.", 50, y);
+        summary.text("No materials have been added.", 50, y);
     } else {
-        materials.forEach((m, index) => {
-            summary.text(`${index + 1}. ${m.description || "(No description)"}`, 50, y);
-            y += 18;
+        materials.forEach((m, i) => {
+            summary.text(`${i + 1}. ${m.description || "(No description)"}`, 50, y);
+            y += 16;
         });
     }
 
-    const summaryPDF = summary.output("blob");
-    rootFolder.file("Job_Summary.pdf", summaryPDF);
+    rootFolder.file(
+        "Job_Summary.pdf",
+        summary.output("blob")
+    );
 
-    // ------------------------------------------------------------
-    // 2. CREATE MATERIAL PDFs
-    // ------------------------------------------------------------
+    // ========================================================================
+    // 2. MATERIAL PDFS
+    // ========================================================================
     for (let i = 0; i < materials.length; i++) {
         const m = materials[i];
         const pdf = new jsPDF({ unit: "pt", format: "letter" });
 
-        let y2 = 40;
+        let y2 = 50;
 
         pdf.setFont("Helvetica", "bold");
         pdf.setFontSize(16);
-        pdf.text(`Material Report — ${m.description || "Material"}`, 50, y2);
-        y2 += 30;
+        pdf.text(`Material Report`, 50, y2);
+        y2 += 26;
 
-        pdf.setFontSize(12);
         pdf.setFont("Helvetica", "normal");
+        pdf.setFontSize(12);
 
-        pdf.text(`Vendor: ${m.vendor || ""}`, 50, y2); y2 += 18;
-        pdf.text(`PO Number: ${m.poNumber || ""}`, 50, y2); y2 += 18;
-        pdf.text(`Date Received: ${m.date || ""}`, 50, y2); y2 += 18;
-        pdf.text(`Quantity: ${m.quantity || ""}`, 50, y2); y2 += 18;
+        const write = (label, value) => {
+            if (value !== undefined && value !== null && value !== "") {
+                pdf.text(`${label}: ${value}`, 50, y2);
+                y2 += 16;
+            }
+        };
 
-        y2 += 10;
+        write("Description", m.description);
+        write("Vendor", m.vendor);
+        write("PO Number", m.poNumber);
+        write("Date Received", m.date);
+        write("Quantity", m.quantity);
+        write("Spec Prefix", m.specPrefix);
+        write("Spec Code", m.specCode);
+        write("Grade", m.grade);
+        write("B16 Dimensions", m.b16dim);
 
-        pdf.text(`Spec: ${m.specPrefix || ""} ${m.specCode || ""}`, 50, y2); y2 += 18;
-        pdf.text(`Grade: ${m.grade || ""}`, 50, y2); y2 += 18;
-        pdf.text(`B16 Dim: ${m.b16dim || ""}`, 50, y2); y2 += 18;
+        pdf.text("Thicknesses:", 50, y2);
+        y2 += 16;
 
-        y2 += 10;
+        write("T1", m.th1);
+        write("T2", m.th2);
+        write("T3", m.th3);
+        write("T4", m.th4);
 
-        pdf.text(`Thicknesses:`, 50, y2); y2 += 18;
-        pdf.text(`T1: ${m.th1 || ""}`, 70, y2); y2 += 18;
-        pdf.text(`T2: ${m.th2 || ""}`, 70, y2); y2 += 18;
-        pdf.text(`T3: ${m.th3 || ""}`, 70, y2); y2 += 18;
-        pdf.text(`T4: ${m.th4 || ""}`, 70, y2); y2 += 18;
+        y2 += 8;
 
-        y2 += 10;
+        write("Visual Inspection", m.visual);
+        write("Marking Acceptable", m.markingAcceptable);
+        write("MTR Acceptable", m.mtrAcceptable);
 
-        pdf.text(`Visual: ${m.visual || ""}`, 50, y2); y2 += 18;
-        pdf.text(`Marking Acceptable: ${m.markingAcceptable || ""}`, 50, y2); y2 += 18;
-        pdf.text(`MTR Acceptable: ${m.mtrAcceptable || ""}`, 50, y2); y2 += 18;
+        y2 += 8;
 
-        y2 += 10;
+        write("Actual Marking", m.actualMarking);
+        write("Comments", m.comments);
 
-        pdf.text(`Actual Marking: ${m.actualMarking || ""}`, 50, y2); y2 += 18;
-        pdf.text(`Comments: ${m.comments || ""}`, 50, y2); y2 += 30;
+        y2 += 20;
 
-        // QC Block
         pdf.setFont("Helvetica", "bold");
         pdf.text("QC Verification", 50, y2);
-        y2 += 22;
+        y2 += 18;
 
         pdf.setFont("Helvetica", "normal");
-        pdf.text(`QC Initials: ${m.qcInitials || ""}`, 50, y2); y2 += 18;
-        pdf.text(`QC Date: ${m.qcDate || ""}`, 50, y2); y2 += 30;
+        write("QC Initials", m.qcInitials);
+        write("QC Date", m.qcDate);
 
-        // Insert photos
+        // -- Insert photos (thumbnails) -------------------------------------
         if (Array.isArray(m.photos) && m.photos.length > 0) {
+            y2 += 20;
             pdf.setFont("Helvetica", "bold");
             pdf.text("Photos:", 50, y2);
-            y2 += 25;
+            y2 += 16;
 
             let x = 50;
 
-            for (let p = 0; p < m.photos.length; p++) {
-                const img = m.photos[p];
-
-                pdf.addImage(img, "JPEG", x, y2, 150, 120);
-                x += 160;
-
-                if (x > 450) {
-                    x = 50;
-                    y2 += 130;
+            m.photos.forEach((img, pIndex) => {
+                try {
+                    pdf.addImage(img, "JPEG", x, y2, 150, 120);
+                } catch (e) {
+                    console.error("Photo skipped:", e);
                 }
 
                 // Save raw photo to ZIP
                 const base64 = img.split(",")[1];
-                photoFolder.file(`mat${i + 1}_photo${p + 1}.jpg`, base64, { base64: true });
-            }
+                if (base64) {
+                    photosFolder.file(
+                        `material${i + 1}_photo${pIndex + 1}.jpg`,
+                        base64,
+                        { base64: true }
+                    );
+                }
+
+                x += 160;
+                if (x > 450) {
+                    x = 50;
+                    y2 += 130;
+                }
+            });
         }
 
-        const materialPDF = pdf.output("blob");
-        matFolder.file(`Material_${i + 1}.pdf`, materialPDF);
+        materialsFolder.file(
+            `Material_${i + 1}.pdf`,
+            pdf.output("blob")
+        );
     }
 
-    // ------------------------------------------------------------
+    // ========================================================================
     // 3. GENERATE ZIP + SHARE
-    // ------------------------------------------------------------
+    // ========================================================================
     const zipBlob = await zip.generateAsync({ type: "blob" });
+    const zipFileName = `Job_${jobNumber}.zip`;
 
-    const zipName = `Job_${jobNumber}.zip`;
+    const file = new File([zipBlob], zipFileName, { type: "application/zip" });
 
-    // Native share sheet (Android + iOS)
-    if (navigator.canShare && navigator.canShare({ files: [new File([zipBlob], zipName)] })) {
-        const file = new File([zipBlob], zipName, { type: "application/zip" });
-        await navigator.share({ files: [file] });
-        return;
+    // Native share sheet support
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({
+                files: [file],
+                title: `Job ${jobNumber} Export`
+            });
+            return;
+        } catch (err) {
+            console.warn("Share failed, fallback to download:", err);
+        }
     }
 
-    // Fallback (browser download)
+    // Browser download fallback
     const url = URL.createObjectURL(zipBlob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = zipName;
+    a.download = zipFileName;
+    document.body.appendChild(a);
     a.click();
+    a.remove();
     URL.revokeObjectURL(url);
 }

@@ -1,34 +1,23 @@
 <!DOCTYPE html>
-<html lang='en'>
+<html lang="en">
 <head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASME Receiving</title>
-
-    <link rel='stylesheet' href='style.css'>
-
-    <!-- iOS home screen icon fix -->
-    <link rel='apple-touch-icon' sizes='180x180' href='assets/icons/icon-180.png'>
-    <meta name='apple-mobile-web-app-capable' content='yes'>
-    <meta name='apple-mobile-web-app-status-bar-style' content='default'>
-
-    <!-- Manifest for Android -->
-    <link rel='manifest' href='manifest.webmanifest'>
+    <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="home-screen">
 
-<header class="card header-bar">
-    <img src="assets/icons/icon-192.png" class="menu-logo">
-    <h1 class="title">ASME Receiving</h1>
-</header>
+    <header class="header-center-only">
+        <img src="assets/icons/icon-192.png" class="header-logo-centered">
+    </header>
 
-<main>
-    <section class="card menu-card">
+    <main class="home-main">
         <button class="primary-btn" onclick="window.location.href='create_job.html'">Create Job</button>
         <button class="primary-btn" onclick="window.location.href='jobs.html'">Browse Jobs</button>
-    </section>
-</main>
+    </main>
 
+    <script src="db.js"></script>
 </body>
 </html>

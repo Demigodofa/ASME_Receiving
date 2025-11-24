@@ -1,10 +1,3 @@
-// create_job.js
-// FINAL VERSION — Works with unified ASMEReceivingDB
-
-document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("saveJobBtn").addEventListener("click", saveJob);
-});
-
 async function saveJob() {
     const jobNumber = document.getElementById("jobNumber").value.trim();
     const description = document.getElementById("description").value.trim();
@@ -15,7 +8,6 @@ async function saveJob() {
         return;
     }
 
-    // Write job to unified DB
     await db.jobs.put({
         jobNumber,
         description,
@@ -23,6 +15,7 @@ async function saveJob() {
         createdAt: new Date().toISOString()
     });
 
-    // Redirect to job details
-    window.location.href = `job.html?job=${jobNumber}`;
+    // FIXED: Absolute path (GitHub Pages + PWA)
+    const base = window.location.origin;
+    window.location.href = `${base}/job.html?job=${jobNumber}`;
 }

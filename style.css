@@ -1,258 +1,84 @@
-/* ============================================================
-   GLOBAL APP STYLES
-============================================================ */
-
-body {
+/* ==========================
+   SPLASH SCREEN
+========================== */
+.splash-screen {
     margin: 0;
     padding: 0;
-    background: #f4f6f8;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    color: #222;
-}
-
-.container {
-    padding: 15px;
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-h1, h2, h3, h4 {
-    margin: 0;
-    font-weight: 600;
-}
-
-.section-title {
-    margin-top: 25px;
-    margin-bottom: 10px;
-    font-size: 20px;
-}
-
-/* ============================================================
-   HYBRID HEADER (DARK RIBBON — RESPONSIVE AUTO 2-ROW)
-============================================================ */
-
-.header-bar {
-    background-color: #1f2d3f; /* Dark industrial navy ribbon */
-    color: white;
-    padding: 10px 12px;
-
-    display: flex;
-    flex-wrap: wrap; /* This enables the auto 2-row behavior */
-    align-items: center;
-    justify-content: space-between;
-
-    border-bottom: 3px solid #0d1621;
-}
-
-.back-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 18px;
-    padding: 4px 6px;
-    cursor: pointer;
-}
-
-/* Title auto-drops to row 2 on narrow screens */
-.title {
-    flex: 1 1 100%;
-    text-align: center;
-    margin: 5px 0;
-    font-size: 21px;
-    font-weight: 700;
-}
-
-/* Logo always upper-right */
-.header-icon {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
-}
-
-/* On wider screens, title fits on one row */
-@media (min-width: 430px) {
-    .title {
-        flex: 0 1 auto;
-        margin: 0 auto;
-    }
-}
-
-/* ============================================================
-   INDUSTRIAL 3D BUTTONS
-============================================================ */
-
-.primary-btn {
-    background: #3f5873;              /* Rich Slate Blue (B2) */
-    color: #ffffff;
-    border: none;
-    padding: 14px 16px;
-    font-size: 17px;
-    width: 100%;
-    margin: 12px 0;
-    border-radius: 6px;
-
-    /* OUTER SHADOW */
-    box-shadow:
-        0 3px 6px rgba(0,0,0,0.25),
-        0 1px 2px rgba(0,0,0,0.15);
-
-    /* INNER SHADOW */
-    background-image:
-        linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(0,0,0,0.20));
-
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.primary-btn:active {
-    transform: scale(0.97);
-    box-shadow:
-        0 1px 2px rgba(0,0,0,0.35),
-        inset 0 1px 3px rgba(0,0,0,0.25);
-}
-
-/* RED DANGER BUTTON */
-.danger-btn {
-    background: #d7191c;              /* Fire Engine Red (R2) */
-    color: white;
-    border: none;
-    padding: 14px 16px;
-    font-size: 17px;
-    width: 100%;
-    margin: 12px 0;
-    border-radius: 6px;
-
-    box-shadow:
-        0 3px 6px rgba(0,0,0,0.25),
-        0 1px 2px rgba(0,0,0,0.15);
-
-    background-image:
-        linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18));
-
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.danger-btn:active {
-    transform: scale(0.97);
-    box-shadow:
-        0 1px 2px rgba(0,0,0,0.35),
-        inset 0 1px 3px rgba(0,0,0,0.25);
-}
-
-/* Two buttons side-by-side */
-.job-btn-row {
-    display: flex;
-    gap: 12px;
-    margin-top: 12px;
-}
-
-.job-open-btn {
-    flex: 1;
-}
-
-.job-del-btn {
-    flex: 1;
-}
-
-/* ============================================================
-   INPUTS & SELECTS
-============================================================ */
-
-input, select, textarea {
-    width: 100%;
-    padding: 12px 10px;
-    margin: 6px 0 15px 0;
-    border: 1px solid #c8ccd0;
-    border-radius: 6px;
-    font-size: 16px;
-    background: #ffffff;
-}
-
-select {
-    background: #e6eef7; /* matches your preferred form aesthetic */
-}
-
-/* ============================================================
-   CARD STYLING
-============================================================ */
-
-.card {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-
-    box-shadow:
-        0 3px 6px rgba(0,0,0,0.08),
-        0 1px 2px rgba(0,0,0,0.06);
-
-    margin-bottom: 18px;
-}
-
-/* Job list cards */
-.job-card h3 {
-    margin-bottom: 6px;
-}
-
-/* ============================================================
-   MATERIALS LIST
-============================================================ */
-
-.materials-list .card {
-    margin-bottom: 20px;
-}
-
-/* ============================================================
-   PHOTO PREVIEW SYSTEM
-============================================================ */
-
-.photo-preview {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin: 15px 0;
-}
-
-.photo-thumb {
-    width: 150px;
-    height: auto;
-    border-radius: 6px;
-    border: 2px solid #d0d4d8;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.10);
-}
-
-.photo-delete {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #d7191c;
-    color: white;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    font-size: 16px;
+    background: #0d2347; /* dark navy */
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: pointer;
-
-    box-shadow:
-        0 2px 4px rgba(0,0,0,0.25),
-        inset 0 1px 2px rgba(255,255,255,0.2);
 }
 
-/* ============================================================
-   LINKS
-============================================================ */
-
-a {
-    text-decoration: none;
+.splash-container {
+    text-align: center;
 }
 
-/* ============================================================
-   MISC
-============================================================ */
+.splash-logo {
+    width: 160px;
+    height: 160px;
+    display: block;
+    margin: 0 auto;
+}
 
-.full-btn {
+/* ==========================
+   HOME SCREEN (Create/Browse)
+========================== */
+.home-screen {
+    background: #ffffff;
+    margin: 0;
+    padding: 0;
+}
+
+.header-center-only {
     width: 100%;
+    background: #ffffff; /* white top bar */
+    padding: 25px 0 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-logo-centered {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto;
+}
+
+/* ==========================
+   HOME BUTTONS
+========================== */
+.home-main {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.primary-btn {
+    width: 80%;
+    padding: 15px;
+    margin: 10px auto;
+    font-size: 1.2em;
+    background: #4a6da7; /* rich slate blue */
+    color: white;
+    border: none;
+    border-radius: 10px;
+    box-shadow: inset 0px 2px 4px rgba(255,255,255,0.4),
+                inset 0px -2px 4px rgba(0,0,0,0.3);
+    display: block;
+}
+
+/* Danger Button (Delete) */
+.danger-btn {
+    width: 80%;
+    padding: 15px;
+    margin: 10px auto;
+    font-size: 1.2em;
+    background: #d62828; /* fire engine red */
+    color: white;
+    border: none;
+    border-radius: 10px;
+    box-shadow: inset 0px 2px 4px rgba(255,255,255,0.4),
+                inset 0px -2px 4px rgba(0,0,0,0.3);
+    display: block;
 }

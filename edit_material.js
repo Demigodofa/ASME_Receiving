@@ -1,195 +1,126 @@
-// edit_material.js — FINAL VERSION
-// Loads material → allows editing → updates unified DB
-
-let materialId = null;
-let jobNumber = null;
+let materialId;
+let jobNumber;
 let photos = [];
 
-// ------------------------------------------------------------
-// Initialization
-// ------------------------------------------------------------
-document.addEventListener("DOMContentLoaded", async () => {
+window.onload = async () => {
     const params = new URLSearchParams(window.location.search);
-    materialId = Number(params.get("id"));
+    materialId = params.get("id");
 
     if (!materialId) {
-        alert("Missing material ID.");
-        window.location.href = "jobs.html";
+        alert("Error: No material ID provided.");
+        history.back();
         return;
     }
 
-    await loadMaterial();
-
-    document.getElementById("photoInput").addEventListener("change", handlePhotoAdd);
-    document.getElementById("saveMaterialBtn").addEventListener("click", saveMaterial);
-});
-
-// ------------------------------------------------------------
-// Load Material Into Form
-// ------------------------------------------------------------
-async function loadMaterial() {
-    const mat = await db.materials.get(materialId);
-
-    if (!mat) {
+    // Load material
+    const material = await db.materials.get(Number(materialId));
+    if (!material) {
         alert("Material not found.");
-        window.location.href = "jobs.html";
+        history.back();
         return;
     }
 
-    jobNumber = mat.jobNumber;
+    jobNumber = material.jobNumber;
 
-    // Fill fields
-    setVal("description", mat.description);
-    setVal("vendor", mat.vendor);
-    setVal("poNumber", mat.poNumber);
-    setVal("date", mat.date);
-    setVal("quantity", mat.quantity);
-    setVal("product", mat.product);
-    setVal("specPrefix", mat.specPrefix);
-    setVal("specCode", mat.specCode);
-    setVal("grade", mat.grade);
-    setVal("b16dim", mat.b16dim);
-    setVal("th1", mat.th1);
-    setVal("th2", mat.th2);
-    setVal("th3", mat.th3);
-    setVal("th4", mat.th4);
-    setVal("other", mat.other);
-    setVal("visual", mat.visual);
-    setVal("markingAcceptable", mat.markingAcceptable);
-    setVal("mtrAcceptable", mat.mtrAcceptable);
-    setVal("actualMarking", mat.actualMarking);
-    setVal("comments", mat.comments);
-    setVal("qcInitials", mat.qcInitials);
-    setVal("qcDate", mat.qcDate);
+    // Prefill fields
+    description.value = material.description || "";
+    vendor.value = material.vendor || "";
+    poNumber.value = material.poNumber || "";
+    date.value = material.date || "";
+    quantity.value = material.quantity || "";
+    specPrefix.value = material.specPrefix || "";
+    specCode.value = material.specCode || "";
+    grade.value = material.grade || "";
+    b16dim.value = material.b16dim || "";
+    th1.value = material.th1 || "";
+    th2.value = material.th2 || "";
+    th3.value = material.th3 || "";
+    th4.value = material.th4 || "";
+    visual.value = material.visual || "";
+    markingAcceptable.value = material.markingAcceptable || "Yes";
+    mtrAcceptable.value = material.mtrAcceptable || "Yes";
+    actualMarking.value = material.actualMarking || "";
+    comments.value = material.comments || "";
+    qcInitials.value = material.qcInitials || "";
+    qcDate.value = material.qcDate || "";
 
     // Load photos
-    photos = Array.isArray(mat.photos) ? mat.photos : [];
-    refreshPhotoPreview();
-}
+    photos = Array.isArray(material.photos) ? [...material.photos] : [];
+    renderPhotos();
 
-function setVal(id, value) {
-    const el = document.getElementById(id);
-    if (el) el.value = value || "";
-}
+    document.getElementById("photoInput").onchange = handlePhoto;
+    document.getElementById("saveMaterialBtn").onclick = saveChanges;
+};
 
-// ------------------------------------------------------------
-// Add New Photo
-// ------------------------------------------------------------
-async function handlePhotoAdd(event) {
+function handlePhoto(e) {
     if (photos.length >= 5) {
         alert("Maximum of 5 photos allowed.");
         return;
     }
 
-    const file = event.target.files[0];
+    const file = e.target.files[0];
     if (!file) return;
 
-    const base64 = await resizeAndConvert(file);
-    photos.push(base64);
-    refreshPhotoPreview();
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        photos.push(ev.target.result);
+        renderPhotos();
+    };
+    reader.readAsDataURL(file);
 }
 
-// (Same resize method used in add_material.js)
-function resizeAndConvert(file) {
-    return new Promise(resolve => {
-        const img = new Image();
-        const reader = new FileReader();
+function renderPhotos() {
+    const div = document.getElementById("photoPreview");
+    div.innerHTML = "";
 
-        reader.onload = e => {
-            img.onload = () => {
-                const maxSize = 1280;
-                let width = img.width;
-                let height = img.height;
+    photos.forEach((img, index) => {
+        const el = document.createElement("div");
+        el.className = "thumb-container";
 
-                if (width > height && width > maxSize) {
-                    height *= maxSize / width;
-                    width = maxSize;
-                } else if (height > maxSize) {
-                    width *= maxSize / height;
-                    height = maxSize;
-                }
+        el.innerHTML = `
+            <img src="${img}" class="thumb">
+            <button class="thumb-delete" onclick="deletePhoto(${index})">×</button>
+        `;
 
-                const canvas = document.createElement("canvas");
-                canvas.width = width;
-                canvas.height = height;
-
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0, width, height);
-
-                resolve(canvas.toDataURL("image/jpeg", 0.85));
-            };
-            img.src = e.target.result;
-        };
-
-        reader.readAsDataURL(file);
+        div.appendChild(el);
     });
 }
 
-// ------------------------------------------------------------
-// Refresh Photo Preview Grid
-// ------------------------------------------------------------
-function refreshPhotoPreview() {
-    const container = document.getElementById("photoPreview");
-    container.innerHTML = "";
-
-    photos.forEach((src, index) => {
-        const wrapper = document.createElement("div");
-        wrapper.style.position = "relative";
-
-        const img = document.createElement("img");
-        img.src = src;
-        img.className = "photo-thumb";
-
-        const del = document.createElement("div");
-        del.className = "photo-delete";
-        del.textContent = "×";
-        del.onclick = () => {
-            photos.splice(index, 1);
-            refreshPhotoPreview();
-        };
-
-        wrapper.appendChild(img);
-        wrapper.appendChild(del);
-        container.appendChild(wrapper);
-    });
+function deletePhoto(idx) {
+    photos.splice(idx, 1);
+    renderPhotos();
 }
 
-// ------------------------------------------------------------
-// Save Changes Back to DB
-// ------------------------------------------------------------
-async function saveMaterial() {
-
+async function saveChanges() {
     const updated = {
-        description: val("description"),
-        vendor: val("vendor"),
-        poNumber: val("poNumber"),
-        date: val("date"),
-        quantity: val("quantity"),
-        product: val("product"),
-        specPrefix: val("specPrefix"),
-        specCode: val("specCode"),
-        grade: val("grade"),
-        b16dim: val("b16dim"),
-        th1: val("th1"),
-        th2: val("th2"),
-        th3: val("th3"),
-        th4: val("th4"),
-        other: val("other"),
-        visual: val("visual"),
-        markingAcceptable: val("markingAcceptable"),
-        mtrAcceptable: val("mtrAcceptable"),
-        actualMarking: val("actualMarking"),
-        comments: val("comments"),
-        qcInitials: val("qcInitials"),
-        qcDate: val("qcDate"),
+        id: Number(materialId),
+        jobNumber,
+        description: description.value,
+        vendor: vendor.value,
+        poNumber: poNumber.value,
+        date: date.value,
+        quantity: quantity.value,
+        specPrefix: specPrefix.value,
+        specCode: specCode.value,
+        grade: grade.value,
+        b16dim: b16dim.value,
+        th1: th1.value,
+        th2: th2.value,
+        th3: th3.value,
+        th4: th4.value,
+        visual: visual.value,
+        markingAcceptable: markingAcceptable.value,
+        mtrAcceptable: mtrAcceptable.value,
+        actualMarking: actualMarking.value,
+        comments: comments.value,
+        qcInitials: qcInitials.value,
+        qcDate: qcDate.value,
         photos
     };
 
-    await db.materials.update(materialId, updated);
+    await db.materials.put(updated);
 
-    window.location.href = `job.html?job=${jobNumber}`;
-}
-
-function val(id) {
-    return document.getElementById(id).value.trim();
+    // Back to job page
+    const base = window.location.origin;
+    window.location.href = `${base}/job.html?job=${jobNumber}`;
 }
