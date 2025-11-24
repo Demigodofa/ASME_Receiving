@@ -1,39 +1,38 @@
+// ============================================================================
+//  ASME Receiving - Safe Auto-Updating Service Worker
+//  Prevents freeze on splash screen & avoids hard-cached HTML
+// ============================================================================
 
-const CACHE_NAME = "asme-receiving-cache-v1";
+const STATIC_CACHE = "asme-static-v4";
 
-const FILES_TO_CACHE = [
-  "/",
-  "/index.html",
-  "/app.html",
-  "/create_job.html",
-  "/jobs.html",
-  "/job.html",
+// Only cache truly static files (icons, CSS, scripts)
+const STATIC_FILES = [
   "/style.css",
   "/db.js",
-  "/manifest.webmanifest",
-  "/service_worker.js",
   "/assets/icons/icon-32.png",
   "/assets/icons/icon-192.png",
   "/assets/icons/icon-512.png"
 ];
 
-// Install
+// ----------------------------------------------------------------------------
+// INSTALL — Precache static assets only
+// ----------------------------------------------------------------------------
 self.addEventListener("install", (event) => {
-  console.log("[SW] Install");
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES_TO_CACHE))
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_FILES))
   );
   self.skipWaiting();
 });
 
-// Activate
+// ----------------------------------------------------------------------------
+// ACTIVATE — Remove old caches
+// ----------------------------------------------------------------------------
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activate");
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((key) => key !== CACHE_NAME)
+          .filter((key) => key !== STATIC_CACHE)
           .map((key) => caches.delete(key))
       )
     )
@@ -41,14 +40,30 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch
+// ----------------------------------------------------------------------------
+// FETCH — Network-first for HTML, Cache-first for static assets
+// ----------------------------------------------------------------------------
 self.addEventListener("fetch", (event) => {
+  const req = event.request;
+
+  // HTML files must never be served from cache
+  if (req.headers.get("accept")?.includes("text/html")) {
+    event.respondWith(
+      fetch(req).catch(() => caches.match("/index.html"))
+    );
+    return;
+  }
+
+  // Static files: cache first
   event.respondWith(
-    caches.match(event.request).then((resp) => {
+    caches.match(req).then((cacheRes) => {
       return (
-        resp ||
-        fetch(event.request).catch(() => {
-          return caches.match("/index.html");
+        cacheRes ||
+        fetch(req).then((networkRes) => {
+          return caches.open(STATIC_CACHE).then((cache) => {
+            cache.put(req, networkRes.clone());
+            return networkRes;
+          });
         })
       );
     })
