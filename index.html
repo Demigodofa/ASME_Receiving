@@ -11,5 +11,14 @@
     <div class="splash-container">
         <img src="assets/icons/icon-192.png" alt="Welder's Helper" class="splash-logo">
     </div>
+
+    <script>
+        // Give the splash screen a moment, then continue
+        window.addEventListener("load", () => {
+            setTimeout(() => {
+                window.location.replace("app.html");
+            }, 800);
+        });
+    </script>
 </body>
 </html>
