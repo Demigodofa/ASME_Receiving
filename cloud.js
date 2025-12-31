@@ -1,4 +1,6 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+// cloud.js (DROP-IN)
+
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 
 import {
   getFirestore,
@@ -21,7 +23,7 @@ import {
   signInAnonymously,
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
-// Promise helper: waits for auth to produce a user (anonymous is fine)
+// ---- Helpers ----
 function waitForFirebaseUser(auth) {
   return new Promise((resolve, reject) => {
     const unsub = onAuthStateChanged(
@@ -40,43 +42,62 @@ function waitForFirebaseUser(auth) {
   });
 }
 
+async function ensureAnonUser(auth) {
+  if (auth.currentUser) return auth.currentUser;
+
+  // kick off anon sign-in (idempotent enough for our use)
+  try {
+    await signInAnonymously(auth);
+  } catch (e) {
+    // Sometimes sign-in is already in-flight or blocked briefly; we still wait.
+    console.warn("Anonymous sign-in attempt failed (will still wait for auth):", e);
+  }
+
+  const user = await waitForFirebaseUser(auth);
+  return user;
+}
+
+function asStr(v) {
+  return v === undefined || v === null ? "" : String(v);
+}
+
+function asNum(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 window.cloudApiReady = (async () => {
   // ---- Guardrails ----
   if (!window.cloudSettings) return { enabled: false, reason: "missing-settings" };
 
+  // Optional: obey your Cloud Mode toggle if you’re using it.
+  // If you want cloud APIs available even when disabled, delete these 2 lines.
+  if (window.cloudSettings.isCloudModeEnabled && !window.cloudSettings.isCloudModeEnabled()) {
+    return { enabled: false, reason: "cloud-mode-disabled" };
+  }
+
   const config = window.cloudSettings.getFirebaseConfig?.();
   if (!config) return { enabled: false, reason: "missing-config" };
 
-  // ---- Firebase init ----
-  const app = initializeApp(config);
+  // ---- Firebase init (avoid double-init) ----
+  const app = getApps().length ? getApps()[0] : initializeApp(config);
   const firestore = getFirestore(app);
   const storage = getStorage(app);
   const auth = getAuth(app);
 
-  // Ensure we always have a uid (anonymous auth)
-  let user = auth.currentUser;
-  if (!user) {
-    // If no user yet, kick off anonymous sign-in, then wait for auth state
-    try {
-      await signInAnonymously(auth);
-    } catch (e) {
-      // In case it was already in progress or blocked, still try to wait for a user
-      console.warn("Anonymous sign-in attempt failed (will still wait for auth):", e);
-    }
-    user = await waitForFirebaseUser(auth);
-  }
-
+  // Ensure we have a uid (anonymous auth)
+  const user = await ensureAnonUser(auth);
   const uid = user.uid;
 
-  // ---- Path builders (single source of truth) ----
+  // ---- Firestore path builders (single source of truth) ----
   const jobDocRef = (jobNumber) =>
-    doc(firestore, "users", uid, "jobs", String(jobNumber));
+    doc(firestore, "users", uid, "jobs", asStr(jobNumber));
 
   const itemsColRef = (jobNumber) =>
-    collection(firestore, "users", uid, "jobs", String(jobNumber), "items");
+    collection(firestore, "users", uid, "jobs", asStr(jobNumber), "items");
 
   const itemDocRef = (jobNumber, itemId) =>
-    doc(firestore, "users", uid, "jobs", String(jobNumber), "items", String(itemId));
+    doc(firestore, "users", uid, "jobs", asStr(jobNumber), "items", asStr(itemId));
 
   const photosColRef = (jobNumber, itemId) =>
     collection(
@@ -84,9 +105,9 @@ window.cloudApiReady = (async () => {
       "users",
       uid,
       "jobs",
-      String(jobNumber),
+      asStr(jobNumber),
       "items",
-      String(itemId),
+      asStr(itemId),
       "photos"
     );
 
@@ -96,66 +117,72 @@ window.cloudApiReady = (async () => {
       "users",
       uid,
       "jobs",
-      String(jobNumber),
+      asStr(jobNumber),
       "items",
-      String(itemId),
+      asStr(itemId),
       "photos",
-      String(photoId)
+      asStr(photoId)
     );
 
+  // ---- Storage path builders ----
+  // IMPORTANT: everything under users/<uid>/... so rules can be simple + secure
   const buildPhotoStoragePaths = (jobNumber, itemId, photoId) => {
-    const base = `users/${uid}/jobs/${jobNumber}/items/${itemId}/photos/${photoId}`;
-    return { thumb: `${base}/thumb.jpg`, full: `${base}/full.jpg` };
+    const base = `users/${uid}/jobs/${asStr(jobNumber)}/items/${asStr(itemId)}/photos/${asStr(photoId)}`;
+    return {
+      thumb: `${base}/thumb.jpg`,
+      full: `${base}/full.jpg`,
+    };
   };
 
-  // ---- Payload builder ----
+  // (Optional) If you later store PDFs in Storage:
+  const buildPdfStoragePath = (jobNumber, itemId) => {
+    return `users/${uid}/jobs/${asStr(jobNumber)}/items/${asStr(itemId)}/report.pdf`;
+  };
+
+  // ---- Payload builders ----
   const buildItemPayload = (material) => ({
-    jobNumber: String(material.jobNumber || ""),
-    description: material.description || "",
-    vendor: material.vendor || "",
-    poNumber: material.poNumber || "",
-    date: material.date || "",
-    quantity: material.quantity || "",
-    product: material.product || "",
-    specPrefix: material.specPrefix || "",
-    specCode: material.specCode || "",
-    grade: material.grade || "",
-    b16dim: material.b16dim || "",
-    th1: material.th1 || "",
-    th2: material.th2 || "",
-    th3: material.th3 || "",
-    th4: material.th4 || "",
-    other: material.other || "",
-    visual: material.visual || "",
-    markingAcceptable: material.markingAcceptable || "",
-    mtrAcceptable: material.mtrAcceptable || "",
-    actualMarking: material.actualMarking || "",
-    comments: material.comments || "",
-    qcInitials: material.qcInitials || "",
-    qcDate: material.qcDate || "",
-    photoCount: Number(material.photoCount || 0),
+    jobNumber: asStr(material?.jobNumber),
+    description: material?.description || "",
+    vendor: material?.vendor || "",
+    poNumber: material?.poNumber || "",
+    date: material?.date || "",
+    quantity: material?.quantity || "",
+    product: material?.product || "",
+    specPrefix: material?.specPrefix || "",
+    specCode: material?.specCode || "",
+    grade: material?.grade || "",
+    b16dim: material?.b16dim || "",
+    th1: material?.th1 || "",
+    th2: material?.th2 || "",
+    th3: material?.th3 || "",
+    th4: material?.th4 || "",
+    other: material?.other || "",
+    visual: material?.visual || "",
+    markingAcceptable: material?.markingAcceptable || "",
+    mtrAcceptable: material?.mtrAcceptable || "",
+    actualMarking: material?.actualMarking || "",
+    comments: material?.comments || "",
+    qcInitials: material?.qcInitials || "",
+    qcDate: material?.qcDate || "",
 
-    // Cloud/offload state
-    offloadStatus: material.offloadStatus || "local-only",
-    pdfStatus: material.pdfStatus || "not-started",
-    pdfStoragePath: material.pdfStoragePath || "",
+    photoCount: asNum(material?.photoCount, 0),
 
-    // Useful metadata
+    offloadStatus: material?.offloadStatus || "local-only",
+    pdfStatus: material?.pdfStatus || "not-started",
+    pdfStoragePath: material?.pdfStoragePath || "",
+
     uid,
     updatedAt: new Date().toISOString(),
   });
 
   // ---- Public API ----
-
-  // Create/update job doc under users/<uid>/jobs/<jobNumber>
   const ensureJobDoc = async (jobNumber, jobData = {}) => {
     if (!jobNumber) throw new Error("ensureJobDoc: jobNumber required");
 
-    const ref = jobDocRef(jobNumber);
     await setDoc(
-      ref,
+      jobDocRef(jobNumber),
       {
-        jobNumber: String(jobNumber),
+        jobNumber: asStr(jobNumber),
         description: jobData.description || "",
         notes: jobData.notes || "",
         uid,
@@ -165,62 +192,57 @@ window.cloudApiReady = (async () => {
     );
   };
 
-  // Create/update an item doc under users/<uid>/jobs/<jobNumber>/items/<itemId>
-  // If material.cloudItemId is missing, we create one.
   const upsertItemDoc = async (material) => {
-    if (!material?.jobNumber) throw new Error("upsertItemDoc: material.jobNumber required");
+    const jobNumber = material?.jobNumber;
+    if (!jobNumber) throw new Error("upsertItemDoc: material.jobNumber required");
 
-    // Ensure the job doc exists (nice for browsing later)
-    await ensureJobDoc(material.jobNumber, {
-      description: material.jobDescription || "",
-      notes: material.jobNotes || "",
+    // ensure job exists for browsing later
+    await ensureJobDoc(jobNumber, {
+      description: material?.jobDescription || "",
+      notes: material?.jobNotes || "",
     });
 
     if (!material.cloudItemId) {
-      const newRef = doc(itemsColRef(material.jobNumber)); // auto-id
+      const newRef = doc(itemsColRef(jobNumber)); // auto-id
       await setDoc(newRef, buildItemPayload(material), { merge: true });
       return newRef.id;
     }
 
-    const ref = itemDocRef(material.jobNumber, material.cloudItemId);
+    const ref = itemDocRef(jobNumber, material.cloudItemId);
     await setDoc(ref, buildItemPayload(material), { merge: true });
     return material.cloudItemId;
   };
 
-  // Creates a photo doc under the item, returns paths for thumb/full
-  const createPhotoDoc = async (material, photo) => {
-    if (!material?.jobNumber) throw new Error("createPhotoDoc: material.jobNumber required");
-    if (!material?.cloudItemId) throw new Error("createPhotoDoc: material.cloudItemId required");
+  const createPhotoDoc = async (material) => {
+    const jobNumber = material?.jobNumber;
+    const itemId = material?.cloudItemId;
+    if (!jobNumber) throw new Error("createPhotoDoc: material.jobNumber required");
+    if (!itemId) throw new Error("createPhotoDoc: material.cloudItemId required");
 
-    const photosRef = photosColRef(material.jobNumber, material.cloudItemId);
-    const newPhotoRef = doc(photosRef); // auto-id
-    const storagePaths = buildPhotoStoragePaths(
-      material.jobNumber,
-      material.cloudItemId,
-      newPhotoRef.id
-    );
+    const newPhotoRef = doc(photosColRef(jobNumber, itemId)); // auto-id
+    const paths = buildPhotoStoragePaths(jobNumber, itemId, newPhotoRef.id);
 
     await setDoc(newPhotoRef, {
-      thumbStoragePath: storagePaths.thumb,
-      fullStoragePath: storagePaths.full,
+      thumbStoragePath: paths.thumb,
+      fullStoragePath: paths.full,
       status: "thumbnail-pending",
       uid,
       createdAt: new Date().toISOString(),
     });
 
-    return { id: newPhotoRef.id, ...storagePaths };
+    return { id: newPhotoRef.id, ...paths };
   };
 
   const updatePhotoStatus = async (material, photoId, payload) => {
-    if (!material?.jobNumber) throw new Error("updatePhotoStatus: material.jobNumber required");
-    if (!material?.cloudItemId) throw new Error("updatePhotoStatus: material.cloudItemId required");
+    const jobNumber = material?.jobNumber;
+    const itemId = material?.cloudItemId;
+    if (!jobNumber) throw new Error("updatePhotoStatus: material.jobNumber required");
+    if (!itemId) throw new Error("updatePhotoStatus: material.cloudItemId required");
     if (!photoId) throw new Error("updatePhotoStatus: photoId required");
 
-    const ref = photoDocRef(material.jobNumber, material.cloudItemId, photoId);
-    await updateDoc(ref, payload);
+    await updateDoc(photoDocRef(jobNumber, itemId, photoId), payload);
   };
 
-  // Uploads a blob to Storage at the given path
   const uploadFile = async (path, blob, onProgress) => {
     if (!path) throw new Error("uploadFile: path required");
     const storageRef = ref(storage, path);
@@ -244,21 +266,24 @@ window.cloudApiReady = (async () => {
     });
   };
 
-  // Requests PDF generation from your backend
-  // IMPORTANT: include uid so server can write to the correct user folder safely
   const requestPdfGeneration = async (material) => {
     const endpoint = window.cloudSettings.getPdfEndpoint?.();
     if (!endpoint) throw new Error("PDF endpoint not configured.");
-    if (!material?.jobNumber) throw new Error("requestPdfGeneration: material.jobNumber required");
-    if (!material?.cloudItemId) throw new Error("requestPdfGeneration: material.cloudItemId required");
+
+    const jobNumber = material?.jobNumber;
+    const itemId = material?.cloudItemId;
+    if (!jobNumber) throw new Error("requestPdfGeneration: material.jobNumber required");
+    if (!itemId) throw new Error("requestPdfGeneration: material.cloudItemId required");
 
     const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         uid,
-        jobNumber: String(material.jobNumber),
-        itemId: String(material.cloudItemId),
+        jobNumber: asStr(jobNumber),
+        itemId: asStr(itemId),
+        // handy if your server wants to know where to write:
+        suggestedPdfPath: buildPdfStoragePath(jobNumber, itemId),
       }),
     });
 
@@ -268,17 +293,14 @@ window.cloudApiReady = (async () => {
     return data.pdfStoragePath || "";
   };
 
-  // Checks if an item exists under the current user/job
+  // NOTE: this version matches your “everything is under job” structure
   const isItemReady = async (jobNumber, itemId) => {
-    const ref = itemDocRef(jobNumber, itemId);
-    const snap = await getDoc(ref);
+    const snap = await getDoc(itemDocRef(jobNumber, itemId));
     return snap.exists();
   };
 
   return {
     enabled: true,
-
-    // identity
     uid,
 
     // firestore
