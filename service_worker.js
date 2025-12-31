@@ -3,12 +3,18 @@
 //  Prevents freeze on splash screen & avoids hard-cached HTML
 // ============================================================================
 
-const STATIC_CACHE = "asme-static-v4";
+const STATIC_CACHE = "asme-static-v5";
 
 // Only cache truly static files (icons, CSS, scripts)
 const STATIC_FILES = [
   "/style.css",
   "/db.js",
+  "/cloud_settings.js",
+  "/photo_utils.js",
+  "/upload_queue.js",
+  "/upload_queue_page.js",
+  "/cloud.js",
+  "/app.js",
   "/assets/icons/icon-32.png",
   "/assets/icons/icon-192.png",
   "/assets/icons/icon-512.png"

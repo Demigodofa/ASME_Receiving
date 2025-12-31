@@ -9,7 +9,6 @@ async function exportJobData(jobNumber) {
         return;
     }
 
-    // Load job and materials
     const job = await db.jobs.where("jobNumber").equals(jobNumber).first();
     const materials = await db.materials.where("jobNumber").equals(jobNumber).toArray();
 
@@ -18,18 +17,13 @@ async function exportJobData(jobNumber) {
         return;
     }
 
-    // Load JSZip and jsPDF
     const zip = new JSZip();
     const { jsPDF } = window.jspdf;
 
-    // Root folder structure
     const rootFolder = zip.folder(`Job_${jobNumber}`);
     const materialsFolder = rootFolder.folder("Materials");
     const photosFolder = rootFolder.folder("Photos");
 
-    // ========================================================================
-    // 1. CREATE JOB SUMMARY PDF
-    // ========================================================================
     let summary = new jsPDF({ unit: "pt", format: "letter" });
 
     let y = 50;
@@ -72,9 +66,6 @@ async function exportJobData(jobNumber) {
         summary.output("blob")
     );
 
-    // ========================================================================
-    // 2. MATERIAL PDFS
-    // ========================================================================
     for (let i = 0; i < materials.length; i++) {
         const m = materials[i];
         const pdf = new jsPDF({ unit: "pt", format: "letter" });
@@ -135,8 +126,24 @@ async function exportJobData(jobNumber) {
         write("QC Initials", m.qcInitials);
         write("QC Date", m.qcDate);
 
-        // -- Insert photos (thumbnails) -------------------------------------
-        if (Array.isArray(m.photos) && m.photos.length > 0) {
+        const materialPhotos = await db.photos.where("materialId").equals(m.id).toArray();
+        const utils = window.photoUtils || {};
+        const photoDataUrls = await Promise.all(materialPhotos.map(async (photo) => {
+            if (photo.thumbnailDataUrl) {
+                return photo.thumbnailDataUrl;
+            }
+            if (photo.thumbnailBlob && utils.blobToDataUrl) {
+                return utils.blobToDataUrl(photo.thumbnailBlob);
+            }
+            if (photo.fullBlob && utils.blobToDataUrl) {
+                return utils.blobToDataUrl(photo.fullBlob);
+            }
+            return null;
+        }));
+
+        const filteredPhotos = photoDataUrls.filter(Boolean).slice(0, 5);
+
+        if (filteredPhotos.length > 0) {
             y2 += 20;
             pdf.setFont("Helvetica", "bold");
             pdf.text("Photos:", 50, y2);
@@ -144,14 +151,13 @@ async function exportJobData(jobNumber) {
 
             let x = 50;
 
-            m.photos.forEach((img, pIndex) => {
+            filteredPhotos.forEach((img, pIndex) => {
                 try {
                     pdf.addImage(img, "JPEG", x, y2, 150, 120);
                 } catch (e) {
                     console.error("Photo skipped:", e);
                 }
 
-                // Save raw photo to ZIP
                 const base64 = img.split(",")[1];
                 if (base64) {
                     photosFolder.file(
@@ -175,15 +181,11 @@ async function exportJobData(jobNumber) {
         );
     }
 
-    // ========================================================================
-    // 3. GENERATE ZIP + SHARE
-    // ========================================================================
     const zipBlob = await zip.generateAsync({ type: "blob" });
     const zipFileName = `Job_${jobNumber}.zip`;
 
     const file = new File([zipBlob], zipFileName, { type: "application/zip" });
 
-    // Native share sheet support
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
             await navigator.share({
@@ -196,13 +198,10 @@ async function exportJobData(jobNumber) {
         }
     }
 
-    // Browser download fallback
     const url = URL.createObjectURL(zipBlob);
     const a = document.createElement("a");
     a.href = url;
     a.download = zipFileName;
-    document.body.appendChild(a);
     a.click();
-    a.remove();
     URL.revokeObjectURL(url);
 }

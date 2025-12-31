@@ -60,12 +60,21 @@ function editMaterial(id) {
 
 async function deleteMaterial(id) {
     if (!confirm("Delete this material?")) return;
-    await db.materials.delete(id);
+    await db.photos.where("materialId").equals(Number(id)).delete();
+    await db.uploadQueue.where("materialId").equals(Number(id)).delete();
+    await db.materials.delete(Number(id));
     loadMaterials();
 }
 
 async function deleteJob() {
     if (!confirm(`Delete Job #${jobNumber}? This removes ALL materials.`)) return;
+
+    const materials = await db.materials.where("jobNumber").equals(jobNumber).toArray();
+    const materialIds = materials.map((m) => m.id);
+    if (materialIds.length > 0) {
+        await db.photos.where("materialId").anyOf(materialIds).delete();
+        await db.uploadQueue.where("materialId").anyOf(materialIds).delete();
+    }
 
     await db.materials.where("jobNumber").equals(jobNumber).delete();
     await db.jobs.where("jobNumber").equals(jobNumber).delete();

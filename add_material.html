@@ -59,15 +59,18 @@
     <input type="text" id="th4">
 
     <label>Visual Inspection</label>
-    <input type="text" id="visual">
+    <select id="visual">
+        <option>Pass</option>
+        <option>Fail</option>
+    </select>
 
-    <label>Marking Acceptable</label>
+    <label>Marking Acceptable?</label>
     <select id="markingAcceptable">
         <option>Yes</option>
         <option>No</option>
     </select>
 
-    <label>MTR Acceptable</label>
+    <label>MTR Acceptable?</label>
     <select id="mtrAcceptable">
         <option>Yes</option>
         <option>No</option>
@@ -96,6 +99,10 @@
 </main>
 
 <script src="db.js"></script>
+<script src="cloud_settings.js"></script>
+<script type="module" src="cloud.js"></script>
+<script src="photo_utils.js"></script>
+<script src="upload_queue.js"></script>
 <script src="add_material.js"></script>
 
 </body>

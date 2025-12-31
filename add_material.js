@@ -9,7 +9,7 @@ window.onload = () => {
     document.getElementById("saveMaterialBtn").onclick = saveMaterial;
 };
 
-function handlePhoto(e) {
+async function handlePhoto(e) {
     if (photos.length >= 5) {
         alert("Maximum 5 photos.");
         return;
@@ -18,24 +18,29 @@ function handlePhoto(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-        photos.push(ev.target.result);
-        renderPhotos();
-    };
-    reader.readAsDataURL(file);
+    const { thumbBlob, thumbDataUrl } = await window.photoUtils.createThumbnail(file);
+
+    photos.push({
+        fullBlob: file,
+        thumbnailBlob: thumbBlob,
+        thumbnailDataUrl: thumbDataUrl,
+        filename: file.name
+    });
+
+    renderPhotos();
+    e.target.value = "";
 }
 
 function renderPhotos() {
     const div = document.getElementById("photoPreview");
     div.innerHTML = "";
 
-    photos.forEach((img, index) => {
+    photos.forEach((photo, index) => {
         const el = document.createElement("div");
         el.className = "thumb-container";
 
         el.innerHTML = `
-            <img src="${img}" class="thumb">
+            <img src="${photo.thumbnailDataUrl}" class="thumb">
             <button class="thumb-delete" onclick="deletePhoto(${index})">×</button>
         `;
 
@@ -71,10 +76,65 @@ async function saveMaterial() {
         comments: comments.value,
         qcInitials: qcInitials.value,
         qcDate: qcDate.value,
-        photos
+        photoCount: photos.length,
+        offloadStatus: "local-only",
+        pdfStatus: "not-started"
     };
 
-    await db.materials.add(m);
+    const materialId = await db.materials.add(m);
+    const now = new Date().toISOString();
+
+    for (const photo of photos) {
+        await db.photos.add({
+            materialId,
+            jobNumber,
+            fullBlob: photo.fullBlob,
+            thumbnailBlob: photo.thumbnailBlob,
+            thumbnailDataUrl: photo.thumbnailDataUrl,
+            status: "local",
+            createdAt: now
+        });
+    }
+
+    await syncMaterialToCloud(materialId);
 
     window.location.href = `job.html?job=${jobNumber}`;
+}
+
+async function syncMaterialToCloud(materialId) {
+    const cloud = await window.cloudApiReady;
+    if (!cloud.enabled || !window.cloudSettings.isCloudModeEnabled()) {
+        return;
+    }
+
+    const material = await db.materials.get(materialId);
+    const job = await db.jobs.where("jobNumber").equals(jobNumber).first();
+
+    await cloud.ensureJobDoc(jobNumber, job || {});
+
+    const cloudItemId = await cloud.upsertItemDoc(material);
+    await db.materials.update(materialId, { cloudItemId });
+
+    const photosForMaterial = await db.photos.where("materialId").equals(materialId).toArray();
+
+    for (const photo of photosForMaterial) {
+        const { id: cloudPhotoId, thumb, full } = await cloud.createPhotoDoc({
+            ...material,
+            cloudItemId
+        }, photo);
+
+        await db.photos.update(photo.id, {
+            cloudPhotoId,
+            thumbStoragePath: thumb,
+            fullStoragePath: full,
+            status: "thumbnail-pending"
+        });
+
+        await window.uploadQueue.enqueueThumbnail({
+            materialId,
+            photoId: photo.id,
+            storagePath: thumb,
+            itemId: cloudItemId
+        });
+    }
 }

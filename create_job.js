@@ -12,10 +12,15 @@ async function saveJob() {
         jobNumber,
         description,
         notes,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        cloudJobId: jobNumber
     });
 
-    // FIXED: Absolute path (GitHub Pages + PWA)
+    const cloud = await window.cloudApiReady;
+    if (cloud.enabled && window.cloudSettings.isCloudModeEnabled()) {
+        await cloud.ensureJobDoc(jobNumber, { description, notes });
+    }
+
     const base = window.location.origin;
     window.location.href = `${base}/job.html?job=${jobNumber}`;
 }
