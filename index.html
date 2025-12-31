@@ -1,24 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welder's Helper</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASME Receiving</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 
-<body class="splash-screen">
-    <div class="splash-container">
-        <img src="assets/icons/icon-192.png" alt="Welder's Helper" class="splash-logo">
-    </div>
+<body class="home-screen">
+  <header class="header-center-only">
+    <img src="assets/icons/icon-192.png" class="header-logo-centered" alt="ASME Receiving" />
+  </header>
 
-    <script>
-        // Give the splash screen a moment, then continue
-        window.addEventListener("load", () => {
-            setTimeout(() => {
-                window.location.replace("app.html");
-            }, 800);
-        });
-    </script>
+  <main class="home-main">
+    <button class="primary-btn" onclick="window.location.href='create_job.html'">Create Job</button>
+    <button class="primary-btn" onclick="window.location.href='jobs.html'">Browse Jobs</button>
+    <button class="secondary-btn" onclick="window.location.href='upload_queue.html'">Upload Queue</button>
+
+    <section class="card cloud-settings">
+      <h2>Cloud Mode</h2>
+
+      <label class="toggle-row">
+        <input type="checkbox" id="cloudModeToggle" />
+        <span>Enable cloud mode</span>
+      </label>
+
+      <p id="cloudStatusText" class="status-text"></p>
+
+      <label>Firebase Config (JSON)</label>
+      <textarea id="firebaseConfigInput" rows="6" placeholder='{"apiKey":"...","projectId":"..."}'></textarea>
+
+      <label>PDF Endpoint (optional for now)</label>
+      <input type="text" id="pdfEndpointInput" placeholder="https://.../generate-pdf" />
+
+      <button type="button" class="secondary-btn" id="saveCloudSettingsBtn">Save Cloud Settings</button>
+    </section>
+  </main>
+
+  <!-- Must load settings first -->
+  <script src="cloud_settings.js"></script>
+
+  <!-- cloud.js MUST be module so Firebase imports work -->
+  <script type="module" src="cloud.js"></script>
+
+  <!-- UI wiring -->
+  <script src="app.js"></script>
 </body>
 </html>
+
