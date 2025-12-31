@@ -66,10 +66,13 @@ self.addEventListener("fetch", (event) => {
       return (
         cacheRes ||
         fetch(req).then((networkRes) => {
-          return caches.open(STATIC_CACHE).then((cache) => {
-            cache.put(req, networkRes.clone());
-            return networkRes;
-          });
+          if (networkRes && networkRes.ok) {
+            const resClone = networkRes.clone();
+            caches.open(STATIC_CACHE).then((cache) => {
+              cache.put(req, resClone);
+            });
+          }
+          return networkRes;
         })
       );
     })
