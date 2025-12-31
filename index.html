@@ -4,7 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ASME Receiving</title>
+
   <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0b5bd3" />
 </head>
 
 <body class="home-screen">
@@ -21,30 +24,33 @@
       <h2>Cloud Mode</h2>
 
       <label class="toggle-row">
-        <input type="checkbox" id="cloudModeToggle" />
+        <input type="checkbox" id="cloudModeToggle">
         <span>Enable cloud mode</span>
       </label>
 
       <p id="cloudStatusText" class="status-text"></p>
 
-      <label>Firebase Config (JSON)</label>
-      <textarea id="firebaseConfigInput" rows="6" placeholder='{"apiKey":"...","projectId":"..."}'></textarea>
+      <label for="firebaseConfigInput">Firebase Config (JSON)</label>
+      <textarea id="firebaseConfigInput" rows="6" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","appId":"..."}'></textarea>
 
-      <label>PDF Endpoint (optional for now)</label>
+      <label for="pdfEndpointInput">PDF Endpoint (optional for now)</label>
       <input type="text" id="pdfEndpointInput" placeholder="https://.../generate-pdf" />
 
       <button type="button" class="secondary-btn" id="saveCloudSettingsBtn">Save Cloud Settings</button>
     </section>
   </main>
 
-  <!-- Must load settings first -->
   <script src="cloud_settings.js"></script>
-
-  <!-- cloud.js MUST be module so Firebase imports work -->
   <script type="module" src="cloud.js"></script>
-
-  <!-- UI wiring -->
   <script src="app.js"></script>
+
+  <script>
+    // Optional but nice: register service worker for offline/PWA
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service_worker.js").catch(() => {});
+    }
+  </script>
 </body>
 </html>
+
 
