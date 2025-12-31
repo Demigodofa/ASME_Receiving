@@ -7,23 +7,29 @@ const cloudSettings = {
     localStorage.setItem("asmeCloudModeEnabled", enabled ? "true" : "false");
   },
 
-  getFirebaseConfig() {
-    // Optional: allow hardcoding via a global for production builds
-    if (window.ASME_RECEIVING_FIREBASE_CONFIG) return window.ASME_RECEIVING_FIREBASE_CONFIG;
-
-    const stored = localStorage.getItem("asmeFirebaseConfig");
-    if (!stored) return null;
-
-    try {
-      return JSON.parse(stored);
-    } catch (error) {
-      console.warn("Invalid Firebase config JSON", error);
-      return null;
-    }
-  },
-
+  // Store raw text so user can paste exactly what Firebase gives them
   setFirebaseConfig(configText) {
     localStorage.setItem("asmeFirebaseConfig", (configText || "").trim());
+  },
+
+  getFirebaseConfigText() {
+    return localStorage.getItem("asmeFirebaseConfig") || "";
+  },
+
+  // Returns parsed object or null
+  getFirebaseConfig() {
+    // Optional hard-coded override (if you ever set it on window)
+    if (window.ASME_RECEIVING_FIREBASE_CONFIG) return window.ASME_RECEIVING_FIREBASE_CONFIG;
+
+    const raw = this.getFirebaseConfigText();
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      console.warn("Invalid Firebase config JSON", e);
+      return null;
+    }
   },
 
   getPdfEndpoint() {
@@ -32,9 +38,7 @@ const cloudSettings = {
 
   setPdfEndpoint(endpoint) {
     localStorage.setItem("asmePdfEndpoint", (endpoint || "").trim());
-  }
+  },
 };
 
 window.cloudSettings = cloudSettings;
-
-  

@@ -7,7 +7,7 @@
 
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#0b5bd3" />
+  <link rel="icon" href="assets/icons/icon-192.png" />
 </head>
 
 <body class="home-screen">
@@ -24,14 +24,14 @@
       <h2>Cloud Mode</h2>
 
       <label class="toggle-row">
-        <input type="checkbox" id="cloudModeToggle">
+        <input type="checkbox" id="cloudModeToggle" />
         <span>Enable cloud mode</span>
       </label>
 
       <p id="cloudStatusText" class="status-text"></p>
 
       <label for="firebaseConfigInput">Firebase Config (JSON)</label>
-      <textarea id="firebaseConfigInput" rows="6" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","appId":"..."}'></textarea>
+      <textarea id="firebaseConfigInput" rows="6" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
 
       <label for="pdfEndpointInput">PDF Endpoint (optional for now)</label>
       <input type="text" id="pdfEndpointInput" placeholder="https://.../generate-pdf" />
@@ -40,17 +40,16 @@
     </section>
   </main>
 
+  <!-- Must be loaded before cloud.js -->
   <script src="cloud_settings.js"></script>
-  <script type="module" src="cloud.js"></script>
-  <script src="app.js"></script>
 
-  <script>
-    // Optional but nice: register service worker for offline/PWA
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service_worker.js").catch(() => {});
-    }
-  </script>
+  <!-- cloud.js MUST be a module (it imports Firebase SDK modules) -->
+  <script type="module" src="cloud.js"></script>
+
+  <!-- UI logic -->
+  <script src="app.js"></script>
 </body>
 </html>
+
 
 

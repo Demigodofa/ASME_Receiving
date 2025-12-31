@@ -7,63 +7,51 @@ window.addEventListener("load", () => {
 
   if (!toggle || !configInput || !pdfInput || !saveBtn || !statusText) return;
 
-  // Load saved UI state
+  // Load current settings
   toggle.checked = cloudSettings.isCloudModeEnabled();
-  configInput.value = localStorage.getItem("asmeFirebaseConfig") || "";
+  configInput.value = cloudSettings.getFirebaseConfigText();
   pdfInput.value = cloudSettings.getPdfEndpoint();
 
-  function setStatus(msg) {
+  const setStatus = (msg) => {
     statusText.textContent = msg;
-  }
+  };
 
-  function validateConfigText(text) {
-    const trimmed = (text || "").trim();
-    if (!trimmed) return { ok: false, reason: "missing" };
+  const refreshStatus = async () => {
+    const mode = cloudSettings.isCloudModeEnabled();
+    const configObj = cloudSettings.getFirebaseConfig();
 
-    try {
-      const obj = JSON.parse(trimmed);
-      const required = ["apiKey", "authDomain", "projectId", "storageBucket", "appId"];
-      const missing = required.filter((k) => !obj?.[k]);
-      if (missing.length) return { ok: false, reason: `missing keys: ${missing.join(", ")}` };
-      return { ok: true, config: obj };
-    } catch (e) {
-      return { ok: false, reason: "invalid JSON" };
-    }
-  }
-
-  async function refreshStatus() {
-    const enabled = cloudSettings.isCloudModeEnabled();
-    const cfg = cloudSettings.getFirebaseConfig();
-
-    if (!enabled) {
-      setStatus("Cloud mode OFF (local-only).");
+    if (!configObj) {
+      setStatus("Paste Firebase config JSON, click Save Cloud Settings, then enable cloud mode.");
       return;
     }
 
-    if (!cfg) {
-      setStatus("Cloud mode ON, but Firebase config is missing/invalid. Paste it and click Save Cloud Settings.");
+    if (!mode) {
+      setStatus("Cloud mode is OFF. Flip the toggle ON to enable uploads.");
       return;
     }
 
+    // At this point: config exists AND mode is ON
+    // cloud.js should have created window.cloudApiReady (a Promise)
     if (!window.cloudApiReady) {
-      setStatus("Cloud mode ON, config OK, but cloud.js is not loaded. (Check <script type='module' src='cloud.js'>)");
+      setStatus("Cloud mode ON, but cloud.js is not loaded. (Check script tags + console errors.)");
       return;
     }
-
-    setStatus("Cloud mode ON… signing in anonymously…");
 
     try {
       const cloud = await window.cloudApiReady;
-      if (!cloud?.enabled) {
-        setStatus(`Cloud disabled: ${cloud?.reason || "unknown-reason"}`);
+
+      if (!cloud || cloud.enabled !== true) {
+        const reason = cloud?.reason ? ` (${cloud.reason})` : "";
+        setStatus(`Cloud not ready${reason}. Check console.`);
         return;
       }
+
       setStatus(`Cloud mode ON ✅ (uid: ${cloud.uid})`);
     } catch (err) {
       console.error(err);
-      setStatus(`Cloud error ❌ Check console. (${err?.message || err})`);
+      setStatus(`Cloud init failed ❌ See console: ${err?.message || err}`);
     }
-  }
+  };
 
   toggle.addEventListener("change", () => {
     cloudSettings.setCloudModeEnabled(toggle.checked);
@@ -71,22 +59,10 @@ window.addEventListener("load", () => {
   });
 
   saveBtn.addEventListener("click", () => {
-    const cfgCheck = validateConfigText(configInput.value);
-    if (!cfgCheck.ok) {
-      // Save anyway so you can fix it, but tell you what's wrong
-      cloudSettings.setFirebaseConfig(configInput.value);
-      cloudSettings.setPdfEndpoint(pdfInput.value);
-      setStatus(`Config saved, but ${cfgCheck.reason}. Fix JSON then Save again.`);
-      return;
-    }
-
     cloudSettings.setFirebaseConfig(configInput.value);
     cloudSettings.setPdfEndpoint(pdfInput.value);
-    setStatus("Settings saved ✅");
     refreshStatus();
   });
 
   refreshStatus();
 });
-
-  
