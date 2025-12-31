@@ -1,6 +1,4 @@
-// cloud.js (DROP-IN)
-
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 
 import {
   getFirestore,
@@ -9,6 +7,7 @@ import {
   collection,
   updateDoc,
   getDoc,
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
 import {
@@ -23,7 +22,7 @@ import {
   signInAnonymously,
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
-// ---- Helpers ----
+// Wait for auth to produce a user (anonymous is fine)
 function waitForFirebaseUser(auth) {
   return new Promise((resolve, reject) => {
     const unsub = onAuthStateChanged(
@@ -42,205 +41,185 @@ function waitForFirebaseUser(auth) {
   });
 }
 
-async function ensureAnonUser(auth) {
-  if (auth.currentUser) return auth.currentUser;
-
-  // kick off anon sign-in (idempotent enough for our use)
-  try {
-    await signInAnonymously(auth);
-  } catch (e) {
-    // Sometimes sign-in is already in-flight or blocked briefly; we still wait.
-    console.warn("Anonymous sign-in attempt failed (will still wait for auth):", e);
-  }
-
-  const user = await waitForFirebaseUser(auth);
-  return user;
-}
-
-function asStr(v) {
-  return v === undefined || v === null ? "" : String(v);
-}
-
-function asNum(v, fallback = 0) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-}
-
 window.cloudApiReady = (async () => {
-  // ---- Guardrails ----
+  // --- guardrails ---
   if (!window.cloudSettings) return { enabled: false, reason: "missing-settings" };
-
-  // Optional: obey your Cloud Mode toggle if you’re using it.
-  // If you want cloud APIs available even when disabled, delete these 2 lines.
-  if (window.cloudSettings.isCloudModeEnabled && !window.cloudSettings.isCloudModeEnabled()) {
-    return { enabled: false, reason: "cloud-mode-disabled" };
-  }
 
   const config = window.cloudSettings.getFirebaseConfig?.();
   if (!config) return { enabled: false, reason: "missing-config" };
 
-  // ---- Firebase init (avoid double-init) ----
-  const app = getApps().length ? getApps()[0] : initializeApp(config);
-  const firestore = getFirestore(app);
+  // --- init ---
+  const app = initializeApp(config);
+  const db = getFirestore(app);
   const storage = getStorage(app);
   const auth = getAuth(app);
 
-  // Ensure we have a uid (anonymous auth)
-  const user = await ensureAnonUser(auth);
+  // --- ensure anonymous auth (so request.auth.uid exists) ---
+  let user = auth.currentUser;
+  if (!user) {
+    try {
+      await signInAnonymously(auth);
+    } catch (e) {
+      // If it was already happening, no big deal—still wait for user
+      console.warn("Anonymous sign-in attempt failed (waiting for auth anyway):", e);
+    }
+    user = await waitForFirebaseUser(auth);
+  }
   const uid = user.uid;
 
-  // ---- Firestore path builders (single source of truth) ----
-  const jobDocRef = (jobNumber) =>
-    doc(firestore, "users", uid, "jobs", asStr(jobNumber));
+  // -------------------------
+  // Firestore path helpers
+  // -------------------------
+  const jobRef = (jobNumber) =>
+    doc(db, "users", uid, "jobs", String(jobNumber));
 
-  const itemsColRef = (jobNumber) =>
-    collection(firestore, "users", uid, "jobs", asStr(jobNumber), "items");
+  const itemsCol = (jobNumber) =>
+    collection(db, "users", uid, "jobs", String(jobNumber), "items");
 
-  const itemDocRef = (jobNumber, itemId) =>
-    doc(firestore, "users", uid, "jobs", asStr(jobNumber), "items", asStr(itemId));
+  const itemRef = (jobNumber, itemId) =>
+    doc(db, "users", uid, "jobs", String(jobNumber), "items", String(itemId));
 
-  const photosColRef = (jobNumber, itemId) =>
-    collection(
-      firestore,
-      "users",
-      uid,
-      "jobs",
-      asStr(jobNumber),
-      "items",
-      asStr(itemId),
-      "photos"
-    );
+  const photosCol = (jobNumber, itemId) =>
+    collection(db, "users", uid, "jobs", String(jobNumber), "items", String(itemId), "photos");
 
-  const photoDocRef = (jobNumber, itemId, photoId) =>
-    doc(
-      firestore,
-      "users",
-      uid,
-      "jobs",
-      asStr(jobNumber),
-      "items",
-      asStr(itemId),
-      "photos",
-      asStr(photoId)
-    );
+  const photoRef = (jobNumber, itemId, photoId) =>
+    doc(db, "users", uid, "jobs", String(jobNumber), "items", String(itemId), "photos", String(photoId));
 
-  // ---- Storage path builders ----
-  // IMPORTANT: everything under users/<uid>/... so rules can be simple + secure
+  // Tiny index so we can find a jobNumber for an itemId later without scanning
+  const itemIndexRef = (itemId) =>
+    doc(db, "users", uid, "itemIndex", String(itemId));
+
+  // -------------------------
+  // Storage path helpers
+  // -------------------------
   const buildPhotoStoragePaths = (jobNumber, itemId, photoId) => {
-    const base = `users/${uid}/jobs/${asStr(jobNumber)}/items/${asStr(itemId)}/photos/${asStr(photoId)}`;
+    const base = `users/${uid}/jobs/${String(jobNumber)}/items/${String(itemId)}/photos/${String(photoId)}`;
     return {
       thumb: `${base}/thumb.jpg`,
       full: `${base}/full.jpg`,
     };
   };
 
-  // (Optional) If you later store PDFs in Storage:
   const buildPdfStoragePath = (jobNumber, itemId) => {
-    return `users/${uid}/jobs/${asStr(jobNumber)}/items/${asStr(itemId)}/report.pdf`;
+    return `users/${uid}/jobs/${String(jobNumber)}/items/${String(itemId)}/report.pdf`;
   };
 
-  // ---- Payload builders ----
+  // -------------------------
+  // Payload builders
+  // -------------------------
   const buildItemPayload = (material) => ({
-    jobNumber: asStr(material?.jobNumber),
-    description: material?.description || "",
-    vendor: material?.vendor || "",
-    poNumber: material?.poNumber || "",
-    date: material?.date || "",
-    quantity: material?.quantity || "",
-    product: material?.product || "",
-    specPrefix: material?.specPrefix || "",
-    specCode: material?.specCode || "",
-    grade: material?.grade || "",
-    b16dim: material?.b16dim || "",
-    th1: material?.th1 || "",
-    th2: material?.th2 || "",
-    th3: material?.th3 || "",
-    th4: material?.th4 || "",
-    other: material?.other || "",
-    visual: material?.visual || "",
-    markingAcceptable: material?.markingAcceptable || "",
-    mtrAcceptable: material?.mtrAcceptable || "",
-    actualMarking: material?.actualMarking || "",
-    comments: material?.comments || "",
-    qcInitials: material?.qcInitials || "",
-    qcDate: material?.qcDate || "",
+    jobNumber: String(material.jobNumber || ""),
+    description: material.description || "",
+    vendor: material.vendor || "",
+    poNumber: material.poNumber || "",
+    date: material.date || "",
+    quantity: material.quantity || "",
+    product: material.product || "",
+    specPrefix: material.specPrefix || "",
+    specCode: material.specCode || "",
+    grade: material.grade || "",
+    b16dim: material.b16dim || "",
+    th1: material.th1 || "",
+    th2: material.th2 || "",
+    th3: material.th3 || "",
+    th4: material.th4 || "",
+    other: material.other || "",
+    visual: material.visual || "",
+    markingAcceptable: material.markingAcceptable || "",
+    mtrAcceptable: material.mtrAcceptable || "",
+    actualMarking: material.actualMarking || "",
+    comments: material.comments || "",
+    qcInitials: material.qcInitials || "",
+    qcDate: material.qcDate || "",
+    photoCount: Number(material.photoCount || 0),
 
-    photoCount: asNum(material?.photoCount, 0),
-
-    offloadStatus: material?.offloadStatus || "local-only",
-    pdfStatus: material?.pdfStatus || "not-started",
-    pdfStoragePath: material?.pdfStoragePath || "",
+    // Cloud/offload state
+    offloadStatus: material.offloadStatus || "local-only",
+    pdfStatus: material.pdfStatus || "not-started",
+    pdfStoragePath: material.pdfStoragePath || "",
 
     uid,
-    updatedAt: new Date().toISOString(),
+    updatedAt: serverTimestamp(),
   });
 
-  // ---- Public API ----
+  // -------------------------
+  // Public API
+  // -------------------------
   const ensureJobDoc = async (jobNumber, jobData = {}) => {
     if (!jobNumber) throw new Error("ensureJobDoc: jobNumber required");
 
     await setDoc(
-      jobDocRef(jobNumber),
+      jobRef(jobNumber),
       {
-        jobNumber: asStr(jobNumber),
+        jobNumber: String(jobNumber),
         description: jobData.description || "",
         notes: jobData.notes || "",
         uid,
-        updatedAt: new Date().toISOString(),
+        updatedAt: serverTimestamp(),
       },
       { merge: true }
     );
   };
 
   const upsertItemDoc = async (material) => {
-    const jobNumber = material?.jobNumber;
-    if (!jobNumber) throw new Error("upsertItemDoc: material.jobNumber required");
+    if (!material?.jobNumber) throw new Error("upsertItemDoc: material.jobNumber required");
 
-    // ensure job exists for browsing later
-    await ensureJobDoc(jobNumber, {
-      description: material?.jobDescription || "",
-      notes: material?.jobNotes || "",
+    // keep job doc alive
+    await ensureJobDoc(material.jobNumber, {
+      description: material.jobDescription || "",
+      notes: material.jobNotes || "",
     });
 
+    // create item if missing
     if (!material.cloudItemId) {
-      const newRef = doc(itemsColRef(jobNumber)); // auto-id
-      await setDoc(newRef, buildItemPayload(material), { merge: true });
-      return newRef.id;
+      const newItemRef = doc(itemsCol(material.jobNumber)); // auto-id
+      await setDoc(newItemRef, buildItemPayload(material), { merge: true });
+
+      // index: itemId -> jobNumber
+      await setDoc(itemIndexRef(newItemRef.id), {
+        jobNumber: String(material.jobNumber),
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+
+      return newItemRef.id;
     }
 
-    const ref = itemDocRef(jobNumber, material.cloudItemId);
-    await setDoc(ref, buildItemPayload(material), { merge: true });
+    // update item
+    await setDoc(itemRef(material.jobNumber, material.cloudItemId), buildItemPayload(material), { merge: true });
+
+    // index update
+    await setDoc(itemIndexRef(material.cloudItemId), {
+      jobNumber: String(material.jobNumber),
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
     return material.cloudItemId;
   };
 
   const createPhotoDoc = async (material) => {
-    const jobNumber = material?.jobNumber;
-    const itemId = material?.cloudItemId;
-    if (!jobNumber) throw new Error("createPhotoDoc: material.jobNumber required");
-    if (!itemId) throw new Error("createPhotoDoc: material.cloudItemId required");
+    if (!material?.jobNumber) throw new Error("createPhotoDoc: material.jobNumber required");
+    if (!material?.cloudItemId) throw new Error("createPhotoDoc: material.cloudItemId required");
 
-    const newPhotoRef = doc(photosColRef(jobNumber, itemId)); // auto-id
-    const paths = buildPhotoStoragePaths(jobNumber, itemId, newPhotoRef.id);
+    const newPhotoRef = doc(photosCol(material.jobNumber, material.cloudItemId));
+    const paths = buildPhotoStoragePaths(material.jobNumber, material.cloudItemId, newPhotoRef.id);
 
     await setDoc(newPhotoRef, {
       thumbStoragePath: paths.thumb,
       fullStoragePath: paths.full,
       status: "thumbnail-pending",
       uid,
-      createdAt: new Date().toISOString(),
+      createdAt: serverTimestamp(),
     });
 
     return { id: newPhotoRef.id, ...paths };
   };
 
   const updatePhotoStatus = async (material, photoId, payload) => {
-    const jobNumber = material?.jobNumber;
-    const itemId = material?.cloudItemId;
-    if (!jobNumber) throw new Error("updatePhotoStatus: material.jobNumber required");
-    if (!itemId) throw new Error("updatePhotoStatus: material.cloudItemId required");
+    if (!material?.jobNumber) throw new Error("updatePhotoStatus: material.jobNumber required");
+    if (!material?.cloudItemId) throw new Error("updatePhotoStatus: material.cloudItemId required");
     if (!photoId) throw new Error("updatePhotoStatus: photoId required");
 
-    await updateDoc(photoDocRef(jobNumber, itemId, photoId), payload);
+    await updateDoc(photoRef(material.jobNumber, material.cloudItemId, photoId), payload);
   };
 
   const uploadFile = async (path, blob, onProgress) => {
@@ -252,12 +231,10 @@ window.cloudApiReady = (async () => {
 
       task.on(
         "state_changed",
-        (snapshot) => {
+        (snap) => {
           if (onProgress) {
-            const progress = snapshot.totalBytes
-              ? snapshot.bytesTransferred / snapshot.totalBytes
-              : 0;
-            onProgress(progress);
+            const p = snap.totalBytes ? snap.bytesTransferred / snap.totalBytes : 0;
+            onProgress(p);
           }
         },
         reject,
@@ -266,37 +243,50 @@ window.cloudApiReady = (async () => {
     });
   };
 
+  // Lets old callers do isItemReady(itemId) by looking up the index
+  const isItemReady = async (itemIdOrJobNumber, maybeItemId) => {
+    // New style: isItemReady(jobNumber, itemId)
+    if (maybeItemId) {
+      const snap = await getDoc(itemRef(itemIdOrJobNumber, maybeItemId));
+      return snap.exists();
+    }
+
+    // Old style: isItemReady(itemId)
+    const itemId = itemIdOrJobNumber;
+    const idxSnap = await getDoc(itemIndexRef(itemId));
+    if (!idxSnap.exists()) return false;
+
+    const { jobNumber } = idxSnap.data();
+    if (!jobNumber) return false;
+
+    const snap = await getDoc(itemRef(jobNumber, itemId));
+    return snap.exists();
+  };
+
   const requestPdfGeneration = async (material) => {
     const endpoint = window.cloudSettings.getPdfEndpoint?.();
     if (!endpoint) throw new Error("PDF endpoint not configured.");
+    if (!material?.jobNumber) throw new Error("requestPdfGeneration: material.jobNumber required");
+    if (!material?.cloudItemId) throw new Error("requestPdfGeneration: material.cloudItemId required");
 
-    const jobNumber = material?.jobNumber;
-    const itemId = material?.cloudItemId;
-    if (!jobNumber) throw new Error("requestPdfGeneration: material.jobNumber required");
-    if (!itemId) throw new Error("requestPdfGeneration: material.cloudItemId required");
+    // where the PDF SHOULD end up in Storage
+    const pdfPath = buildPdfStoragePath(material.jobNumber, material.cloudItemId);
 
-    const response = await fetch(endpoint, {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         uid,
-        jobNumber: asStr(jobNumber),
-        itemId: asStr(itemId),
-        // handy if your server wants to know where to write:
-        suggestedPdfPath: buildPdfStoragePath(jobNumber, itemId),
+        jobNumber: String(material.jobNumber),
+        itemId: String(material.cloudItemId),
+        pdfStoragePath: pdfPath,
       }),
     });
 
-    if (!response.ok) throw new Error(`PDF request failed: ${response.status}`);
+    if (!res.ok) throw new Error(`PDF request failed: ${res.status}`);
 
-    const data = await response.json();
-    return data.pdfStoragePath || "";
-  };
-
-  // NOTE: this version matches your “everything is under job” structure
-  const isItemReady = async (jobNumber, itemId) => {
-    const snap = await getDoc(itemDocRef(jobNumber, itemId));
-    return snap.exists();
+    const data = await res.json().catch(() => ({}));
+    return data.pdfStoragePath || pdfPath;
   };
 
   return {
@@ -316,5 +306,6 @@ window.cloudApiReady = (async () => {
 
     // pdf
     requestPdfGeneration,
+    buildPdfStoragePath,
   };
 })();
