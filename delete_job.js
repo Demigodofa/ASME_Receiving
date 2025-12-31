@@ -1,7 +1,9 @@
 const db = new Dexie("ASMEReceivingDB");
-db.version(1).stores({
-    jobs: "jobNumber, description, notes, createdAt",
-    materials: "++id, jobNumber"
+db.version(2).stores({
+    jobs: "jobNumber, description, notes, createdAt, cloudJobId",
+    materials: "++id, jobNumber",
+    photos: "++id, materialId, jobNumber, status, createdAt",
+    uploadQueue: "++id, status, type, createdAt, updatedAt, materialId, photoId"
 });
 
 async function deleteJob(jobNum) {
@@ -11,14 +13,19 @@ async function deleteJob(jobNum) {
     if (!ok) return;
 
     const mats = await db.materials.where("jobNumber").equals(jobToDelete).toArray();
-    for (let m of mats) {
-        await db.materials.delete(m.id);
+    const materialIds = mats.map((m) => m.id);
+
+    if (materialIds.length > 0) {
+        await db.photos.where("materialId").anyOf(materialIds).delete();
+        await db.uploadQueue.where("materialId").anyOf(materialIds).delete();
     }
 
+    await db.materials.where("jobNumber").equals(jobToDelete).delete();
     await db.jobs.delete(jobToDelete);
 
-    if (!jobNum)
+    if (!jobNum) {
         window.location.replace("jobs.html");
-    else
+    } else {
         location.reload();
+    }
 }

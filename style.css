@@ -82,3 +82,139 @@
                 inset 0px -2px 4px rgba(0,0,0,0.3);
     display: block;
 }
+
+/* ==========================
+   SECONDARY BUTTONS
+========================== */
+.secondary-btn {
+    width: 80%;
+    padding: 12px;
+    margin: 10px auto;
+    font-size: 1em;
+    background: #e0e6f0;
+    color: #0d2347;
+    border: 1px solid #c5cedb;
+    border-radius: 10px;
+    display: block;
+}
+
+/* ==========================
+   CLOUD SETTINGS
+========================== */
+.cloud-settings {
+    margin: 20px auto;
+    padding: 16px;
+    width: 90%;
+    max-width: 520px;
+    border-radius: 12px;
+    background: #f5f7fb;
+    text-align: left;
+}
+
+.cloud-settings textarea,
+.cloud-settings input[type="text"] {
+    width: 100%;
+    margin: 6px 0 12px;
+    padding: 10px;
+    border: 1px solid #c5cedb;
+    border-radius: 8px;
+    font-size: 0.95em;
+}
+
+.toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.status-text {
+    color: #274060;
+    margin-bottom: 12px;
+}
+
+/* ==========================
+   OFFLOAD PANEL
+========================== */
+.offload-panel {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 12px;
+    background: #f5f7fb;
+}
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.status-chip {
+    background: #e0e6f0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.85em;
+}
+
+.offload-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.offload-actions .secondary-btn {
+    width: auto;
+    flex: 1 1 140px;
+}
+
+/* ==========================
+   UPLOAD QUEUE
+========================== */
+.queue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.queue-card {
+    border: 1px solid #d7dfea;
+    border-radius: 10px;
+    padding: 12px;
+    background: #ffffff;
+}
+
+.queue-label {
+    font-weight: 600;
+    color: #0d2347;
+}
+
+.queue-meta {
+    font-size: 0.85em;
+    color: #6b7c94;
+    margin-bottom: 8px;
+}
+
+.queue-error {
+    color: #d62828;
+    font-size: 0.85em;
+    margin-top: 8px;
+}
+
+.progress-bar {
+    height: 6px;
+    background: #e0e6f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #4a6da7;
+    width: 0;
+}
+
+.muted {
+    color: #6b7c94;
+    font-size: 0.9em;
+}
