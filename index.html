@@ -4,15 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ASME Receiving</title>
-
   <link rel="stylesheet" href="style.css" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="assets/icons/icon-192.png" />
 </head>
 
 <body class="home-screen">
   <header class="header-center-only">
-    <img src="assets/icons/icon-192.png" class="header-logo-centered" alt="ASME Receiving" />
+    <img src="assets/icons/icon-192.png" class="header-logo-centered" alt="ASME Receiving">
   </header>
 
   <main class="home-main">
@@ -30,26 +27,24 @@
 
       <p id="cloudStatusText" class="status-text"></p>
 
-      <label for="firebaseConfigInput">Firebase Config (JSON)</label>
-      <textarea id="firebaseConfigInput" rows="6" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
+      <label>Firebase Config (JSON)</label>
+      <textarea id="firebaseConfigInput" rows="6"
+        placeholder='Anonymous sign-in attempt failed (waiting for auth anyway): 
+        FirebaseError {code: "auth/api-key-not-valid.-please-pass-a-valid-api-key.", customData: Object, name: "FirebaseError", constructor: Object}'></textarea>
 
-      <label for="pdfEndpointInput">PDF Endpoint (optional for now)</label>
+      <label>PDF Endpoint (optional for now)</label>
       <input type="text" id="pdfEndpointInput" placeholder="https://.../generate-pdf" />
 
       <button type="button" class="secondary-btn" id="saveCloudSettingsBtn">Save Cloud Settings</button>
     </section>
   </main>
 
-  <!-- Must be loaded before cloud.js -->
   <script src="cloud_settings.js"></script>
-
-  <!-- cloud.js MUST be a module (it imports Firebase SDK modules) -->
   <script type="module" src="cloud.js"></script>
-
-  <!-- UI logic -->
   <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
