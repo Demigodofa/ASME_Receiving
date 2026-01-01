@@ -1,50 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ASME Receiving</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaterialGuardian</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="assets/icons/Material_Guardian.png"> 
 </head>
-
-<body class="home-screen">
-  <header class="header-center-only">
-    <img src="assets/icons/icon-192.png" class="header-logo-centered" alt="ASME Receiving">
-  </header>
-
-  <main class="home-main">
-    <button class="primary-btn" onclick="window.location.href='create_job.html'">Create Job</button>
-    <button class="primary-btn" onclick="window.location.href='jobs.html'">Browse Jobs</button>
-    <button class="secondary-btn" onclick="window.location.href='upload_queue.html'">Upload Queue</button>
-
-    <section class="card cloud-settings">
-      <h2>Cloud Mode</h2>
-
-      <label class="toggle-row">
-        <input type="checkbox" id="cloudModeToggle" />
-        <span>Enable cloud mode</span>
-      </label>
-
-      <p id="cloudStatusText" class="status-text"></p>
-
-      <label>Firebase Config (JSON)</label>
-      <textarea id="firebaseConfigInput" rows="6"
-        placeholder='Anonymous sign-in attempt failed (waiting for auth anyway): 
-        FirebaseError {code: "auth/api-key-not-valid.-please-pass-a-valid-api-key.", customData: Object, name: "FirebaseError", constructor: Object}'></textarea>
-
-      <label>PDF Endpoint (optional for now)</label>
-      <input type="text" id="pdfEndpointInput" placeholder="https://.../generate-pdf" />
-
-      <button type="button" class="secondary-btn" id="saveCloudSettingsBtn">Save Cloud Settings</button>
-    </section>
-  </main>
-
-  <script src="cloud_settings.js"></script>
-  <script type="module" src="cloud.js"></script>
-  <script src="app.js"></script>
+<body class="splash-screen-body">
+    <div class="splash-container">
+        <img src="assets/icons/icon-192.png" class="splash-logo" alt="Welders Helper Logo">
+        <h1 class="splash-title">Welders Helper</h1>
+        <p class="splash-subtitle">A Suite of Tools for the Modern Welder</p>
+    </div>
+    <script>
+        // Wait for the animation to mostly complete, then redirect
+        setTimeout(() => {
+            window.location.href = 'home.html';
+        }, 2800); // Redirect slightly before the animation ends for a smoother transition
+    </script>
 </body>
 </html>
-
-
-
-

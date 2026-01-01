@@ -1,12 +1,20 @@
 // ============================================================================
-//  ASME Receiving - Safe Auto-Updating Service Worker
-//  Prevents freeze on splash screen & avoids hard-cached HTML
+//  MaterialGuardian - Caching Service Worker
 // ============================================================================
 
-const STATIC_CACHE = "asme-static-v5";
+const CACHE_NAME = "material-guardian-static-v1";
 
-// Only cache truly static files (icons, CSS, scripts)
-const STATIC_FILES = [
+// These are the files that make up the "app shell"
+const APP_SHELL_FILES = [
+  "/",
+  "/index.html",
+  "/home.html",
+  "/create_job.html",
+  "/jobs.html",
+  "/job_detail.html",
+  "/upload_queue.html",
+  "/receiving.html", // Added this page
+  "/manifest.webmanifest",
   "/style.css",
   "/db.js",
   "/cloud_settings.js",
@@ -15,66 +23,54 @@ const STATIC_FILES = [
   "/upload_queue_page.js",
   "/cloud.js",
   "/app.js",
-  "/assets/icons/icon-32.png",
-  "/assets/icons/icon-192.png",
-  "/assets/icons/icon-512.png"
+  "/create_job.js",
+  "/jobs_list.js",
+  "/job_detail.js",
+  "/assets/icons/Material_Guardian_180.png",
+  "/assets/icons/Material_Guardian_192.png",
+  "/assets/icons/Material_Guardian_512.png",
+  "/assets/icons/icon-192.png" // For Welder's Helper splash
 ];
 
-// ----------------------------------------------------------------------------
-// INSTALL — Precache static assets only
-// ----------------------------------------------------------------------------
+// Install: Cache all the app shell files
 self.addEventListener("install", (event) => {
+  console.log("[SW] Install");
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_FILES))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL_FILES))
   );
   self.skipWaiting();
 });
 
-// ----------------------------------------------------------------------------
-// ACTIVATE — Remove old caches
-// ----------------------------------------------------------------------------
+// Activate: Remove old caches
 self.addEventListener("activate", (event) => {
+  console.log("[SW] Activate");
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
-        keys
-          .filter((key) => key !== STATIC_CACHE)
-          .map((key) => caches.delete(key))
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       )
     )
   );
   self.clients.claim();
 });
 
-// ----------------------------------------------------------------------------
-// FETCH — Network-first for HTML, Cache-first for static assets
-// ----------------------------------------------------------------------------
+// Fetch: Serve from cache first, with a network-first strategy for pages
 self.addEventListener("fetch", (event) => {
   const req = event.request;
 
-  // HTML files must never be served from cache
-  if (req.headers.get("accept")?.includes("text/html")) {
+  // For HTML pages, try the network first, fall back to cache.
+  // This ensures users get updates if they are online.
+  if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req).catch(() => caches.match("/index.html"))
+      fetch(req).catch(() => caches.match(req.url))
     );
     return;
   }
 
-  // Static files: cache first
+  // For all other static assets, use a cache-first strategy.
   event.respondWith(
     caches.match(req).then((cacheRes) => {
-      return (
-        cacheRes ||
-        fetch(req).then((networkRes) => {
-          if (networkRes && networkRes.ok) {
-            const resClone = networkRes.clone();
-            caches.open(STATIC_CACHE).then((cache) => {
-              cache.put(req, resClone);
-            });
-          }
-          return networkRes;
-        })
-      );
+      return cacheRes || fetch(req);
     })
   );
 });

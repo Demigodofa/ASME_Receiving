@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaterialGuardian</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="assets/icons/Material_Guardian_180.png">
+</head>
+<body>
+
+    <main class="app-grid">
+        <!-- Centered Logo -->
+        <div class="logo-container">
+            <img src="assets/icons/Material_Guardian_512.png" class="app-logo" alt="MaterialGuardian Logo">
+            <p class="app-version">v1.0.0</p> <!-- Optional version number -->
+        </div>
+
+        <!-- Navigation Buttons -->
+        <nav class="nav-grid">
+            <a href="jobs.html" class="nav-button">
+                <img src="assets/icons/jobs.svg" alt="Jobs Icon"> <!-- Replace with actual icon -->
+                <span>Jobs</span>
+            </a>
+            <a href="upload_queue.html" class="nav-button">
+                <img src="assets/icons/cloud.svg" alt="Upload Queue Icon"> <!-- Replace with actual icon -->
+                <span>Upload Queue</span>
+            </a>
+        </nav>
+
+        <!-- Settings -->
+        <div class="settings-container">
+            <button id="settingsBtn" class="settings-btn">
+                <img src="assets/icons/settings.svg" alt="Settings"> <!-- Replace with actual icon -->
+            </button>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

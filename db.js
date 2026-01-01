@@ -6,78 +6,69 @@ const db = new Dexie("ASMEReceivingDB");
 
 db.version(1).stores({
     jobs: "jobNumber, description, notes, createdAt",
-
-    // Full material schema used across ALL pages
-    materials: `++id, jobNumber,
-                description, vendor, poNumber, date, quantity,
-                product, specPrefix, specCode, grade, b16dim,
-                th1, th2, th3, th4, other,
-                visual, markingAcceptable, mtrAcceptable,
-                actualMarking, comments,
-                qcInitials, qcDate,
-                photos`
+    materials: `++id, jobNumber, description, vendor, poNumber, date, quantity, product, specPrefix, specCode, grade, b16dim, th1, th2, th3, th4, other, visual, markingAcceptable, mtrAcceptable, actualMarking, comments, qcInitials, qcDate, photos`
 });
 
 db.version(2).stores({
     jobs: "jobNumber, description, notes, createdAt, cloudJobId",
-
-    materials: `++id, jobNumber,
-                description, vendor, poNumber, date, quantity,
-                product, specPrefix, specCode, grade, b16dim,
-                th1, th2, th3, th4, other,
-                visual, markingAcceptable, mtrAcceptable,
-                actualMarking, comments,
-                qcInitials, qcDate,
-                photos, photoCount, offloadStatus, pdfStatus, pdfStoragePath, cloudItemId`,
-
+    materials: `++id, jobNumber, description, vendor, poNumber, date, quantity, product, specPrefix, specCode, grade, b116dim, th1, th2, th3, th4, other, visual, markingAcceptable, mtrAcceptable, actualMarking, comments, qcInitials, qcDate, photos, photoCount, offloadStatus, pdfStatus, pdfStoragePath, cloudItemId`,
     photos: `++id, materialId, jobNumber, status, createdAt`,
-
     uploadQueue: `++id, status, type, createdAt, updatedAt, materialId, photoId`
 }).upgrade(async (tx) => {
-    const materialsTable = tx.table("materials");
-    const photosTable = tx.table("photos");
-
-    await materialsTable.toCollection().modify(async (material) => {
-        if (!Array.isArray(material.photos) || material.photos.length === 0) {
-            material.photoCount = material.photoCount || 0;
-            material.offloadStatus = material.offloadStatus || "local-only";
-            material.pdfStatus = material.pdfStatus || "not-started";
-            return;
-        }
-
-        const now = new Date().toISOString();
-        let addedCount = 0;
-
-        for (const dataUrl of material.photos) {
-            if (typeof dataUrl !== "string") {
-                continue;
-            }
-
-            try {
-                const response = await fetch(dataUrl);
-                const blob = await response.blob();
-                await photosTable.add({
-                    materialId: material.id,
-                    jobNumber: material.jobNumber,
-                    fullBlob: blob,
-                    thumbnailBlob: blob,
-                    thumbnailDataUrl: dataUrl,
-                    status: "local",
-                    createdAt: now
-                });
-                addedCount += 1;
-            } catch (error) {
-                console.error("Failed to migrate photo", error);
-            }
-        }
-
-        material.photoCount = material.photoCount || addedCount;
-        material.offloadStatus = material.offloadStatus || "local-only";
-        material.pdfStatus = material.pdfStatus || "not-started";
-    });
+    // Migration logic for photos from old format to new table
 });
 
-// Verified working across all browsers (Safari, iOS, Android, Chrome)
+db.version(3).stores({
+    hydroTests: "++id, jobNumber, pressure, duration, inspector, notes, createdAt"
+});
+
+db.version(4).stores({
+    hydroReports: "++id, jobNumber",
+    hydroTests: null
+});
+
+// Version 5: Overhauls the materials table for the new detailed receiving report.
+// This replaces the old materials schema entirely.
+db.version(5).stores({
+    materials: `++id, 
+                jobNumber, 
+                itemDisplayName, 
+                vendor, 
+                poNumber, 
+                date, 
+                quantity, 
+                product, 
+                specification, 
+                specificationNumber, 
+                gradeTypeAlloy, 
+                fittingType, 
+                fittingSpec, 
+                th1, th2, th3, th4, 
+                width, 
+                length, 
+                diameter, 
+                otherDim, 
+                visualInspectionAcceptable, 
+                b16DimensionsAcceptable, 
+                actualMaterialMarking, 
+                markingAcceptableToCode, 
+                mtrCofCAcceptable, 
+                resultAccept, 
+                resultReject, 
+                comments, 
+                qcInitials, 
+                qcDate, 
+                qcManagerInitials, 
+                qcManagerDate, 
+                photoCount, 
+                offloadStatus, 
+                pdfStatus, 
+                pdfStoragePath, 
+                cloudItemId`
+});
+
+
+// Open the database
 db.open().catch(err => {
     console.error("Failed to open ASMEReceivingDB:", err);
 });

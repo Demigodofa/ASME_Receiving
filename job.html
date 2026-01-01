@@ -1,83 +1,43 @@
-let jobNumber;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Job Details - MaterialGuardian</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <header class="header-bar">
+        <button class="back-btn" onclick="window.location.href='jobs.html'">← Back</button>
+        <img src="assets/icons/Material_Guardian.png" class="header-logo-centered" alt="MaterialGuardian">
+    </header>
 
-window.onload = async () => {
-    const params = new URLSearchParams(window.location.search);
-    jobNumber = params.get("job");
+    <main>
+        <div id="jobInfo" class="card"></div>
 
-    if (!jobNumber) {
-        alert("Error: Job number missing.");
-        window.location.href = "jobs.html";
-        return;
-    }
+        <div class="card">
+            <h2>Receiving Reports</h2>
+            <div id="materialsList"></div>
+            <button id="addMaterialBtn" class="primary-btn">Add Receiving Report</button>
+        </div>
 
-    loadJob();
-    loadMaterials();
+        <div class="card">
+            <h2>Job Actions</h2>
+            <button id="exportJobBtn" class="secondary-btn">Export Job Data</button>
+            <button id="generateReportBtn" class="secondary-btn">Generate Hydro Report</button>
+            <button id="deleteJobBtn" class="danger-btn">Delete Job</button>
+        </div>
+    </main>
 
-    document.getElementById("addMaterialBtn").onclick = () => {
-        window.location.href = `add_material.html?job=${jobNumber}`;
-    };
+    <footer>
+        <!-- Footer content can go here -->
+    </footer>
 
-    document.getElementById("exportJobBtn").onclick = () => {
-        exportJobData(jobNumber);
-    };
-
-    document.getElementById("deleteJobBtn").onclick = deleteJob;
-};
-
-async function loadJob() {
-    const job = await db.jobs.where("jobNumber").equals(jobNumber).first();
-    if (!job) return;
-
-    document.getElementById("jobInfo").innerHTML = `
-        <h2>Job #${job.jobNumber}</h2>
-        <p>${job.description || ""}</p>
-        <p>${job.notes || ""}</p>
-    `;
-}
-
-async function loadMaterials() {
-    const materials = await db.materials.where("jobNumber").equals(jobNumber).toArray();
-    const container = document.getElementById("materialsList");
-    container.innerHTML = "";
-
-    materials.forEach((m) => {
-        const div = document.createElement("div");
-        div.className = "material-card";
-
-        div.innerHTML = `
-            <h3>${m.description}</h3>
-            <button class="primary-btn" onclick="editMaterial('${m.id}')">Edit</button>
-            <button class="danger-btn" onclick="deleteMaterial('${m.id}')">Delete</button>
-        `;
-
-        container.appendChild(div);
-    });
-}
-
-function editMaterial(id) {
-    window.location.href = `edit_material.html?id=${id}`;
-}
-
-async function deleteMaterial(id) {
-    if (!confirm("Delete this material?")) return;
-    await db.photos.where("materialId").equals(Number(id)).delete();
-    await db.uploadQueue.where("materialId").equals(Number(id)).delete();
-    await db.materials.delete(Number(id));
-    loadMaterials();
-}
-
-async function deleteJob() {
-    if (!confirm(`Delete Job #${jobNumber}? This removes ALL materials.`)) return;
-
-    const materials = await db.materials.where("jobNumber").equals(jobNumber).toArray();
-    const materialIds = materials.map((m) => m.id);
-    if (materialIds.length > 0) {
-        await db.photos.where("materialId").anyOf(materialIds).delete();
-        await db.uploadQueue.where("materialId").anyOf(materialIds).delete();
-    }
-
-    await db.materials.where("jobNumber").equals(jobNumber).delete();
-    await db.jobs.where("jobNumber").equals(jobNumber).delete();
-
-    window.location.href = "jobs.html";
-}
+    <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+    <script src="db.js"></script>
+    <script src="job.js"></script>
+    <script src="job_detail.js"></script> <!-- Added for future functionality -->
+    <script src="export_job.js"></script>
+    <script src="delete_job.js"></script>
+</body>
+</html>

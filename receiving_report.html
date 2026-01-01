@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receiving Inspection Report</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="header-bar">
+    <button class="back-btn" onclick="history.back()">Back</button>
+    <h1 class="title">Receiving Report</h1>
+    <img src="assets/icons/icon-192.png" class="header-icon">
+</header>
+
+<main class="content">
+<form id="reportForm">
+    <!-- In-App Display Description -->
+    <fieldset class="form-section">
+        <legend>In-App Display</legend>
+        <div class="form-field">
+            <label for="itemDisplayName">Item Description (for list view)</label>
+            <textarea id="itemDisplayName" rows="2" placeholder="e.g., '3-inch 90-degree elbow'"></textarea>
+        </div>
+    </fieldset>
+
+    <!-- Header Section -->
+    <fieldset class="form-section">
+        <legend>Report Details</legend>
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="jobNumber">Job No.</label>
+                <input type="text" id="jobNumber" maxlength="8">
+            </div>
+            <div class="form-field">
+                <label for="vendor">Vendor</label>
+                <input type="text" id="vendor" maxlength="20">
+            </div>
+            <div class="form-field">
+                <label for="poNumber">PO.</label>
+                <input type="text" id="poNumber" maxlength="10">
+            </div>
+            <div class="form-field">
+                <label for="date">Date</label>
+                <input type="date" id="date">
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- Material Details -->
+    <div class="form-grid">
+        <div class="form-field">
+            <label for="quantity">Quantity</label>
+            <input type="number" id="quantity" maxlength="6">
+        </div>
+        <div class="form-field">
+            <label for="product">Product</label>
+            <select id="product">
+                <option>Flat Plate</option>
+                <option>Head</option>
+                <option>Pipe</option>
+                <option>Tube</option>
+                <option>Fitting</option>
+                <option>Other</option>
+                <option>Filler Metal</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-grid">
+        <div class="form-field">
+            <label for="specification">Specification</label>
+            <select id="specification">
+                <option>SA</option>
+                <option>A</option>
+                <option>SFA</option>
+                <option>SB</option>
+            </select>
+            <input type="text" id="specificationNumber" maxlength="7" placeholder="Number">
+        </div>
+         <div class="form-field">
+            <label for="gradeTypeAlloy">Grade/Type/Alloy</label>
+            <input type="text" id="gradeTypeAlloy" maxlength="10">
+        </div>
+    </div>
+
+    <!-- Fitting Section -->
+    <div class="form-grid">
+        <div class="form-field">
+            <label for="fittingType">Fitting</label>
+            <select id="fittingType">
+                <option>N/A</option>
+                <option>B16.</option>
+            </select>
+            <select id="fittingSpec">
+                <option>5</option>
+                <option>9</option>
+                <option>11</option>
+                <option>34</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Dimensions -->
+    <fieldset class="form-section">
+        <legend>Dimensions</legend>
+        <div class="form-grid-4col">
+            <div class="form-field">
+                <label for="th1">Th1</label>
+                <input type="text" id="th1" maxlength="8">
+            </div>
+            <div class="form-field">
+                <label for="th2">Th2</label>
+                <input type="text" id="th2" maxlength="8">
+            </div>
+            <div class="form-field">
+                <label for="th3">Th3</label>
+                <input type="text" id="th3" maxlength="8">
+            </div>
+            <div class="form-field">
+                <label for="th4">Th4</label>
+                <input type="text" id="th4" maxlength="8">
+            </div>
+            <div class="form-field">
+                <label for="width">Width</label>
+                <input type="text" id="width" maxlength="10">
+            </div>
+            <div class="form-field">
+                <label for="length">Length</label>
+                <input type="text" id="length" maxlength="8">
+            </div>
+            <div class="form-field">
+                <label for="diameter">Diameter</label>
+                <input type="text" id="diameter" maxlength="6">
+            </div>
+            <div class="form-field">
+                <label for="otherDim">Other</label>
+                <input type="text" id="otherDim" maxlength="10">
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- Inspection Details -->
+    <fieldset class="form-section">
+        <legend>Inspection</legend>
+        <div class="form-field">
+            <label for="visualInspectionAcceptable">Visual Inspection Acceptable?</label>
+            <select id="visualInspectionAcceptable">
+                <option>Yes</option>
+                <option>No</option>
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="b16DimensionsAcceptable">B16 Dimensions Acceptable?</label>
+            <select id="b16DimensionsAcceptable">
+                <option>Yes</option>
+                <option>No</option>
+                <option>N/A</option>
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="actualMaterialMarking">Actual Material Marking</label>
+            <textarea id="actualMaterialMarking" rows="4"></textarea>
+        </div>
+        <div class="form-field">
+            <label for="mtrCofCAcceptable">MTR/CofC Acceptable to Specification?</label>
+            <select id="mtrCofCAcceptable">
+                <option>Yes</option>
+                <option>No</option>
+                <option>N/A</option>
+            </select>
+        </div>
+    </fieldset>
+
+    <!-- Acceptance and Comments -->
+    <fieldset class="form-section">
+        <legend>Status</legend>
+        <div class="form-field">
+             <label>Result</label>
+            <div class="checkbox-group">
+                <input type="checkbox" id="resultAccept">
+                <label for="resultAccept">Accept</label>
+                <input type="checkbox" id="resultReject">
+                <label for="resultReject">Reject</label>
+            </div>
+        </div>
+        <div class="form-field">
+            <label for="comments">Comments</label>
+            <textarea id="comments"></textarea>
+        </div>
+    </fieldset>
+
+    <!-- QC -->
+    <fieldset class="form-section">
+        <legend>Quality Control</legend>
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="qcInitials">Initials</label>
+                <input type="text" id="qcInitials" maxlength="4">
+            </div>
+            <div class="form-field">
+                <label for="qcDate">Date</label>
+                <input type="date" id="qcDate">
+            </div>
+        </div>
+    </fieldset>
+    
+    <!-- QC Manager -->
+    <fieldset class="form-section">
+        <legend>Material Approval</legend>
+         <div class="form-field">
+            <label>QC Manager</label>
+             <div class="form-grid">
+                <div class="form-field">
+                    <label for="qcManagerInitials">Initials</label>
+                    <input type="text" id="qcManagerInitials" maxlength="4">
+                </div>
+                <div class="form-field">
+                    <label for="qcManagerDate">Date</label>
+                    <input type="date" id="qcManagerDate">
+                </div>
+            </div>
+        </div>
+    </fieldset>
+
+    <label>Photos (max 5)</label>
+    <input type="file" accept="image/*" capture="camera" id="photoInput" multiple>
+    <div id="photoPreview" class="photo-preview"></div>
+
+    <button type="submit" class="primary-btn" id="saveBtn">Save</button>
+    <button type="button" class="danger-btn" id="deleteBtn" style="display: none;">Delete</button>
+</form>
+</main>
+
+<script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+<script src="db.js"></script>
+<script src="photo_utils.js"></script>
+<script src="receiving_report.js"></script>
+
+</body>
+</html>

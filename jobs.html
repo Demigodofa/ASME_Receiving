@@ -8,17 +8,16 @@
     <link rel="stylesheet" href="style.css">
 
     <!-- Unified DB + logic -->
+    <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
     <script defer src="db.js"></script>
-    <script defer src="jobs.js"></script>
+    <script defer src="jobs_list.js"></script>
 </head>
 
 <body>
 
-<!-- UNIVERSAL NAVY HEADER -->
 <header class="header-bar">
-    <button class="back-btn" onclick="window.history.back()">← Back</button>
-    <h1 class="title">Browse Jobs</h1>
-    <img src="assets/icons/icon-192.png" class="header-icon">
+    <button class="back-btn" onclick="window.location.href='home.html'">← Back</button>
+    <img src="assets/icons/Material_Guardian.png" class="header-logo-centered" alt="MaterialGuardian">
 </header>
 
 <div class="container">
