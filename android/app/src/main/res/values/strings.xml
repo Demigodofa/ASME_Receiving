@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MaterialGuardian</string>
+    <string name="title_activity_main">MaterialGuardian</string>
+    <string name="package_name">com.materialguardian.app</string>
+    <string name="custom_url_scheme">com.materialguardian.app</string>
+</resources>

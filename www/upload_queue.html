@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Queue</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="header-bar">
+    <button class="back-btn" onclick="window.history.back()">← Back</button>
+    <h1 class="title">Upload Queue</h1>
+    <img src="assets/icons/icon-192.png" class="header-icon">
+</header>
+
+<main class="content">
+    <section class="card">
+        <h2>Pending / In Progress</h2>
+        <div id="queuePending" class="queue-list"></div>
+    </section>
+
+    <section class="card">
+        <h2>Failed</h2>
+        <div id="queueFailed" class="queue-list"></div>
+    </section>
+
+    <section class="card">
+        <h2>Completed</h2>
+        <div id="queueCompleted" class="queue-list"></div>
+    </section>
+</main>
+
+<script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+<script src="db.js"></script>
+<script src="cloud_settings.js"></script>
+<script type="module" src="cloud.js"></script>
+<script src="upload_queue.js"></script>
+<script src="upload_queue_page.js"></script>
+</body>
+</html>

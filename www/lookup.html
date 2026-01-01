@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lookup - ASME Receiving</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon-32.png" type="image/png" />
+</head>
+
+<body>
+
+    <header>
+        <img src="icon-32.png" alt="App Icon" />
+        <h1>Lookup</h1>
+    </header>
+
+    <main>
+
+        <div class="card">
+            <h2 class="center">Search</h2>
+
+            <label for="searchField">Search Jobs / Parts</label>
+            <input id="searchField" type="text" placeholder="Enter job # or part #" oninput="performLookup()" />
+        </div>
+
+        <div class="card">
+            <h2 class="center">Results</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>ID</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="resultTable">
+                    <!-- populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <footer>
+        <a href="app.html" class="btn-secondary action-btn">Back</a>
+    </footer>
+
+    <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
+    <script>
+        const sampleData = [
+            { type: 'Job', id: '1001', desc: 'Heat Exchanger' },
+            { type: 'Job', id: '1002', desc: 'Steam Drum' },
+            { type: 'Part', id: 'A123', desc: '4” Sch80 Pipe' },
+            { type: 'Part', id: 'B448', desc: '316 Plate' }
+        ];
+
+        function performLookup() {
+            const q = document.getElementById('searchField').value.trim().toLowerCase();
+            const table = document.getElementById('resultTable');
+
+            table.innerHTML = '';
+
+            if (q.length === 0) return;
+
+            const filtered = sampleData.filter(item =>
+                item.id.toLowerCase().includes(q) ||
+                item.desc.toLowerCase().includes(q) ||
+                item.type.toLowerCase().includes(q)
+            );
+
+            filtered.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.type}</td>
+                    <td>${item.id}</td>
+                    <td>${item.desc}</td>
+                `;
+                table.appendChild(row);
+            });
+        }
+    </script>
+
+</body>
+</html>

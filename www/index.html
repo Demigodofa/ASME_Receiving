@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaterialGuardian</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="assets/icons/Material_Guardian.png"> 
+</head>
+<body class="splash-screen-body">
+    <div class="splash-container">
+        <img src="assets/icons/icon-192.png" class="splash-logo" alt="Welders Helper Logo">
+        <h1 class="splash-title">Welders Helper</h1>
+        <p class="splash-subtitle">A Suite of Tools for the Modern Welder</p>
+    </div>
+    <script>
+        // Wait for the animation to mostly complete, then redirect
+        setTimeout(() => {
+            window.location.href = 'home.html';
+        }, 2800); // Redirect slightly before the animation ends for a smoother transition
+    </script>
+</body>
+</html>
