@@ -25,6 +25,109 @@ body {
 }
 
 /* =========================
+   1a. Splash + Landing Screens
+========================== */
+.splash-screen-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--background-light);
+}
+
+.splash-container {
+    text-align: center;
+    animation: splashFade 3s ease-in-out forwards;
+    opacity: 0;
+    padding: 0 24px;
+}
+
+.splash-logo {
+    width: min(70vw, 320px);
+    max-height: 40vh;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.splash-title {
+    font-size: 2rem;
+    margin: 0 0 8px;
+    font-weight: 600;
+}
+
+.splash-subtitle {
+    margin: 0 auto;
+    max-width: 320px;
+    color: #51617d;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+@keyframes splashFade {
+    0% { opacity: 0; }
+    33% { opacity: 1; }
+    67% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.home-landing-body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    background: var(--background-light);
+}
+
+.landing-screen {
+    width: 100%;
+    max-width: 480px;
+    padding: 32px 20px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+}
+
+.landing-logo {
+    width: min(70vw, 260px);
+    max-height: 33vh;
+    height: auto;
+}
+
+.landing-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.landing-button {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    padding: 18px 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-light);
+    border-radius: 18px;
+    background: linear-gradient(180deg, #88c5ff 0%, #5a9fe8 100%);
+    box-shadow: 0 6px 12px rgba(12, 33, 77, 0.2),
+                inset 0 2px 0 rgba(255, 255, 255, 0.45);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.landing-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(12, 33, 77, 0.25),
+                inset 0 2px 0 rgba(255, 255, 255, 0.45);
+}
+
+.landing-button:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 8px rgba(12, 33, 77, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* =========================
    2. Header & Navigation
 ========================== */
 .header-bar {
