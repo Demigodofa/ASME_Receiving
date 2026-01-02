@@ -12,7 +12,7 @@ A lightweight, offline-first receiving inspection app with optional cloud mode f
 
 ### Cloud mode setup
 
-1. Open the home screen (`app.html`).
+1. Open the app entry point (`app.html`), which routes through `index.html` (splash) to `home.html`.
 2. Paste your Firebase config JSON into **Firebase Config (JSON)**.
 3. Provide your PDF generation endpoint in **PDF Endpoint**.
 4. Enable **Cloud mode**.
