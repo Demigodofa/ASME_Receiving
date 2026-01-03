@@ -62,6 +62,10 @@ Visit **Upload Queue** from the home screen to monitor pending, failed, and comp
 - The home screen lists saved jobs and links directly to their job details for editing and reporting.
 - The job details screen shows a compact job summary row; select it to edit job metadata, and use the hydro report action/status under Job Details to open or generate the report.
 
+## UI layout conventions
+
+- Screens with the fixed header use the `.page-content` wrapper in `style.css` to keep content centered and padded on larger displays.
+
 ## Development checks
 
 - `npm run lint` for ESLint.
