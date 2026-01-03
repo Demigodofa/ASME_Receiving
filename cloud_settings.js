@@ -25,19 +25,23 @@ const cloudSettings = {
   async redeemAccessToken(token) {
     // ** THIS IS A MOCK **
     // In a real application, you would make an HTTP request to your secure server.
-    // e.g., const response = await fetch('https://your-api.com/redeem-token', 
-    //          { method: 'POST', body: JSON.stringify({ token }) });
-    // const data = await response.json();
+    // Since you provided your Firebase config, we have "connected" it here.
 
-    console.log(`Simulating redemption for token: ${token}`);
+    console.log(`Activating cloud with token: ${token}`);
 
-    // Mock server response.
+    // Real config provided by user
     const mockServerResponse = {
       success: true,
       config: {
-        // This is where the server would return the actual Firebase config
-        firebase: { /* ... your firebase config object ... */ }, 
-        // And the PDF endpoint
+        firebase: {
+          apiKey: "AIzaSyBMbqSHZkvWZ4eJCKswkQtlpH9Ai7sjzO8",
+          authDomain: "asme-receiving.firebaseapp.com",
+          projectId: "asme-receiving",
+          storageBucket: "asme-receiving.firebasestorage.app",
+          messagingSenderId: "293518443128",
+          appId: "1:293518443128:web:5641cbd8e082d7ce0fe38d",
+          measurementId: "G-7QC63TZ1K3"
+        },
         pdfEndpoint: "https://your-live-pdf-endpoint.com/generate"
       }
     };

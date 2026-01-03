@@ -30,14 +30,16 @@
             <div class="home-jobs-header">
                 <h2>Jobs</h2>
             </div>
-            <div id="homeJobsList" class="home-jobs-list"></div>
+            <!-- Changed ID to jobsList to match jobs.js wiring -->
+            <div id="jobsList" class="home-jobs-list"></div>
         </section>
     </main>
 
     <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
     <script src="db.js"></script>
     <script src="cloud_settings.js"></script>
-    <!-- home.js is no longer needed as the settings panel is removed -->
+    <!-- Added jobs.js to handle the job list logic -->
+    <script src="jobs.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
