@@ -46,6 +46,11 @@ Visit **Upload Queue** from the home screen to monitor pending, failed, and comp
 
 - The **Save Job** action on `create_job.html` stores the job in IndexedDB and routes to `job.html` for adding receiving reports and materials.
 
+## Development checks
+
+- `npm run lint` for ESLint.
+- `npm test` for Jest.
+
 ## Service worker caching
 
 Static assets are cached in the service worker (`service_worker.js`). If you add new static assets, update the cache list.
