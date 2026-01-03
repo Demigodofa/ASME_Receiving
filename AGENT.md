@@ -12,6 +12,7 @@
 - Receiving report photo buckets live in `receiving_report.js` and save `photos` with `category` and `label` metadata for materials vs. MTR/CofC.
 - Job renumbering updates related materials, photos, and hydro reports in `job.js`.
 - Shared page centering/layout for fixed-header screens lives in `style.css` under `.page-content` and uses `box-sizing: border-box` to prevent padded layouts from overflowing.
+- Header logos are sized via `.header-logo-centered` in `style.css` to keep the fixed header compact.
 
 ## Keeping documentation in sync
 

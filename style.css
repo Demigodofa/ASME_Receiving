@@ -249,6 +249,12 @@ body {
     height: 40px;
 }
 
+.header-logo-centered {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto;
+}
+
 .back-btn {
     font-size: 1.05em;
     background: linear-gradient(to bottom, #f1f3f6, #d7dbe2);

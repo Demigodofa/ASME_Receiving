@@ -66,6 +66,7 @@ Visit **Upload Queue** from the home screen to monitor pending, failed, and comp
 
 - Screens with the fixed header use the `.page-content` wrapper in `style.css` to keep content centered and padded on larger displays.
 - The shared `.page-content`, `.container`, and `.content` wrappers use `box-sizing: border-box` so padded layouts do not overflow on narrow screens.
+- The header logo uses the `.header-logo-centered` class to keep the icon sized consistently across pages.
 
 ## Development checks
 
