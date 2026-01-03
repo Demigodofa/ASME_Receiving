@@ -395,16 +395,19 @@ body {
 ========================== */
 .content {
     padding: 20px 16px;
+    box-sizing: border-box;
 }
 
 .container {
     padding: 20px 16px;
+    box-sizing: border-box;
 }
 
 .page-content {
     max-width: var(--page-max-width);
     margin: 84px auto 40px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .page-content:not(.content):not(.container) {
