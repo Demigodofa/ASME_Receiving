@@ -21,7 +21,7 @@
         <legend>In-App Display</legend>
         <div class="form-field">
             <label for="itemDisplayName">Item Description (for list view)</label>
-            <textarea id="itemDisplayName" rows="2" placeholder="e.g., '3-inch 90-degree elbow'"></textarea>
+            <textarea id="itemDisplayName" rows="5" maxlength="175" placeholder="e.g., '3-inch 90-degree elbow'"></textarea>
         </div>
     </fieldset>
 
@@ -35,7 +35,7 @@
             </div>
             <div class="form-field">
                 <label for="vendor">Vendor</label>
-                <input type="text" id="vendor" maxlength="20">
+                <input type="text" id="vendor" maxlength="30">
             </div>
             <div class="form-field">
                 <label for="poNumber">PO.</label>
@@ -52,7 +52,7 @@
     <div class="form-grid">
         <div class="form-field">
             <label for="quantity">Quantity</label>
-            <input type="number" id="quantity" maxlength="6">
+            <input type="text" id="quantity" inputmode="numeric" maxlength="20">
         </div>
         <div class="form-field">
             <label for="product">Product</label>
@@ -76,7 +76,7 @@
                 <option>SFA</option>
                 <option>SB</option>
             </select>
-            <input type="text" id="specificationNumber" maxlength="7" placeholder="Number">
+            <input type="text" id="specificationNumber" maxlength="20" placeholder="Number">
         </div>
          <div class="form-field">
             <label for="gradeTypeAlloy">Grade/Type/Alloy</label>
@@ -92,18 +92,31 @@
                 <option>N/A</option>
                 <option>B16.</option>
             </select>
-            <select id="fittingSpec">
-                <option>5</option>
-                <option>9</option>
-                <option>11</option>
-                <option>34</option>
-            </select>
+            <input type="text" id="fittingSpec" list="fittingSpecOptions" placeholder="B16 spec">
+            <datalist id="fittingSpecOptions">
+                <option value="5"></option>
+                <option value="9"></option>
+                <option value="11"></option>
+                <option value="34"></option>
+            </datalist>
         </div>
     </div>
 
     <!-- Dimensions -->
     <fieldset class="form-section">
-        <legend>Dimensions</legend>
+        <legend class="fieldset-legend-with-options">
+            <span>Dimensions</span>
+            <span class="legend-options">
+                <label class="checkbox-inline">
+                    <input type="checkbox" id="dimensionsImperial" checked>
+                    Imperial
+                </label>
+                <label class="checkbox-inline">
+                    <input type="checkbox" id="dimensionsMetric">
+                    Metric
+                </label>
+            </span>
+        </legend>
         <div class="form-grid-4col">
             <div class="form-field">
                 <label for="th1">Th1</label>
@@ -160,7 +173,7 @@
         </div>
         <div class="form-field">
             <label for="actualMaterialMarking">Actual Material Marking</label>
-            <textarea id="actualMaterialMarking" rows="4"></textarea>
+            <textarea id="actualMaterialMarking" rows="5"></textarea>
         </div>
         <div class="form-field">
             <label for="mtrCofCAcceptable">MTR/CofC Acceptable to Specification?</label>
@@ -223,9 +236,45 @@
         </div>
     </fieldset>
 
-    <label>Photos (max 5)</label>
-    <input type="file" accept="image/*" capture="camera" id="photoInput" multiple>
-    <div id="photoPreview" class="photo-preview"></div>
+    <fieldset class="form-section full-width">
+        <legend>Photos</legend>
+        <div class="photo-group">
+            <div class="photo-group-header">
+                <h3>Materials</h3>
+                <span class="photo-count" id="materialsPhotoCount">0/4</span>
+            </div>
+            <div class="photo-action-row">
+                <label class="file-button" for="materialsCameraInput">Take Materials Photos</label>
+                <input type="file" accept="image/*" capture="environment" id="materialsCameraInput" data-photo-input data-category="materials" multiple>
+                <label class="file-button" for="materialsFileInput">Choose Materials Files</label>
+                <input type="file" accept="image/*" id="materialsFileInput" data-photo-input data-category="materials" multiple>
+                <button type="button" class="secondary-btn view-edit-btn" id="materialsViewBtn">View/Edit Photos</button>
+            </div>
+            <div id="materialsPhotoPreview" class="photo-preview is-hidden"></div>
+        </div>
+
+        <div class="photo-group">
+            <div class="photo-group-header">
+                <h3>MTR/CofC</h3>
+                <span class="photo-count" id="mtrPhotoCount">0/8</span>
+            </div>
+            <div class="photo-action-row">
+                <label class="file-button" for="mtrCameraInput">Take MTR/CofC Photos</label>
+                <input type="file" accept="image/*" capture="environment" id="mtrCameraInput" data-photo-input data-category="mtr" multiple>
+                <label class="file-button" for="mtrFileInput">Choose MTR/CofC Files</label>
+                <input type="file" accept="image/*" id="mtrFileInput" data-photo-input data-category="mtr" multiple>
+                <button type="button" class="secondary-btn view-edit-btn" id="mtrViewBtn">View/Edit Photos</button>
+            </div>
+            <div id="mtrPhotoPreview" class="photo-preview is-hidden"></div>
+        </div>
+    </fieldset>
+
+    <div class="photo-modal is-hidden" id="photoModal">
+        <div class="photo-modal-content">
+            <button type="button" class="photo-modal-close" id="photoModalClose">Close</button>
+            <img id="photoModalImage" alt="Full size photo">
+        </div>
+    </div>
 
     <button type="submit" class="primary-btn" id="saveBtn">Save</button>
     <button type="button" class="danger-btn" id="deleteBtn" style="display: none;">Delete</button>
