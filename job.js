@@ -100,9 +100,10 @@ async function loadMaterials() {
         div.onclick = () => editMaterial(m.id, m.jobNumber);
 
         const photos = await db.photos.where("materialId").equals(m.id).toArray();
+        const materialPhotos = photos.filter((photo) => !photo.category || photo.category === "materials");
         let thumbnailsHTML = '';
-        for (let i = 0; i < Math.min(photos.length, 5); i++) {
-            thumbnailsHTML += `<img src="${photos[i].imageData}" class="thumbnail" />`;
+        for (let i = 0; i < Math.min(materialPhotos.length, 5); i++) {
+            thumbnailsHTML += `<img src="${materialPhotos[i].imageData}" class="thumbnail" />`;
         }
 
         div.innerHTML = `
@@ -147,7 +148,7 @@ async function saveJobDetails(originalJobNumber) {
         : existing.cloudJobId;
 
     try {
-        await db.transaction("rw", db.jobs, db.materials, db.photos, async () => {
+        await db.transaction("rw", db.jobs, db.materials, db.photos, db.hydroReports, async () => {
             if (updatedJobNumber === originalJobNumber) {
                 await db.jobs.update(originalJobNumber, {
                     description: updatedDescription,
@@ -172,6 +173,11 @@ async function saveJobDetails(originalJobNumber) {
                 .modify({ jobNumber: updatedJobNumber });
 
             await db.photos
+                .where("jobNumber")
+                .equals(originalJobNumber)
+                .modify({ jobNumber: updatedJobNumber });
+
+            await db.hydroReports
                 .where("jobNumber")
                 .equals(originalJobNumber)
                 .modify({ jobNumber: updatedJobNumber });

@@ -514,6 +514,35 @@ textarea {
     height: 20px;
 }
 
+.checkbox-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.checkbox-group--horizontal,
+.radio-group--horizontal {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.hydro-report .checkbox-group input[type="checkbox"],
+.hydro-report .radio-group input[type="radio"] {
+    width: 22px;
+    height: 22px;
+}
+
+.hydro-report .checkbox-group label,
+.hydro-report .radio-group label {
+    margin-right: 12px;
+}
+
 /* =========================
    5. Cards & Lists
 ========================== */
@@ -551,6 +580,14 @@ textarea {
     font-weight: 600;
 }
 
+.material-card h3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+
 .material-card .thumbnail-container {
     display: flex;
     gap: 8px;
@@ -569,7 +606,7 @@ textarea {
 ========================== */
 .photo-preview {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 10px;
 }
 
@@ -579,23 +616,146 @@ textarea {
 
 .photo-preview-item img {
     width: 100%;
-    height: 100px;
+    height: 120px;
     object-fit: cover;
     border-radius: 8px;
+    cursor: pointer;
 }
 
 .delete-photo-btn {
     position: absolute;
     top: 4px;
     right: 4px;
-    background-color: rgba(0, 0, 0, 0.6);
-    color: white;
+    background-color: rgba(207, 33, 33, 0.9);
+    color: #fff;
     border: none;
     border-radius: 50%;
     width: 24px;
     height: 24px;
     font-weight: bold;
     cursor: pointer;
+}
+
+.photo-group {
+    padding: 12px 0 6px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.photo-group:last-child {
+    border-bottom: none;
+}
+
+.photo-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.photo-group-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.photo-count {
+    font-weight: 600;
+    color: var(--primary-blue-dark);
+}
+
+.photo-action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.photo-action-row input[type="file"] {
+    display: none;
+}
+
+.file-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: var(--secondary-blue);
+    color: var(--text-dark);
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 2px 3px var(--shadow-light);
+}
+
+.view-edit-btn {
+    width: auto;
+    margin: 0;
+    padding: 10px 16px;
+}
+
+.photo-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.photo-modal-content {
+    background: var(--text-light);
+    border-radius: 16px;
+    padding: 16px;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.photo-modal-content img {
+    max-width: 80vw;
+    max-height: 70vh;
+    align-self: center;
+    border-radius: 12px;
+}
+
+.photo-modal-close {
+    border: none;
+    background: var(--danger-red);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.fieldset-legend-with-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+}
+
+.legend-options {
+    display: inline-flex;
+    gap: 12px;
+    font-weight: 500;
+}
+
+.checkbox-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.is-hidden {
+    display: none;
 }
 
 /* =========================
