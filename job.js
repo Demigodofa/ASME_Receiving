@@ -23,10 +23,6 @@ window.onload = async () => {
         exportJobData(jobNumber);
     };
 
-    document.getElementById("generateReportBtn").onclick = () => {
-        window.location.href = `hydro_report.html?job=${jobNumber}`;
-    };
-
     document.getElementById("deleteJobBtn").onclick = deleteJob;
 };
 
@@ -34,20 +30,61 @@ async function loadJob() {
     const job = await db.jobs.where("jobNumber").equals(jobNumber).first();
     if (!job) return;
 
+    const report = await db.hydroReports.where("jobNumber").equals(jobNumber).first();
+    const hasReport = Boolean(report);
     const jobInfo = document.getElementById("jobInfo");
+    const jobDescription = job.description ? job.description : "No description";
     jobInfo.innerHTML = `
         <h2>Job Details</h2>
-        <label for="jobNumberInput">Job Number</label>
-        <input type="text" id="jobNumberInput" value="${job.jobNumber}" />
-        <label for="jobDescriptionInput">Description</label>
-        <input type="text" id="jobDescriptionInput" value="${job.description || ""}" />
-        <label for="jobNotesInput">Notes</label>
-        <textarea id="jobNotesInput">${job.notes || ""}</textarea>
-        <button id="saveJobDetailsBtn" class="primary-btn">Save Job Details</button>
+        <button id="jobDetailsToggle" class="job-details-summary" type="button" aria-expanded="false">
+            <span class="job-details-number">Job #${job.jobNumber}</span>
+            <span class="job-details-description">${jobDescription}</span>
+            <span class="job-details-edit">Edit</span>
+        </button>
+        <div class="job-details-actions">
+            <button id="generateReportBtn" class="secondary-btn">
+                ${hasReport ? "Open Hydro Report" : "Generate Hydro Report"}
+            </button>
+            <span id="hydroReportStatus" class="status-pill ${hasReport ? "status-pill--success" : "status-pill--muted"}">
+                ${hasReport ? "✓ Hydro report generated" : "Hydro report not generated"}
+            </span>
+        </div>
+        <div id="jobDetailsForm" class="job-details-form is-hidden">
+            <h3 class="job-details-edit-title">Edit Job Details</h3>
+            <label for="jobNumberInput">Job Number</label>
+            <input type="text" id="jobNumberInput" value="${job.jobNumber}" />
+            <label for="jobDescriptionInput">Description</label>
+            <input type="text" id="jobDescriptionInput" value="${job.description || ""}" />
+            <label for="jobNotesInput">Notes</label>
+            <textarea id="jobNotesInput">${job.notes || ""}</textarea>
+            <div class="job-details-form-actions">
+                <button id="saveJobDetailsBtn" class="primary-btn" type="button">Save Job Details</button>
+                <button id="cancelJobDetailsBtn" class="secondary-btn" type="button">Cancel</button>
+            </div>
+        </div>
     `;
+
+    const jobDetailsForm = document.getElementById("jobDetailsForm");
+    const jobDetailsToggle = document.getElementById("jobDetailsToggle");
+    const cancelJobDetailsBtn = document.getElementById("cancelJobDetailsBtn");
+
+    jobDetailsToggle.onclick = () => {
+        const isOpen = !jobDetailsForm.classList.contains("is-hidden");
+        jobDetailsForm.classList.toggle("is-hidden", isOpen);
+        jobDetailsToggle.setAttribute("aria-expanded", String(!isOpen));
+    };
+
+    cancelJobDetailsBtn.onclick = () => {
+        jobDetailsForm.classList.add("is-hidden");
+        jobDetailsToggle.setAttribute("aria-expanded", "false");
+    };
 
     document.getElementById("saveJobDetailsBtn").onclick = () => {
         saveJobDetails(job.jobNumber);
+    };
+
+    document.getElementById("generateReportBtn").onclick = () => {
+        window.location.href = `hydro_report.html?job=${jobNumber}`;
     };
 }
 
@@ -72,7 +109,6 @@ async function loadMaterials() {
             <h3 class="clickable-title">${m.itemDisplayName || "Untitled Material"}</h3>
             <p>Quantity: ${m.quantity || "N/A"}</p>
             <div class="thumbnail-container">${thumbnailsHTML}</div>
-            <button class="danger-btn" onclick="deleteMaterial(event, '${m.id}')">Delete</button>
         `;
 
         container.appendChild(div);
@@ -154,15 +190,6 @@ async function saveJobDetails(originalJobNumber) {
 function editMaterial(id, jobNum) {
     // Navigate to the new universal receiving report page for editing.
     window.location.href = `receiving_report.html?id=${id}&job=${jobNum}`;
-}
-
-async function deleteMaterial(event, id) {
-    event.stopPropagation(); // Prevent the card's onclick from firing
-    if (!confirm("Delete this material?")) return;
-    await db.photos.where("materialId").equals(Number(id)).delete();
-    await db.uploadQueue.where("materialId").equals(Number(id)).delete();
-    await db.materials.delete(Number(id));
-    loadMaterials();
 }
 
 async function deleteJob() {
