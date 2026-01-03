@@ -45,6 +45,7 @@ Visit **Upload Queue** from the home screen to monitor pending, failed, and comp
 ## Job creation flow
 
 - The **Save Job** action on `create_job.html` stores the job in IndexedDB and routes to `job.html` for adding receiving reports and materials.
+- The home screen lists saved jobs and links directly to their job details for editing and reporting.
 
 ## Development checks
 

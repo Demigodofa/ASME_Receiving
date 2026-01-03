@@ -6,6 +6,7 @@
 - Local IndexedDB schema is defined in `db.js` and includes `materials`, `photos`, and `uploadQueue`.
 - Cloud mode settings are stored in local storage and managed by `cloud_settings.js`.
 - Job creation UI wiring lives in `create_job.js` (save handler and navigation).
+- The home screen job list is rendered in `home.js` with styles in `style.css`.
 - Lint and test scripts are defined in `package.json` with config in `eslint.config.js` and smoke tests in `__tests__/`.
 
 ## Keeping documentation in sync

@@ -34,11 +34,21 @@ async function loadJob() {
     const job = await db.jobs.where("jobNumber").equals(jobNumber).first();
     if (!job) return;
 
-    document.getElementById("jobInfo").innerHTML = `
-        <h2>Job #${job.jobNumber}</h2>
-        <p>${job.description || ""}</p>
-        <p>${job.notes || ""}</p>
+    const jobInfo = document.getElementById("jobInfo");
+    jobInfo.innerHTML = `
+        <h2>Job Details</h2>
+        <label for="jobNumberInput">Job Number</label>
+        <input type="text" id="jobNumberInput" value="${job.jobNumber}" />
+        <label for="jobDescriptionInput">Description</label>
+        <input type="text" id="jobDescriptionInput" value="${job.description || ""}" />
+        <label for="jobNotesInput">Notes</label>
+        <textarea id="jobNotesInput">${job.notes || ""}</textarea>
+        <button id="saveJobDetailsBtn" class="primary-btn">Save Job Details</button>
     `;
+
+    document.getElementById("saveJobDetailsBtn").onclick = () => {
+        saveJobDetails(job.jobNumber);
+    };
 }
 
 async function loadMaterials() {
@@ -48,7 +58,7 @@ async function loadMaterials() {
 
     for (const m of materials) {
         const div = document.createElement("div");
-        div.className = "material-card";
+        div.className = "material-card material-card-clickable";
         // Pass both material ID and job number for editing.
         div.onclick = () => editMaterial(m.id, m.jobNumber);
 
@@ -59,15 +69,86 @@ async function loadMaterials() {
         }
 
         div.innerHTML = `
-            // Use the new itemDisplayName for the card header.
-            <h3>${m.itemDisplayName || 'Untitled Material'}</h3>
-            <p>Quantity: ${m.quantity || 'N/A'}</p>
+            <h3 class="clickable-title">${m.itemDisplayName || "Untitled Material"}</h3>
+            <p>Quantity: ${m.quantity || "N/A"}</p>
             <div class="thumbnail-container">${thumbnailsHTML}</div>
             <button class="danger-btn" onclick="deleteMaterial(event, '${m.id}')">Delete</button>
         `;
 
         container.appendChild(div);
     };
+}
+
+async function saveJobDetails(originalJobNumber) {
+    const jobNumberInput = document.getElementById("jobNumberInput");
+    const descriptionInput = document.getElementById("jobDescriptionInput");
+    const notesInput = document.getElementById("jobNotesInput");
+
+    if (!jobNumberInput || !descriptionInput || !notesInput) return;
+
+    const updatedJobNumber = jobNumberInput.value.trim();
+    const updatedDescription = descriptionInput.value.trim();
+    const updatedNotes = notesInput.value.trim();
+
+    if (!updatedJobNumber) {
+        alert("Job Number is required.");
+        return;
+    }
+
+    if (updatedJobNumber !== originalJobNumber) {
+        const existingJob = await db.jobs.get(updatedJobNumber);
+        if (existingJob) {
+            alert(`Job #${updatedJobNumber} already exists.`);
+            return;
+        }
+    }
+
+    const existing = await db.jobs.get(originalJobNumber);
+    if (!existing) return;
+
+    const nextCloudJobId = existing.cloudJobId === originalJobNumber
+        ? updatedJobNumber
+        : existing.cloudJobId;
+
+    try {
+        await db.transaction("rw", db.jobs, db.materials, db.photos, async () => {
+            if (updatedJobNumber === originalJobNumber) {
+                await db.jobs.update(originalJobNumber, {
+                    description: updatedDescription,
+                    notes: updatedNotes,
+                    cloudJobId: nextCloudJobId,
+                });
+                return;
+            }
+
+            await db.jobs.delete(originalJobNumber);
+            await db.jobs.put({
+                jobNumber: updatedJobNumber,
+                description: updatedDescription,
+                notes: updatedNotes,
+                createdAt: existing.createdAt,
+                cloudJobId: nextCloudJobId || updatedJobNumber,
+            });
+
+            await db.materials
+                .where("jobNumber")
+                .equals(originalJobNumber)
+                .modify({ jobNumber: updatedJobNumber });
+
+            await db.photos
+                .where("jobNumber")
+                .equals(originalJobNumber)
+                .modify({ jobNumber: updatedJobNumber });
+        });
+
+        jobNumber = updatedJobNumber;
+        window.history.replaceState({}, "", `job.html?job=${updatedJobNumber}`);
+        await loadJob();
+        await loadMaterials();
+    } catch (error) {
+        console.error("Failed to save job details", error);
+        alert("Failed to save job details. Please try again.");
+    }
 }
 
 function editMaterial(id, jobNum) {
