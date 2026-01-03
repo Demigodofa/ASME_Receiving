@@ -46,6 +46,7 @@ Visit **Upload Queue** from the home screen to monitor pending, failed, and comp
 
 - The **Save Job** action on `create_job.html` stores the job in IndexedDB and routes to `job.html` for adding receiving reports and materials.
 - The home screen lists saved jobs and links directly to their job details for editing and reporting.
+- The job details screen shows a compact job summary row; select it to edit job metadata, and use the hydro report action/status under Job Details to open or generate the report.
 
 ## Development checks
 

@@ -344,6 +344,106 @@ body {
     margin-top: 0;
 }
 
+.job-details-summary {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid #e1e7f0;
+    background: #f9fbff;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.job-details-summary:hover {
+    border-color: #b6c3e3;
+    box-shadow: 0 4px 8px var(--shadow-light);
+    transform: translateY(-1px);
+}
+
+.job-details-number {
+    font-weight: 700;
+    color: var(--primary-blue);
+    white-space: nowrap;
+}
+
+.job-details-description {
+    flex: 1;
+    font-weight: 600;
+    color: #1f2a44;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.job-details-edit {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #5b677a;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.job-details-actions {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-pill--success {
+    background: #e7f7ed;
+    color: #1f6f3f;
+    border-color: #b9e0c7;
+}
+
+.status-pill--muted {
+    background: #f1f4f8;
+    color: #5b677a;
+    border-color: #d5dde8;
+}
+
+.job-details-form {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.job-details-edit-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2a44;
+}
+
+.job-details-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.is-hidden {
+    display: none;
+}
+
 #reportForm, .job-form {
     display: flex;
     flex-direction: column;

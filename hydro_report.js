@@ -106,7 +106,7 @@ async function saveReport(event) {
         await db.hydroReports.add(reportData);
         alert("Hydro Report saved!");
     }
-    window.history.back();
+    window.location.href = `job.html?job=${jobNumber}`;
 }
 
 async function deleteReport() {
