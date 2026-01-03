@@ -73,13 +73,19 @@ body {
 .home-landing-body {
     min-height: 100vh;
     display: flex;
-    justify-content: center;
+    flex-direction: column; /* Changed for header */
     background: var(--background-light);
 }
+
+.landing-screen.has-header {
+    padding-top: 70px; /* Space for the header */
+}
+
 
 .landing-screen {
     width: 100%;
     max-width: 480px;
+    margin: 0 auto; /* Centering the content */
     padding: 32px 20px 40px;
     display: flex;
     flex-direction: column;
@@ -212,8 +218,10 @@ body {
     padding: 10px 16px;
     background-color: var(--text-light);
     box-shadow: 0 2px 4px var(--shadow-light);
-    position: sticky;
+    position: fixed; /* Changed to fixed */
     top: 0;
+    left: 0; /* Added */
+    right: 0; /* Added */
     z-index: 100;
 }
 
@@ -221,6 +229,18 @@ body {
     font-size: 1.25em;
     font-weight: 600;
     margin: 0;
+    position: absolute; /* Centering title */
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.header-btn {
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    z-index: 1; /* Ensure button is on top of title */
 }
 
 .header-icon {
@@ -245,18 +265,80 @@ body {
     font-weight: 600;
 }
 
-/* Header for home screen */
-.header-center-only {
-    padding: 20px 0;
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
+
+/* =========================
+   2a. Settings Panel
+========================== */
+.settings-panel {
+    position: fixed;
+    top: 0;
+    left: -100%; /* Start off-screen */
+    width: 85%;
+    max-width: 320px;
+    height: 100%;
+    background: var(--background-light);
+    box-shadow: 4px 0 15px rgba(0,0,0,0.15);
+    z-index: 1001;
+    transition: left 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
 }
 
-.header-logo-centered {
-    width: 90px; /* Reduced logo size */
-    height: 90px;
-    margin: 0 auto;
+.settings-panel.is-open {
+    left: 0;
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background-color: #fff;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.settings-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.close-btn {
+    font-size: 1.8rem;
+    font-weight: 300;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.settings-content {
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-button {
+    display: block;
+    text-decoration: none;
+    color: var(--text-dark);
+    background: #fff;
+    border: 1px solid var(--border-light);
+    padding: 14px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    box-shadow: var(--shadow-light);
+}
+
+.setting-item > label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+#firebaseConfigInput, #pdfEndpointInput {
+    width: 100%;
 }
 
 

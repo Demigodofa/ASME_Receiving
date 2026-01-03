@@ -11,7 +11,38 @@
 </head>
 <body class="home-landing-body">
 
-    <main class="landing-screen">
+    <header class="header-bar">
+        <button id="settingsBtn" class="header-btn">⚙️</button>
+        <h1 class="title">MaterialGuardian</h1>
+    </header>
+
+    <div id="settingsPanel" class="settings-panel">
+        <div class="settings-header">
+            <h2>Settings</h2>
+            <button id="closeSettingsBtn" class="close-btn">&times;</button>
+        </div>
+        <div class="settings-content">
+            <a href="system_status.html" class="settings-button">View System Status</a>
+            <hr>
+            <h3>Cloud Sync</h3>
+            <div class="setting-item">
+                <label for="cloudModeToggle">Cloud Mode Enabled</label>
+                <input type="checkbox" id="cloudModeToggle">
+            </div>
+            <div class="setting-item">
+                <label for="firebaseConfigInput">Firebase Config (JSON)</label>
+                <textarea id="firebaseConfigInput" rows="5"></textarea>
+            </div>
+            <div class="setting-item">
+                <label for="pdfEndpointInput">PDF Endpoint URL</label>
+                <input type="text" id="pdfEndpointInput">
+            </div>
+            <button id="saveCloudSettingsBtn" class="primary-btn">Save Cloud Settings</button>
+            <p id="cloudStatusText"></p>
+        </div>
+    </div>
+
+    <main class="landing-screen has-header">
         <div class="landing-logo-wrapper">
             <img src="assets/icons/Material_Guardian_512.png" class="landing-logo" alt="Receiving Guardian Logo">
         </div>
@@ -31,6 +62,7 @@
 
     <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
     <script src="db.js"></script>
+    <script src="cloud_settings.js"></script>
     <script src="home.js"></script>
     <script src="app.js"></script>
 </body>

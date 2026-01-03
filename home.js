@@ -1,5 +1,19 @@
 window.addEventListener("DOMContentLoaded", async () => {
   const list = document.getElementById("homeJobsList");
+  const settingsBtn = document.getElementById("settingsBtn");
+  const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+  const settingsPanel = document.getElementById("settingsPanel");
+
+  if (settingsBtn && closeSettingsBtn && settingsPanel) {
+    settingsBtn.addEventListener("click", () => {
+      settingsPanel.classList.add("is-open");
+    });
+
+    closeSettingsBtn.addEventListener("click", () => {
+      settingsPanel.classList.remove("is-open");
+    });
+  }
+
   if (!list) return;
 
   const jobs = await db.jobs.orderBy("createdAt").reverse().toArray();
