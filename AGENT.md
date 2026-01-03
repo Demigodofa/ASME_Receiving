@@ -10,6 +10,7 @@
 - The home screen job list is rendered in `home.js` with styles in `style.css`.
 - Lint and test scripts are defined in `package.json` with config in `eslint.config.js` and smoke tests in `__tests__/`.
 - Receiving report photo buckets live in `receiving_report.js` and save `photos` with `category` and `label` metadata for materials vs. MTR/CofC.
+- Job renumbering updates related materials, photos, and hydro reports in `job.js`.
 
 ## Keeping documentation in sync
 

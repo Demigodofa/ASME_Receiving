@@ -54,7 +54,7 @@ window.onload = async () => {
         input.addEventListener("change", handlePhotoInput);
     });
 
-    setupLineLimit("itemDisplayName", 2);
+    setupLineLimit("itemDisplayName", 5);
     setupLineLimit("actualMaterialMarking", 5);
     setupDimensionUnits();
     handleFittingChange();

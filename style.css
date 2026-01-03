@@ -514,6 +514,29 @@ textarea {
     height: 20px;
 }
 
+.radio-group {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.checkbox-group--horizontal,
+.radio-group--horizontal {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.hydro-report .checkbox-group input[type="checkbox"],
+.hydro-report .radio-group input[type="radio"] {
+    width: 22px;
+    height: 22px;
+}
+
+.hydro-report .checkbox-group label,
+.hydro-report .radio-group label {
+    margin-right: 12px;
+}
+
 /* =========================
    5. Cards & Lists
 ========================== */

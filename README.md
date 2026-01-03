@@ -46,10 +46,15 @@ Visit **Upload Queue** from the home screen to monitor pending, failed, and comp
 
 ## Receiving report UI limits
 
-- Item descriptions are capped at two lines (70 characters total).
+- Item descriptions are capped at five lines (175 characters total).
 - Vendor (30 chars), quantity (20 chars), and specification numbers (20 chars) are length-limited.
 - Actual material markings are limited to five lines.
 - Dimensions include imperial/metric selectors, defaulting to imperial.
+
+## Hydro report defaults
+
+- Hydro report yes/no and accepted/rejected options default to the affirmative/accepted choice on new reports.
+- When a job number is edited, the hydro report record is updated to keep it connected to the job.
 
 ## Job creation flow
 

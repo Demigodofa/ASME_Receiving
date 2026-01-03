@@ -148,7 +148,7 @@ async function saveJobDetails(originalJobNumber) {
         : existing.cloudJobId;
 
     try {
-        await db.transaction("rw", db.jobs, db.materials, db.photos, async () => {
+        await db.transaction("rw", db.jobs, db.materials, db.photos, db.hydroReports, async () => {
             if (updatedJobNumber === originalJobNumber) {
                 await db.jobs.update(originalJobNumber, {
                     description: updatedDescription,
@@ -173,6 +173,11 @@ async function saveJobDetails(originalJobNumber) {
                 .modify({ jobNumber: updatedJobNumber });
 
             await db.photos
+                .where("jobNumber")
+                .equals(originalJobNumber)
+                .modify({ jobNumber: updatedJobNumber });
+
+            await db.hydroReports
                 .where("jobNumber")
                 .equals(originalJobNumber)
                 .modify({ jobNumber: updatedJobNumber });

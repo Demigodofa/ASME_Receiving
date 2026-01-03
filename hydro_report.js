@@ -17,6 +17,7 @@ window.onload = async () => {
     document.getElementById("aiDate").valueAsDate = new Date();
     document.getElementById("customerDate").valueAsDate = new Date();
 
+    setDefaultSelections();
     await loadReport();
 
     document.getElementById("hydroReportForm").onsubmit = saveReport;
@@ -66,6 +67,18 @@ async function loadReport() {
         deleteBtn.onclick = deleteReport;
         document.getElementById("hydroReportForm").appendChild(deleteBtn);
     }
+}
+
+function setDefaultSelections() {
+    const valvesClosed = document.getElementById("valvesClosedYes");
+    const vented = document.getElementById("ventedYes");
+    const supported = document.getElementById("supportedYes");
+    const finalResult = document.getElementById("resultAccepted");
+
+    if (valvesClosed) valvesClosed.checked = true;
+    if (vented) vented.checked = true;
+    if (supported) supported.checked = true;
+    if (finalResult) finalResult.checked = true;
 }
 
 async function saveReport(event) {
