@@ -11,6 +11,7 @@
 - Lint and test scripts are defined in `package.json` with config in `eslint.config.js` and smoke tests in `__tests__/`.
 - Receiving report photo buckets live in `receiving_report.js` and save `photos` with `category` and `label` metadata for materials vs. MTR/CofC.
 - Job renumbering updates related materials, photos, and hydro reports in `job.js`.
+- Shared page centering/layout for fixed-header screens lives in `style.css` under `.page-content`.
 
 ## Keeping documentation in sync
 
