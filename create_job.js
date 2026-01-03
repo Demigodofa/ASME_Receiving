@@ -24,3 +24,15 @@ async function saveJob() {
     const base = window.location.origin;
     window.location.href = `${base}/job.html?job=${jobNumber}`;
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    const saveButton = document.getElementById("saveJobBtn");
+    if (saveButton) {
+        saveButton.addEventListener("click", () => {
+            saveJob().catch((error) => {
+                console.error("Failed to save job", error);
+                alert("Failed to save job. Please try again.");
+            });
+        });
+    }
+});
