@@ -92,8 +92,18 @@ window.cloudApiReady = (async () => {
   // -------------------------
   // Storage path helpers
   // -------------------------
-  const buildPhotoStoragePaths = (jobNumber, itemId, photoId) => {
-    const base = `users/${uid}/jobs/${String(jobNumber)}/items/${String(itemId)}/photos/${String(photoId)}`;
+  const sanitizePathLabel = (value, fallback) => {
+    const cleaned = String(value || "")
+      .trim()
+      .replace(/[^a-z0-9_-]+/gi, "_")
+      .replace(/^_+|_+$/g, "");
+    return cleaned || fallback;
+  };
+
+  const buildPhotoStoragePaths = (jobNumber, itemId, photoId, options = {}) => {
+    const categoryFolder = options.category === "mtr" ? "mtr-cofc" : "materials";
+    const label = sanitizePathLabel(options.label, String(photoId));
+    const base = `users/${uid}/jobs/${String(jobNumber)}/items/${String(itemId)}/photos/${categoryFolder}/${label}`;
     return {
       thumb: `${base}/thumb.jpg`,
       full: `${base}/full.jpg`,
@@ -196,12 +206,15 @@ window.cloudApiReady = (async () => {
     return material.cloudItemId;
   };
 
-  const createPhotoDoc = async (material) => {
+  const createPhotoDoc = async (material, photoMeta = {}) => {
     if (!material?.jobNumber) throw new Error("createPhotoDoc: material.jobNumber required");
     if (!material?.cloudItemId) throw new Error("createPhotoDoc: material.cloudItemId required");
 
     const newPhotoRef = doc(photosCol(material.jobNumber, material.cloudItemId));
-    const paths = buildPhotoStoragePaths(material.jobNumber, material.cloudItemId, newPhotoRef.id);
+    const paths = buildPhotoStoragePaths(material.jobNumber, material.cloudItemId, newPhotoRef.id, {
+      category: photoMeta.category,
+      label: photoMeta.label,
+    });
 
     await setDoc(newPhotoRef, {
       thumbStoragePath: paths.thumb,
