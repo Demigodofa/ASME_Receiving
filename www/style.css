@@ -339,6 +339,12 @@ textarea {
     height: 20px;
 }
 
+.checkbox-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .radio-group {
     display: flex;
     gap: 20px;
