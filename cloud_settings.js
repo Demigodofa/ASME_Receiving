@@ -1,82 +1,85 @@
 const getStorage = () => {
-  // Check if Capacitor is available and if we're on a native platform
+  // In a real app, you would use Capacitor's SecureStorage for native builds.
+  // For this example, we'll use a mock that mimics its async API but uses localStorage.
+  // This is NOT secure for production, but allows for a realistic development flow.
   if (window.Capacitor && window.Capacitor.isNative && window.Capacitor.Plugins.SecureStorage) {
     return window.Capacitor.Plugins.SecureStorage;
   }
 
-  // Fallback to a simple in-memory map for web/testing environments
-  console.warn("SecureStorage not available. Falling back to non-persistent in-memory storage.");
-  const webStorage = new Map();
+  console.warn("SecureStorage not available. Falling back to non-persistent localStorage mock.");
   return {
-    get: async ({ key }) => ({ value: webStorage.get(key) || null }),
-    set: async ({ key, value }) => webStorage.set(key, value),
-    remove: async ({ key }) => webStorage.delete(key),
-    clear: async () => webStorage.clear(), // For completeness
+    get: async ({ key }) => ({ value: localStorage.getItem(key) || null }),
+    set: async ({ key, value }) => localStorage.setItem(key, value),
+    remove: async ({ key }) => localStorage.removeItem(key),
+    clear: async () => localStorage.clear(),
   };
 };
 
 const storage = getStorage();
+const CONFIG_KEY = "asmeCloudConfig";
 
 const cloudSettings = {
-  async isCloudModeEnabled() {
-    const result = await storage.get({ key: "asmeCloudModeEnabled" });
-    return result.value === "true";
-  },
 
-  async setCloudModeEnabled(enabled) {
-    await storage.set({ key: "asmeCloudModeEnabled", value: enabled ? "true" : "false" });
-  },
+  // This function simulates calling your backend to validate a token
+  // and get the cloud configuration.
+  async redeemAccessToken(token) {
+    // ** THIS IS A MOCK **
+    // In a real application, you would make an HTTP request to your secure server.
+    // e.g., const response = await fetch('https://your-api.com/redeem-token', 
+    //          { method: 'POST', body: JSON.stringify({ token }) });
+    // const data = await response.json();
 
-  // This returns the RAW text (so app.js can show it in the textarea)
-  async getFirebaseConfigText() {
-    if (window.ASME_RECEIVING_FIREBASE_CONFIG) {
-      try {
-        return JSON.stringify(window.ASME_RECEIVING_FIREBASE_CONFIG, null, 2);
-      } catch {
-        return "";
+    console.log(`Simulating redemption for token: ${token}`);
+
+    // Mock server response.
+    const mockServerResponse = {
+      success: true,
+      config: {
+        // This is where the server would return the actual Firebase config
+        firebase: { /* ... your firebase config object ... */ }, 
+        // And the PDF endpoint
+        pdfEndpoint: "https://your-live-pdf-endpoint.com/generate"
       }
+    };
+
+    if (mockServerResponse.success) {
+      const configStr = JSON.stringify(mockServerResponse.config);
+      await storage.set({ key: CONFIG_KEY, value: configStr });
+      return { success: true, message: "Cloud access activated!" };
+    } else {
+      return { success: false, message: "Invalid access token. Please try again." };
     }
-    const result = await storage.get({ key: "asmeFirebaseConfig" });
-    return result.value || "";
   },
 
-  // This returns the PARSED object (or null if invalid)
-  async getFirebaseConfig() {
-    if (window.ASME_RECEIVING_FIREBASE_CONFIG) {
-      return window.ASME_RECEIVING_FIREBASE_CONFIG;
-    }
-
-    const stored = await this.getFirebaseConfigText(); // Use the class method to get text
-    if (!stored) return null;
+  async _getCloudConfig() {
+    const configStr = await storage.get({ key: CONFIG_KEY });
+    if (!configStr.value) return null;
 
     try {
-      return JSON.parse(stored);
-    } catch (error) {
-      console.warn("Invalid Firebase config JSON", error);
+      return JSON.parse(configStr.value);
+    } catch (e) {
+      console.error("Failed to parse cloud config", e);
       return null;
     }
   },
 
-  async setFirebaseConfig(configText) {
-    await storage.set({ key: "asmeFirebaseConfig", value: (configText || "").trim() });
+  async isCloudModeEnabled() {
+    const config = await this._getCloudConfig();
+    return !!config; // Enabled if a valid config exists
+  },
+
+  async getFirebaseConfig() {
+    const config = await this._getCloudConfig();
+    return config ? config.firebase : null;
   },
 
   async getPdfEndpoint() {
-    if (window.ASME_RECEIVING_PDF_ENDPOINT) {
-        return window.ASME_RECEIVING_PDF_ENDPOINT;
-    }
-    const result = await storage.get({ key: "asmePdfEndpoint" });
-    return result.value || "";
-  },
-
-  async setPdfEndpoint(endpoint) {
-    await storage.set({ key: "asmePdfEndpoint", value: (endpoint || "").trim() });
+    const config = await this._getCloudConfig();
+    return config ? config.pdfEndpoint : null;
   },
 
   async clearAll() {
-    await storage.remove({ key: "asmeCloudModeEnabled" });
-    await storage.remove({ key: "asmeFirebaseConfig" });
-    await storage.remove({ key: "asmePdfEndpoint" });
+    await storage.remove({ key: CONFIG_KEY });
   },
 };
 

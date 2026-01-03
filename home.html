@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MaterialGuardian</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="activate_cloud.css">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="assets/icons/Material_Guardian_180.png">
@@ -12,36 +13,8 @@
 <body class="home-landing-body">
 
     <header class="header-bar">
-        <button id="settingsBtn" class="header-btn">⚙️</button>
         <h1 class="title">MaterialGuardian</h1>
     </header>
-
-    <div id="settingsPanel" class="settings-panel">
-        <div class="settings-header">
-            <h2>Settings</h2>
-            <button id="closeSettingsBtn" class="close-btn">&times;</button>
-        </div>
-        <div class="settings-content">
-            <a href="system_status.html" class="settings-button">View System Status</a>
-            <a href="upload_queue.html" class="settings-button">View Upload Queue</a>
-            <hr>
-            <h3>Cloud Sync</h3>
-            <div class="setting-item">
-                <label for="cloudModeToggle">Cloud Mode Enabled</label>
-                <input type="checkbox" id="cloudModeToggle">
-            </div>
-            <div class="setting-item">
-                <label for="firebaseConfigInput">Firebase Config (JSON)</label>
-                <textarea id="firebaseConfigInput" rows="5"></textarea>
-            </div>
-            <div class="setting-item">
-                <label for="pdfEndpointInput">PDF Endpoint URL</label>
-                <input type="text" id="pdfEndpointInput">
-            </div>
-            <button id="saveCloudSettingsBtn" class="primary-btn">Save Cloud Settings</button>
-            <p id="cloudStatusText"></p>
-        </div>
-    </div>
 
     <main class="landing-screen has-header">
         <div class="landing-logo-wrapper">
@@ -50,6 +23,7 @@
 
         <div class="landing-actions">
             <a href="create_job.html" class="landing-button">Create A New Job</a>
+            <a href="activate_cloud.html" class="landing-button">Activate Cloud Access</a>
         </div>
 
         <section class="home-jobs-section">
@@ -64,7 +38,7 @@
     <script src="https://unpkg.com/dexie@3/dist/dexie.js"></script>
     <script src="db.js"></script>
     <script src="cloud_settings.js"></script>
-    <script src="home.js"></script>
+    <!-- home.js is no longer needed as the settings panel is removed -->
     <script src="app.js"></script>
 </body>
 </html>
