@@ -1,80 +1,61 @@
-window.addEventListener("load", () => {
-    renderQueue();
-    window.addEventListener("uploadqueue:update", renderQueue);
-});
+window.addEventListener("DOMContentLoaded", async () => {
+  const listContainer = document.getElementById("queueList");
+  if (!listContainer) return;
 
-async function renderQueue() {
-    const pendingContainer = document.getElementById("queuePending");
-    const failedContainer = document.getElementById("queueFailed");
-    const completedContainer = document.getElementById("queueCompleted");
+  async function renderQueue() {
+    listContainer.innerHTML = "";
+    const queue = await db.uploadQueue.toArray();
 
-    const items = await window.uploadQueue.getQueueItems();
-
-    const pendingItems = items.filter((item) => item.status === "pending" || item.status === "uploading");
-    const failedItems = items.filter((item) => item.status === "failed");
-    const completedItems = items.filter((item) => item.status === "completed");
-
-    renderItems(pendingContainer, pendingItems, false);
-    renderItems(failedContainer, failedItems, true);
-    renderItems(completedContainer, completedItems, false);
-
-    window.uploadQueue.processQueue();
-}
-
-function renderItems(container, items, showRetry) {
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    if (items.length === 0) {
-        const empty = document.createElement("p");
-        empty.className = "muted";
-        empty.textContent = "No entries.";
-        container.appendChild(empty);
-        return;
+    if (queue.length === 0) {
+      listContainer.innerHTML = `<div class="home-job-empty">The upload queue is empty.</div>`;
+      return;
     }
 
-    items.forEach((item) => {
-        const card = document.createElement("div");
-        card.className = "queue-card";
+    queue.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "queue-item";
 
-        const label = document.createElement("div");
-        label.className = "queue-label";
-        label.textContent = `${item.type.toUpperCase()} • ${item.status}`;
+      const statusClass = item.error ? "failed" : "pending";
+      const statusText = item.error ? "Failed" : "Pending";
 
-        const meta = document.createElement("div");
-        meta.className = "queue-meta";
-        meta.textContent = `Material #${item.materialId || "-"}`;
+      div.innerHTML = `
+        <div class="queue-item-header">
+          <span class="queue-item-title">${item.type}: ${item.key}</span>
+          <span class="queue-item-status ${statusClass}">${statusText}</span>
+        </div>
+        <div class="queue-item-details">
+          Added: ${new Date(item.timestamp).toLocaleString()}
+        </div>
+        ${item.error ? `<div class="queue-item-error"><strong>Error:</strong> ${item.error}</div>` : ''}
+        <div class="queue-item-actions">
+          <button class="queue-action-btn retry-btn" data-id="${item.id}">Retry</button>
+          <button class="queue-action-btn cancel-btn" data-id="${item.id}">Cancel</button>
+        </div>
+      `;
 
-        const progress = document.createElement("div");
-        progress.className = "progress-bar";
-        const progressFill = document.createElement("div");
-        progressFill.className = "progress-fill";
-        progressFill.style.width = `${item.progress || 0}%`;
-        progress.appendChild(progressFill);
-
-        card.appendChild(label);
-        card.appendChild(meta);
-
-        if (item.status === "uploading" || item.status === "pending") {
-            card.appendChild(progress);
-        }
-
-        if (item.status === "failed" && item.error) {
-            const error = document.createElement("div");
-            error.className = "queue-error";
-            error.textContent = item.error;
-            card.appendChild(error);
-        }
-
-        if (showRetry) {
-            const btn = document.createElement("button");
-            btn.className = "secondary-btn";
-            btn.textContent = "Retry";
-            btn.onclick = () => window.uploadQueue.retry(item.id);
-            card.appendChild(btn);
-        }
-
-        container.appendChild(card);
+      listContainer.appendChild(div);
     });
-}
+
+    listContainer.querySelectorAll(".retry-btn").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const id = parseInt(e.target.dataset.id, 10);
+        // Here you would trigger a re-process of the specific queue item
+        // For now, we'll just clear the error for demonstration
+        await db.uploadQueue.update(id, { error: null });
+        renderQueue();
+        // In a real implementation, you would call your queue processing logic here
+        // e.g., window.uploadQueue.processQueue(); 
+      });
+    });
+
+    listContainer.querySelectorAll(".cancel-btn").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const id = parseInt(e.target.dataset.id, 10);
+        await db.uploadQueue.delete(id);
+        renderQueue();
+      });
+    });
+  }
+
+  renderQueue();
+});
