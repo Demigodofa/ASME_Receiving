@@ -2,3 +2,4 @@ node_modules/
 .gradle/
 android/app/google-services.json
 ios/App/App/GoogleService-Info.plist
+node_modules
