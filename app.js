@@ -20,13 +20,13 @@ window.addEventListener("load", async () => {
   }
 
   // Load saved values into UI
-  toggle.checked = cs.isCloudModeEnabled();
-  configInput.value = cs.getFirebaseConfigText();
-  pdfInput.value = cs.getPdfEndpoint();
+  toggle.checked = await cs.isCloudModeEnabled();
+  configInput.value = await cs.getFirebaseConfigText();
+  pdfInput.value = await cs.getPdfEndpoint();
 
   const refreshStatus = async () => {
-    const mode = cs.isCloudModeEnabled();
-    const config = cs.getFirebaseConfig();
+    const mode = await cs.isCloudModeEnabled();
+    const config = await cs.getFirebaseConfig();
 
     if (!config) {
       setStatus(mode
@@ -59,12 +59,12 @@ window.addEventListener("load", async () => {
     // Don’t allow ON without valid config
     if (toggle.checked && !cs.getFirebaseConfig()) {
       toggle.checked = false;
-      cs.setCloudModeEnabled(false);
+      await cs.setCloudModeEnabled(false);
       setStatus("Paste valid Firebase config JSON and click Save BEFORE enabling cloud mode.", true);
       return;
     }
 
-    cs.setCloudModeEnabled(toggle.checked);
+    await cs.setCloudModeEnabled(toggle.checked);
     await refreshStatus();
   });
 
@@ -79,17 +79,17 @@ window.addEventListener("load", async () => {
         setStatus("Save failed: Firebase config must be VALID JSON (include { } and quotes).", true);
         return;
       }
-      cs.setFirebaseConfig(raw);
+      await cs.setFirebaseConfig(raw);
     } else {
-      cs.setFirebaseConfig("");
+      await cs.setFirebaseConfig("");
     }
 
-    cs.setPdfEndpoint(pdfInput.value.trim());
+    await cs.setPdfEndpoint(pdfInput.value.trim());
 
     // If they left cloud mode ON but config is invalid -> force OFF
     if (toggle.checked && !cs.getFirebaseConfig()) {
       toggle.checked = false;
-      cs.setCloudModeEnabled(false);
+      await cs.setCloudModeEnabled(false);
       setStatus("Cloud mode turned OFF because config is missing/invalid.", true);
       return;
     }

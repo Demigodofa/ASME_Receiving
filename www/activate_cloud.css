@@ -1,0 +1,65 @@
+.activate-cloud-body {
+    background-color: var(--background-light);
+}
+
+.activation-card {
+    background: var(--text-light);
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-medium);
+    text-align: center;
+    max-width: 400px;
+    margin: 20px auto;
+}
+
+.activation-card h2 {
+    font-size: 1.6rem;
+    margin-bottom: 12px;
+    color: var(--text-dark);
+}
+
+.activation-card p {
+    font-size: 1rem;
+    color: #5b677a;
+    margin-bottom: 24px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.text-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    font-size: 1rem;
+    text-align: center;
+}
+
+.primary-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.status-message {
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    display: none; /* Hidden by default */
+}
+
+.status-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    display: block;
+}
+
+.status-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    display: block;
+}

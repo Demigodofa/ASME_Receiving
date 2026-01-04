@@ -7,6 +7,7 @@
 - Cloud mode settings are stored in local storage and managed by `cloud_settings.js`.
 - Receiving report photo buckets live in `receiving_report.js` and save `photos` with `category` and `label` metadata for materials vs. MTR/CofC.
 - Job renumbering updates related materials, photos, and hydro reports in `job.js`.
+- The landing screen actions live in `home.html` and use `.landing-screen`/`.landing-actions` in `style.css`; job lists are handled on `jobs.html`.
 
 ## Keeping documentation in sync
 

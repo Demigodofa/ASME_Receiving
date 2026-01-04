@@ -16,8 +16,15 @@ async function saveJob() {
         cloudJobId: jobNumber
     });
 
-    const cloud = await window.cloudApiReady;
-    if (cloud.enabled && window.cloudSettings.isCloudModeEnabled()) {
+    let cloud = null;
+    try {
+        cloud = await window.cloudApiReady;
+    } catch (error) {
+        console.warn("Cloud init failed, saving locally only.", error);
+    }
+
+    const cloudEnabled = await window.cloudSettings.isCloudModeEnabled();
+    if (cloud?.enabled && cloudEnabled) {
         await cloud.ensureJobDoc(jobNumber, { description, notes });
     }
 
