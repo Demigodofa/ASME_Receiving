@@ -10,6 +10,17 @@ const photoState = {
     materials: [],
     mtr: []
 };
+const CAMERA_MAX_DIM = {
+    materials: 1920,
+    mtr: 2200
+};
+const cameraState = {
+    stream: null,
+    category: null,
+    mode: "photo",
+    rotation: 0,
+    contrast: 1
+};
 
 window.onload = async () => {
     const params = new URLSearchParams(window.location.search);
@@ -54,11 +65,47 @@ window.onload = async () => {
     document.querySelectorAll("[data-photo-input]").forEach((input) => {
         input.addEventListener("change", handlePhotoInput);
     });
+    const materialsCameraBtn = document.getElementById("materialsCameraBtn");
+    const mtrCameraBtn = document.getElementById("mtrCameraBtn");
+    const capturePhotoBtn = document.getElementById("capturePhotoBtn");
+    const exitCameraBtn = document.getElementById("exitCameraBtn");
+    const scanRotation = document.getElementById("scanRotation");
+    const scanContrast = document.getElementById("scanContrast");
+    const modeButtons = document.querySelectorAll(".camera-mode-btn");
+
+    if (materialsCameraBtn) {
+        materialsCameraBtn.onclick = () => startCamera("materials");
+    }
+    if (mtrCameraBtn) {
+        mtrCameraBtn.onclick = () => startCamera("mtr");
+    }
+    if (capturePhotoBtn) {
+        capturePhotoBtn.onclick = captureFromCamera;
+    }
+    if (exitCameraBtn) {
+        exitCameraBtn.onclick = closeCameraOverlay;
+    }
+    if (scanRotation) {
+        scanRotation.addEventListener("input", (event) => {
+            cameraState.rotation = Number(event.target.value || 0);
+        });
+    }
+    if (scanContrast) {
+        scanContrast.addEventListener("input", (event) => {
+            cameraState.contrast = Number(event.target.value || 1);
+        });
+    }
+    modeButtons.forEach((btn) => {
+        btn.addEventListener("click", () => setCameraMode(btn.dataset.mode));
+    });
 
     setupLineLimit("itemDisplayName", 5);
     setupLineLimit("actualMaterialMarking", 5);
     setupDimensionUnits();
     handleFittingChange();
+    setupUnsavedWarning();
+    window.addEventListener("pagehide", stopCameraStream);
+    window.addEventListener("beforeunload", stopCameraStream);
 };
 
 async function loadMaterial() {
@@ -88,11 +135,28 @@ async function loadMaterial() {
     const materialPhotos = await db.photos.where("materialId").equals(id).toArray();
     photoState.materials = [];
     photoState.mtr = [];
-    materialPhotos.forEach((photo) => {
+    const utils = window.photoUtils;
+    for (const photo of materialPhotos) {
         const category = photo.category || "materials";
-        if (!photoState[category]) return;
-        photoState[category].push({ dataUrl: photo.imageData });
-    });
+        if (!photoState[category]) continue;
+        const kind = photo.kind || (category === "mtr" ? "mtr-photo" : "photo");
+        let dataUrl = photo.imageData || photo.thumbnailDataUrl;
+        if (!dataUrl && utils && utils.blobToDataUrl && (photo.thumbnailBlob || photo.fullBlob)) {
+            try {
+                dataUrl = await utils.blobToDataUrl(photo.thumbnailBlob || photo.fullBlob);
+            } catch (error) {
+                console.warn("Could not read stored photo", error);
+            }
+        }
+        if (!dataUrl) continue;
+        photoState[category].push({
+            dataUrl,
+            kind,
+            pdfDataUrl: photo.pdfDataUrl || null,
+            rotation: photo.rotation || 0,
+            contrast: photo.contrast || 1
+        });
+    }
     renderPhotoPreview("materials");
     renderPhotoPreview("mtr");
 }
@@ -174,34 +238,67 @@ async function handlePhotoInput(event) {
     const category = event.target.dataset.category;
     if (!category || !photoState[category]) return;
 
-    const files = event.target.files;
+    const files = Array.from(event.target.files || []);
     if (!files.length) return;
 
     for (const file of files) {
-        if (photoState[category].length >= PHOTO_LIMITS[category]) {
-            alert(`You can only add up to ${PHOTO_LIMITS[category]} ${category === 'materials' ? 'materials' : 'MTR/CofC'} photos.`);
-            break;
-        }
-
-        let dataUrl;
-        if (category === 'materials') {
-            // High-quality resizing for materials photos to ensure markings are readable
-            dataUrl = await resizeAndCompressImage(file, 1920, 1920, 0.9);
-        } else {
-            // For MTRs, we will use the original image data for now to prepare for scanning
-            dataUrl = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-        
-        photoState[category].push({ dataUrl });
+        const added = await addPhotoEntryFromFile(file, category);
+        if (!added) break;
     }
 
     event.target.value = ''; // Clear the input
+}
+
+async function addPhotoEntryFromFile(file, category) {
+    if (photoState[category].length >= PHOTO_LIMITS[category]) {
+        alert(`You can only add up to ${PHOTO_LIMITS[category]} ${category === 'materials' ? 'materials' : 'MTR/CofC'} photos.`);
+        return false;
+    }
+
+    let dataUrl;
+    if (category === "materials") {
+        dataUrl = await resizeAndCompressImage(file, CAMERA_MAX_DIM.materials, CAMERA_MAX_DIM.materials, 0.9);
+    } else {
+        dataUrl = await readFileAsDataUrl(file);
+    }
+
+    const entry = {
+        dataUrl,
+        kind: category === "mtr" ? "mtr-photo" : "photo",
+        rotation: 0,
+        contrast: 1
+    };
+
+    await addPhotoToState(category, entry);
+    return true;
+}
+
+async function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+async function addPhotoToState(category, entry) {
+    if (!photoState[category]) return;
+    if (photoState[category].length >= PHOTO_LIMITS[category]) {
+        alert(`You can only add up to ${PHOTO_LIMITS[category]} ${category === 'materials' ? 'materials' : 'MTR/CofC'} photos.`);
+        return;
+    }
+
+    photoState[category].push({
+        dataUrl: entry.dataUrl,
+        kind: entry.kind || (category === "mtr" ? "mtr-photo" : "photo"),
+        pdfDataUrl: entry.pdfDataUrl || null,
+        rotation: entry.rotation || 0,
+        contrast: entry.contrast || 1
+    });
+    setDirty();
     renderPhotoPreview(category);
+    updateCameraCount();
 }
 
 function renderPhotoPreview(category) {
@@ -211,6 +308,17 @@ function renderPhotoPreview(category) {
     photoState[category].forEach((photo, index) => {
         const imgContainer = document.createElement("div");
         imgContainer.className = "photo-preview-item";
+        if (photo.kind === "mtr-scan") {
+            const pill = document.createElement("span");
+            pill.className = "photo-type-pill";
+            pill.textContent = "SCAN";
+            imgContainer.appendChild(pill);
+        } else if (photo.kind === "mtr-photo") {
+            const pill = document.createElement("span");
+            pill.className = "photo-type-pill";
+            pill.textContent = "PHOTO";
+            imgContainer.appendChild(pill);
+        }
         const img = document.createElement("img");
         img.src = photo.dataUrl;
         img.alt = `${category} photo ${index + 1}`;
@@ -227,6 +335,7 @@ function renderPhotoPreview(category) {
         previewContainer.appendChild(imgContainer);
     });
     updatePhotoCount(category);
+    updateCameraCount();
 }
 
 async function updatePhotos(materialId, reportData) {
@@ -240,15 +349,21 @@ async function updatePhotos(materialId, reportData) {
         const bucket = photoState[category];
         for (let index = 0; index < bucket.length; index += 1) {
             const label = buildPhotoLabel(category, description, index + 1);
+            const entry = bucket[index];
             await db.photos.add({
                 materialId: id,
                 jobNumber: jobNumber,
-                imageData: bucket[index].dataUrl,
+                imageData: entry.dataUrl,
+                thumbnailDataUrl: entry.dataUrl,
                 status: "local",
                 category,
                 label,
                 sequence: index + 1,
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                kind: entry.kind || (category === "mtr" ? "mtr-photo" : "photo"),
+                pdfDataUrl: entry.pdfDataUrl || null,
+                rotation: entry.rotation || 0,
+                contrast: entry.contrast || 1
             });
         }
     }
@@ -268,6 +383,186 @@ function updatePhotoCount(category) {
     const countEl = document.getElementById(`${category}PhotoCount`);
     if (!countEl) return;
     countEl.textContent = `${photoState[category].length}/${PHOTO_LIMITS[category]}`;
+}
+
+function updateCameraCount() {
+    const countEl = document.getElementById("cameraCount");
+    if (!countEl || !cameraState.category) return;
+    const current = photoState[cameraState.category]?.length || 0;
+    countEl.textContent = `${current}/${PHOTO_LIMITS[cameraState.category]}`;
+}
+
+async function startCamera(category) {
+    cameraState.category = category;
+    if (category !== "mtr") {
+        cameraState.mode = "photo";
+    }
+    stopCameraStream();
+    syncCameraModeUI();
+    resetScanAdjustments();
+    updateCameraCount();
+
+    const overlay = document.getElementById("cameraOverlay");
+    const video = document.getElementById("cameraVideo");
+    if (!overlay || !video) return;
+
+    overlay.classList.remove("is-hidden");
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        closeCameraOverlay();
+        const fallback = document.getElementById(`${category}CameraInput`);
+        if (fallback) fallback.click();
+        return;
+    }
+
+    try {
+        cameraState.stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" } },
+            audio: false
+        });
+        video.srcObject = cameraState.stream;
+        await video.play();
+    } catch (error) {
+        console.error("Unable to access camera", error);
+        closeCameraOverlay();
+        const fallback = document.getElementById(`${category}CameraInput`);
+        if (fallback) fallback.click();
+    }
+}
+
+function syncCameraModeUI() {
+    const modeRow = document.getElementById("cameraModeRow");
+    const scanAdjustments = document.getElementById("scanAdjustments");
+    const shouldShowMode = cameraState.category === "mtr";
+    if (modeRow) {
+        modeRow.classList.toggle("is-hidden", !shouldShowMode);
+    }
+    if (scanAdjustments) {
+        scanAdjustments.classList.toggle("is-hidden", !(shouldShowMode && cameraState.mode === "scan"));
+    }
+    document.querySelectorAll(".camera-mode-btn").forEach((btn) => {
+        btn.classList.toggle("is-active", btn.dataset.mode === cameraState.mode);
+    });
+}
+
+function setCameraMode(mode) {
+    if (cameraState.category !== "mtr") return;
+    cameraState.mode = mode === "scan" ? "scan" : "photo";
+    syncCameraModeUI();
+}
+
+function resetScanAdjustments() {
+    cameraState.rotation = 0;
+    cameraState.contrast = 1;
+    const rotationEl = document.getElementById("scanRotation");
+    const contrastEl = document.getElementById("scanContrast");
+    if (rotationEl) rotationEl.value = "0";
+    if (contrastEl) contrastEl.value = "1";
+}
+
+async function captureFromCamera() {
+    const category = cameraState.category;
+    if (!category) return;
+
+    if (photoState[category].length >= PHOTO_LIMITS[category]) {
+        alert(`You can only add up to ${PHOTO_LIMITS[category]} ${category === 'materials' ? 'materials' : 'MTR/CofC'} photos.`);
+        return;
+    }
+
+    const video = document.getElementById("cameraVideo");
+    if (!video || !video.videoWidth) {
+        alert("Camera is not ready yet. Please wait a second and try again.");
+        return;
+    }
+
+    const maxDim = CAMERA_MAX_DIM[category];
+    const scale = Math.min(1, maxDim / Math.max(video.videoWidth, video.videoHeight));
+    const width = Math.round(video.videoWidth * scale);
+    const height = Math.round(video.videoHeight * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+
+    const rotation = cameraState.mode === "scan" ? Number(cameraState.rotation || 0) : 0;
+    const contrast = cameraState.mode === "scan" ? Number(cameraState.contrast || 1) : 1;
+
+    ctx.save();
+    ctx.translate(width / 2, height / 2);
+    ctx.rotate((rotation * Math.PI) / 180);
+    ctx.filter = `contrast(${contrast})`;
+    ctx.drawImage(video, -width / 2, -height / 2, width, height);
+    ctx.restore();
+
+    const quality = cameraState.mode === "scan" ? 0.92 : 0.9;
+    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+
+    if (category === "mtr" && cameraState.mode === "scan") {
+        const pdfDataUrl = await buildScanPdf(dataUrl);
+        await addPhotoToState(category, {
+            dataUrl,
+            kind: "mtr-scan",
+            pdfDataUrl,
+            rotation,
+            contrast
+        });
+    } else {
+        await addPhotoToState(category, {
+            dataUrl,
+            kind: category === "mtr" ? "mtr-photo" : "photo",
+            rotation,
+            contrast
+        });
+    }
+
+    updateCameraCount();
+}
+
+async function buildScanPdf(dataUrl) {
+    if (!window.jspdf || !window.jspdf.jsPDF) return null;
+
+    const image = await loadImage(dataUrl);
+    const { jsPDF } = window.jspdf;
+    const orientation = image.width >= image.height ? "landscape" : "portrait";
+    const pdf = new jsPDF({ orientation, unit: "pt", format: "letter" });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const scale = Math.min(pageW / image.width, pageH / image.height);
+    const w = image.width * scale;
+    const h = image.height * scale;
+    const x = (pageW - w) / 2;
+    const y = (pageH - h) / 2;
+    pdf.addImage(dataUrl, "JPEG", x, y, w, h);
+    return pdf.output("datauristring");
+}
+
+function loadImage(dataUrl) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = dataUrl;
+    });
+}
+
+function closeCameraOverlay() {
+    const overlay = document.getElementById("cameraOverlay");
+    if (overlay) {
+        overlay.classList.add("is-hidden");
+    }
+    cameraState.category = null;
+    stopCameraStream();
+}
+
+function stopCameraStream() {
+    if (cameraState.stream) {
+        cameraState.stream.getTracks().forEach((track) => track.stop());
+        cameraState.stream = null;
+    }
+    const video = document.getElementById("cameraVideo");
+    if (video) {
+        video.srcObject = null;
+    }
 }
 
 function togglePhotoPreview(category) {

@@ -890,6 +890,154 @@ textarea {
     font-weight: 600;
 }
 
+.camera-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 16, 32, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.camera-overlay:not(.is-hidden) {
+    display: flex;
+}
+
+.camera-frame {
+    background: #0f1f3a;
+    border-radius: 18px;
+    overflow: hidden;
+    width: min(900px, 96vw);
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.camera-video-wrap {
+    position: relative;
+    background: #000;
+    aspect-ratio: 3 / 4;
+}
+
+.camera-video-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.camera-count-pill {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    background: rgba(16, 43, 89, 0.9);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+}
+
+.camera-controls {
+    padding: 14px 16px 18px;
+    background: #0c1a33;
+    color: #e8eef7;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.camera-mode-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.camera-mode-label {
+    font-weight: 600;
+    color: #dfe7f6;
+}
+
+.camera-mode-toggle {
+    display: inline-flex;
+    background: #0a1a31;
+    border: 1px solid #1f3f73;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.camera-mode-btn {
+    border: none;
+    background: transparent;
+    color: #b9c8e0;
+    padding: 10px 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.camera-mode-btn.is-active {
+    background: linear-gradient(135deg, #2f7bd8, #3a60d5);
+    color: #fff;
+}
+
+.scan-adjustments {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    background: #0a1528;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid #17325c;
+}
+
+.scan-adjustments label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #dfe7f6;
+}
+
+.scan-adjustments input[type="range"] {
+    width: 100%;
+    accent-color: var(--primary-blue);
+}
+
+.camera-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.camera-capture-btn {
+    flex: 1;
+    margin: 0;
+}
+
+.camera-exit-btn {
+    width: 44%;
+    margin: 0;
+    padding: 14px;
+    background: linear-gradient(to bottom, #4c84f2, #3a7bd5);
+}
+
+.photo-type-pill {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    background: rgba(58, 123, 213, 0.9);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
 .fieldset-legend-with-options {
     display: flex;
     align-items: center;

@@ -243,7 +243,7 @@
                 <span class="photo-count" id="materialsPhotoCount">0/4</span>
             </div>
             <div class="photo-action-row">
-                <label class="file-button" for="materialsCameraInput">Take Materials Photos</label>
+                <button type="button" class="file-button" id="materialsCameraBtn">Take Materials Photos</button>
                 <input type="file" accept="image/*" capture="environment" id="materialsCameraInput" data-photo-input data-category="materials" multiple>
                 <label class="file-button" for="materialsFileInput">Choose Materials Files</label>
                 <input type="file" accept="image/*" id="materialsFileInput" data-photo-input data-category="materials" multiple>
@@ -258,7 +258,7 @@
                 <span class="photo-count" id="mtrPhotoCount">0/8</span>
             </div>
             <div class="photo-action-row">
-                <label class="file-button" for="mtrCameraInput">Take MTR/CofC Photos</label>
+                <button type="button" class="file-button" id="mtrCameraBtn">Take MTR/CofC Photos</button>
                 <input type="file" accept="image/*" capture="environment" id="mtrCameraInput" data-photo-input data-category="mtr" multiple>
                 <label class="file-button" for="mtrFileInput">Choose MTR/CofC Files</label>
                 <input type="file" accept="image/*" id="mtrFileInput" data-photo-input data-category="mtr" multiple>
@@ -275,6 +275,34 @@
         </div>
     </div>
 
+    <div class="camera-overlay is-hidden" id="cameraOverlay">
+        <div class="camera-frame">
+            <div class="camera-video-wrap">
+                <video id="cameraVideo" autoplay playsinline muted></video>
+                <div class="camera-count-pill" id="cameraCount">0/0</div>
+            </div>
+            <div class="camera-controls">
+                <div class="camera-mode-row" id="cameraModeRow">
+                    <span class="camera-mode-label">Capture Mode</span>
+                    <div class="camera-mode-toggle">
+                        <button type="button" class="camera-mode-btn is-active" data-mode="photo">Photo</button>
+                        <button type="button" class="camera-mode-btn" data-mode="scan">Scan (PDF)</button>
+                    </div>
+                </div>
+                <div class="scan-adjustments is-hidden" id="scanAdjustments">
+                    <label for="scanRotation">Straighten</label>
+                    <input type="range" id="scanRotation" min="-10" max="10" step="0.5" value="0">
+                    <label for="scanContrast">Contrast</label>
+                    <input type="range" id="scanContrast" min="0.6" max="1.6" step="0.05" value="1">
+                </div>
+                <div class="camera-buttons">
+                    <button type="button" class="primary-btn camera-capture-btn" id="capturePhotoBtn">Capture</button>
+                    <button type="button" class="primary-btn camera-exit-btn" id="exitCameraBtn">Exit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <button type="submit" class="primary-btn" id="saveBtn">Save</button>
     <button type="button" class="danger-btn" id="deleteBtn" style="display: none;">Delete</button>
 </form>
@@ -284,6 +312,7 @@
 <script src="db.js"></script>
 <script src="photo_utils.js"></script>
 <script src="image_processing.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-H0vMyoY9hw3rroWAtxEvsC0BpvyEukgqS0bkkCm1cW0XkyRjO6jwxKF1u9IiMaTZGi99ZTSdK6Ff8OsKx4JRFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="receiving_report.js"></script>
 
 </body>
