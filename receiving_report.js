@@ -1,8 +1,6 @@
 
 let materialId;
 let jobNumber;
-let isDirty = false;
-let suppressUnsavedWarning = false;
 const PHOTO_LIMITS = {
     materials: 4,
     mtr: 8
@@ -61,7 +59,6 @@ window.onload = async () => {
     setupLineLimit("actualMaterialMarking", 5);
     setupDimensionUnits();
     handleFittingChange();
-    setupUnsavedWarning();
 };
 
 async function loadMaterial() {
@@ -120,8 +117,6 @@ function handleFittingChange() {
 
 async function saveReport(event) {
     event.preventDefault();
-    suppressUnsavedWarning = true;
-    isDirty = false;
 
     const reportData = {};
     const formElements = document.getElementById("reportForm").elements;
@@ -161,9 +156,6 @@ async function saveReport(event) {
 
 async function deleteReport() {
     if (!confirm("Are you sure you want to delete this report and all its photos?")) return;
-
-    suppressUnsavedWarning = true;
-    isDirty = false;
 
     try {
         const id = Number(materialId);
@@ -209,7 +201,6 @@ async function handlePhotoInput(event) {
     }
 
     event.target.value = ''; // Clear the input
-    setDirty();
     renderPhotoPreview(category);
 }
 
@@ -229,7 +220,6 @@ function renderPhotoPreview(category) {
         deleteBtn.className = "delete-photo-btn";
         deleteBtn.onclick = () => {
             photoState[category].splice(index, 1);
-            setDirty();
             renderPhotoPreview(category);
         };
         imgContainer.appendChild(img);
@@ -334,37 +324,4 @@ function setupDimensionUnits() {
 
     imperial.addEventListener("change", handleChange);
     metric.addEventListener("change", handleChange);
-}
-
-function setDirty() {
-    isDirty = true;
-}
-
-function setupUnsavedWarning() {
-    const form = document.getElementById("reportForm");
-    if (!form) return;
-
-    form.addEventListener("input", setDirty);
-    form.addEventListener("change", setDirty);
-
-    window.addEventListener("beforeunload", (event) => {
-        if (!isDirty || suppressUnsavedWarning) return;
-        event.preventDefault();
-        event.returnValue = "";
-    });
-
-    window.history.pushState({ receivingGuard: true }, "");
-    window.addEventListener("popstate", () => {
-        if (!isDirty || suppressUnsavedWarning) {
-            return;
-        }
-
-        const leave = confirm("You have unsaved changes. Leave this report without saving?");
-        if (leave) {
-            suppressUnsavedWarning = true;
-            history.back();
-        } else {
-            window.history.pushState({ receivingGuard: true }, "");
-        }
-    });
 }

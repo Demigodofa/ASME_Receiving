@@ -1,77 +1,79 @@
 package com.materialguardian.app;
 
-import android.text.TextUtils;
+import android.util.Log;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
-import com.getcapacitor.annotation.PluginMethod;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-
-import java.util.List;
 
 @CapacitorPlugin(name = "FirebaseNative")
 public class FirebaseNativePlugin extends Plugin {
 
+    private static final String TAG = "FirebaseNativePlugin";
+
+    /**
+     * Initialize Firebase using runtime config (web-style config fields).
+     * Expected call payload:
+     * {
+     *   apiKey, appId, projectId, storageBucket, messagingSenderId
+     * }
+     */
     @PluginMethod
     public void initialize(PluginCall call) {
-        JSObject config = call.getObject("config", null);
-        if (config == null) {
-            call.reject("config is required");
-            return;
-        }
+        try {
+            // If already initialized, return ok
+            if (!FirebaseApp.getApps(getContext()).isEmpty()) {
+                JSObject ret = new JSObject();
+                ret.put("ok", true);
+                ret.put("alreadyInitialized", true);
+                call.resolve(ret);
+                return;
+            }
 
-        String apiKey = config.getString("apiKey");
-        String appId = config.getString("appId");
-        String projectId = config.getString("projectId");
-        String storageBucket = config.getString("storageBucket");
-        String messagingSenderId = config.getString("messagingSenderId");
-        String databaseUrl = config.getString("databaseURL");
+            String apiKey = call.getString("apiKey");
+            String appId = call.getString("appId"); // Firebase web config uses "appId"
+            String projectId = call.getString("projectId");
+            String storageBucket = call.getString("storageBucket");
+            String messagingSenderId = call.getString("messagingSenderId");
 
-        if (isEmpty(apiKey) || isEmpty(appId) || isEmpty(projectId)) {
-            call.reject("config.apiKey, config.appId, and config.projectId are required");
-            return;
-        }
+            // Minimum required fields to avoid a junk init
+            if (appId == null || projectId == null) {
+                call.reject("Missing required Firebase config fields (appId, projectId).");
+                return;
+            }
 
-        List<FirebaseApp> apps = FirebaseApp.getApps(getContext());
-        if (apps != null && !apps.isEmpty()) {
-            call.resolve(result("already-initialized"));
-            return;
-        }
+            FirebaseOptions.Builder b = new FirebaseOptions.Builder()
+                    .setApplicationId(appId)
+                    .setProjectId(projectId);
 
-        FirebaseOptions.Builder options = FirebaseOptions.builder()
-            .setApiKey(apiKey)
-            .setApplicationId(appId)
-            .setProjectId(projectId);
+            // Optional fields
+            if (apiKey != null) b.setApiKey(apiKey);
+            if (storageBucket != null) b.setStorageBucket(storageBucket);
+            if (messagingSenderId != null) b.setGcmSenderId(messagingSenderId);
 
-        if (!isEmpty(storageBucket)) {
-            options.setStorageBucket(storageBucket);
-        }
-        if (!isEmpty(messagingSenderId)) {
-            options.setGcmSenderId(messagingSenderId);
-        }
-        if (!isEmpty(databaseUrl)) {
-            options.setDatabaseUrl(databaseUrl);
-        }
+            FirebaseApp.initializeApp(getContext(), b.build());
 
-        FirebaseApp app = FirebaseApp.initializeApp(getContext(), options.build());
-        if (app == null) {
-            call.reject("Failed to initialize Firebase (no default app)");
-            return;
-        }
+            JSObject ret = new JSObject();
+            ret.put("ok", true);
+            ret.put("alreadyInitialized", false);
+            call.resolve(ret);
 
-        call.resolve(result("initialized"));
+        } catch (Exception e) {
+            Log.e(TAG, "Firebase initialize failed", e);
+            call.reject("Firebase initialize failed: " + e.getMessage(), e);
+        }
     }
 
-    private boolean isEmpty(String value) {
-        return value == null || value.trim().isEmpty();
-    }
-
-    private JSObject result(String status) {
-        JSObject obj = new JSObject();
-        obj.put("status", status);
-        return obj;
+    @PluginMethod
+    public void isInitialized(PluginCall call) {
+        boolean initialized = !FirebaseApp.getApps(getContext()).isEmpty();
+        JSObject ret = new JSObject();
+        ret.put("initialized", initialized);
+        call.resolve(ret);
     }
 }
