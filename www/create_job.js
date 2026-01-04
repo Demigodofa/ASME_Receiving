@@ -28,6 +28,5 @@ async function saveJob() {
         await cloud.ensureJobDoc(jobNumber, { description, notes });
     }
 
-    const base = window.location.origin;
-    window.location.href = `${base}/job.html?job=${jobNumber}`;
+    window.location.href = `job.html?job=${encodeURIComponent(jobNumber)}`;
 }

@@ -79,18 +79,13 @@ body {
     overflow-x: hidden;
 }
 
-html, body {
-    overflow-x: hidden;
-}
-
 .landing-screen.has-header {
     padding-top: 70px; /* Space for the header */
 }
 
 
 .landing-screen {
-    width: 100%;
-    max-width: 480px;
+    width: min(100%, 480px);
     margin: 0 auto; /* Centering the content */
     padding: 32px 20px 40px;
     display: flex;

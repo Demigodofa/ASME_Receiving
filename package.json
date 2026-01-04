@@ -1,14 +1,17 @@
 {
   "scripts": {
     "lint": "eslint .",
-    "test": "jest"
+    "test": "jest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
     "@capacitor/cli": "^8.0.0",
-    "@capacitor/ios": "^8.0.0"
+    "@capacitor/ios": "^8.0.0",
+    "@capacitor-mlkit/document-scanner": "^7.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "eslint": "^9.39.2",
     "jest": "^30.2.0"
   }
