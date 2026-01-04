@@ -93,6 +93,7 @@ body {
     align-items: center;
     gap: 32px;
     box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .landing-logo {
@@ -108,6 +109,7 @@ body {
     gap: 16px;
     max-width: 320px;
     margin: 0 auto;
+    box-sizing: border-box;
 }
 
 .home-jobs-section {
@@ -115,6 +117,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .home-jobs-header h2 {
@@ -137,7 +141,7 @@ body {
 .home-job-row {
     width: 100%;
     display: grid;
-    grid-template-columns: 90px 1.2fr 1.6fr;
+    grid-template-columns: minmax(0, 90px) minmax(0, 1.2fr) minmax(0, 1.6fr);
     gap: 12px;
     align-items: center;
     padding: 14px 16px;
@@ -148,6 +152,8 @@ body {
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(15, 31, 58, 0.08);
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-sizing: border-box;
+    max-width: 100%;
 }
 
 .home-job-row:hover {
@@ -185,6 +191,10 @@ body {
     font-size: 0.95rem;
 }
 
+.home-jobs-button {
+    margin-top: 8px;
+}
+
 .landing-button {
     display: block;
     width: 100%;
@@ -199,6 +209,7 @@ body {
     box-shadow: 0 6px 12px rgba(12, 33, 77, 0.2),
                 inset 0 2px 0 rgba(255, 255, 255, 0.45);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
 }
 
 .landing-button:hover {
@@ -235,6 +246,17 @@ body {
     }
 }
 
+@media (max-width: 520px) {
+    .home-job-row {
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+    }
+
+    .home-job-cell {
+        white-space: normal;
+    }
+}
+
 /* =========================
    2. Header & Navigation
 ========================== */
@@ -243,6 +265,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 10px 16px;
+    min-height: 90px;
     background-color: var(--text-light);
     box-shadow: 0 2px 4px var(--shadow-light);
     position: fixed; /* Changed to fixed */
@@ -278,7 +301,10 @@ body {
 .header-logo-centered {
     width: 90px;
     height: 90px;
-    margin: 0 auto;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .back-btn {
@@ -296,6 +322,8 @@ body {
     box-shadow: 0 4px 6px var(--shadow-light),
                 inset 0 1px 0 rgba(255, 255, 255, 0.7);
     font-weight: 600;
+    position: relative;
+    z-index: 1;
 }
 
 

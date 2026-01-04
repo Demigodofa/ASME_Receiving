@@ -18,6 +18,7 @@ A lightweight, offline-first receiving inspection app with optional cloud mode f
 3. Paste your Firebase config JSON into **Firebase Config (JSON)** when using the settings panel workflow.
 4. Provide your PDF generation endpoint in **PDF Endpoint**.
 5. Enable **Cloud mode**.
+6. On native builds, the same config is passed into the Firebase native SDK (Auth/Firestore/Storage) via the bundled Capacitor plugin, so the native SDK is initialized alongside the web SDK without needing a baked-in `google-services.json`/`GoogleService-Info.plist`.
 
 The config and endpoint are stored in local storage so the app can run offline between sessions.
 
