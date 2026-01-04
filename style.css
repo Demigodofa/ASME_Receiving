@@ -196,6 +196,10 @@ html, body {
     font-size: 0.95rem;
 }
 
+.home-jobs-button {
+    margin-top: 8px;
+}
+
 .landing-button {
     display: block;
     width: 100%;
