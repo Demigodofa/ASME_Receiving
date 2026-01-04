@@ -1,5 +1,5 @@
 function openJob(jobNumber) {
-    window.location.href = `job.html?job=${jobNumber}`;
+    window.location.href = `job.html?job=${encodeURIComponent(jobNumber)}`;
 }
 
 async function deleteJob(jobNumber) {
