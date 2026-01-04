@@ -1,6 +1,5 @@
 function openJob(jobNumber) {
-    const base = window.location.origin;
-    window.location.href = `${base}/job.html?job=${jobNumber}`;
+    window.location.href = `job.html?job=${jobNumber}`;
 }
 
 async function deleteJob(jobNumber) {
