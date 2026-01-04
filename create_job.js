@@ -8,20 +8,24 @@ async function saveJob() {
         return;
     }
 
-    // 1. Save to local database IMMEDIATELY
+    await db.jobs.put({
+        jobNumber,
+        description,
+        notes,
+        createdAt: new Date().toISOString(),
+        cloudJobId: jobNumber
+    });
+
+    let cloud = null;
     try {
-        await db.jobs.put({
-            jobNumber,
-            description,
-            notes,
-            createdAt: new Date().toISOString(),
-            cloudJobId: jobNumber
-        });
-        console.log("Job saved locally.");
-    } catch (err) {
-        console.error("Local save failed:", err);
-        alert("Failed to save locally. Please check storage space.");
-        return;
+        cloud = await window.cloudApiReady;
+    } catch (error) {
+        console.warn("Cloud init failed, saving locally only.", error);
+    }
+
+    const cloudEnabled = await window.cloudSettings.isCloudModeEnabled();
+    if (cloud?.enabled && cloudEnabled) {
+        await cloud.ensureJobDoc(jobNumber, { description, notes });
     }
 
     // 2. Attempt Cloud Sync in the background (Don't wait for it to finish)

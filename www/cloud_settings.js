@@ -1,4 +1,31 @@
 const cloudSettings = {
+  async redeemAccessToken(token) {
+    console.log(`Simulating redemption for token: ${token}`);
+
+    let firebaseConfig = window.ASME_RECEIVING_FIREBASE_CONFIG || null;
+    let pdfEndpoint = window.ASME_RECEIVING_PDF_ENDPOINT || "";
+
+    if (!firebaseConfig) {
+      try {
+        const parsedToken = JSON.parse(token);
+        firebaseConfig = parsedToken.firebase || parsedToken;
+        pdfEndpoint = parsedToken.pdfEndpoint || pdfEndpoint;
+      } catch (error) {
+        return {
+          success: false,
+          message: "Activation failed: no Firebase config available for this access code.",
+        };
+      }
+    }
+
+    this.setFirebaseConfig(JSON.stringify(firebaseConfig));
+    if (pdfEndpoint) {
+      this.setPdfEndpoint(pdfEndpoint);
+    }
+    this.setCloudModeEnabled(true);
+    return { success: true, message: "Cloud access activated!" };
+  },
+
   isCloudModeEnabled() {
     return localStorage.getItem("asmeCloudModeEnabled") === "true";
   },

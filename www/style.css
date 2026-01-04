@@ -73,8 +73,12 @@ body {
 .home-landing-body {
     min-height: 100vh;
     display: flex;
-    justify-content: center;
+    flex-direction: column; /* Changed for header */
     background: var(--background-light);
+}
+
+.landing-screen.has-header {
+    padding-top: 70px; /* Space for the header */
 }
 
 .landing-screen {
@@ -85,6 +89,7 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 32px;
+    box-sizing: border-box;
 }
 
 .landing-logo {
@@ -98,14 +103,17 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    max-width: 320px;
+    margin: 0 auto;
 }
 
 .landing-button {
     display: block;
+    width: 100%;
     text-align: center;
     text-decoration: none;
-    padding: 18px 20px;
-    font-size: 1.1rem;
+    padding: 14px 18px;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-light);
     border-radius: 18px;
@@ -125,6 +133,28 @@ body {
     transform: translateY(0);
     box-shadow: 0 4px 8px rgba(12, 33, 77, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+@media (max-width: 420px) {
+    .header-bar {
+        flex-wrap: wrap;
+        justify-content: center;
+        row-gap: 6px;
+        padding-bottom: 12px;
+    }
+
+    .header-bar .title {
+        position: static;
+        transform: none;
+        width: 100%;
+        text-align: center;
+        order: 2;
+    }
+
+    .header-bar .back-btn {
+        order: 1;
+        margin-right: auto;
+    }
 }
 
 /* =========================

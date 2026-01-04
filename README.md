@@ -13,9 +13,11 @@ A lightweight, offline-first receiving inspection app with optional cloud mode f
 ### Cloud mode setup
 
 1. Open the app entry point (`app.html`), which routes through `index.html` (splash) to `home.html`.
-2. Paste your Firebase config JSON into **Firebase Config (JSON)**.
-3. Provide your PDF generation endpoint in **PDF Endpoint**.
-4. Enable **Cloud mode**.
+2. Use **Activate Cloud Access** to redeem your access code and store the Firebase config.
+   - For local/testing flows without a backend, define `window.ASME_RECEIVING_FIREBASE_CONFIG` (and optional `window.ASME_RECEIVING_PDF_ENDPOINT`) before `cloud_settings.js` loads so the access code can enable cloud mode.
+3. Paste your Firebase config JSON into **Firebase Config (JSON)** when using the settings panel workflow.
+4. Provide your PDF generation endpoint in **PDF Endpoint**.
+5. Enable **Cloud mode**.
 
 The config and endpoint are stored in local storage so the app can run offline between sessions.
 
@@ -59,7 +61,8 @@ Visit **Upload Queue** from the home screen to monitor pending, failed, and comp
 ## Job creation flow
 
 - The **Save Job** action on `create_job.html` stores the job in IndexedDB and routes to `job.html` for adding receiving reports and materials.
-- The home screen lists saved jobs and links directly to their job details for editing and reporting.
+- Cloud sync is attempted only when cloud mode is enabled; local saves still succeed if cloud initialization fails.
+- The **Jobs** screen (`jobs.html`) lists saved jobs and links directly to their job details for editing and reporting.
 - The job details screen shows a compact job summary row; select it to edit job metadata, and use the hydro report action/status under Job Details to open or generate the report.
 
 ## UI layout conventions
