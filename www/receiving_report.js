@@ -1,3 +1,4 @@
+
 let materialId;
 let jobNumber;
 const PHOTO_LIMITS = {
@@ -172,18 +173,34 @@ async function deleteReport() {
 async function handlePhotoInput(event) {
     const category = event.target.dataset.category;
     if (!category || !photoState[category]) return;
+
     const files = event.target.files;
     if (!files.length) return;
 
     for (const file of files) {
         if (photoState[category].length >= PHOTO_LIMITS[category]) {
-            alert(`You can only add up to ${PHOTO_LIMITS[category]} ${category === "materials" ? "materials" : "MTR/CofC"} photos.`);
+            alert(`You can only add up to ${PHOTO_LIMITS[category]} ${category === 'materials' ? 'materials' : 'MTR/CofC'} photos.`);
             break;
         }
-        const dataUrl = await resizeAndCompressImage(file, 800, 600, 0.7);
+
+        let dataUrl;
+        if (category === 'materials') {
+            // High-quality resizing for materials photos to ensure markings are readable
+            dataUrl = await resizeAndCompressImage(file, 1920, 1920, 0.9);
+        } else {
+            // For MTRs, we will use the original image data for now to prepare for scanning
+            dataUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
         photoState[category].push({ dataUrl });
     }
-    event.target.value = "";
+
+    event.target.value = ''; // Clear the input
     renderPhotoPreview(category);
 }
 

@@ -1,5 +1,8 @@
 {
   "appId": "com.materialguardian.app",
   "appName": "MaterialGuardian",
-  "webDir": "."
+  "webDir": "www",
+  "server": {
+    "allowNavigation": ["*"]
+  }
 }
