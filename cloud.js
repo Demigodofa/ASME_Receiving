@@ -41,12 +41,41 @@ function waitForFirebaseUser(auth) {
   });
 }
 
+async function initializeNativeFirebase(config) {
+  const capacitor = window.Capacitor;
+  const isNative = typeof capacitor?.isNativePlatform === "function"
+    ? capacitor.isNativePlatform()
+    : Boolean(capacitor?.isNative);
+
+  if (!isNative) return { status: "skipped", reason: "not-native" };
+
+  const nativePlugin = capacitor?.Plugins?.FirebaseNative;
+  if (!nativePlugin?.initialize) return { status: "skipped", reason: "missing-plugin" };
+
+  if (!config?.apiKey || !config?.appId || !config?.projectId) {
+    return { status: "skipped", reason: "missing-config" };
+  }
+
+  try {
+    const res = await nativePlugin.initialize({ config });
+    return res || { status: "initialized" };
+  } catch (err) {
+    console.warn("Native Firebase init failed:", err);
+    return { status: "error", error: err?.message || String(err) };
+  }
+}
+
 window.cloudApiReady = (async () => {
   // --- guardrails ---
   if (!window.cloudSettings) return { enabled: false, reason: "missing-settings" };
 
   const config = await window.cloudSettings.getFirebaseConfig?.();
   if (!config) return { enabled: false, reason: "missing-config" };
+
+  const nativeInit = await initializeNativeFirebase(config);
+  if (nativeInit?.status === "error") {
+    console.warn("Proceeding with web Firebase SDK after native init failure:", nativeInit);
+  }
 
   // --- init ---
   const app = initializeApp(config);
