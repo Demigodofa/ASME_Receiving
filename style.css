@@ -76,6 +76,7 @@ body {
     display: flex;
     flex-direction: column; /* Changed for header */
     background: var(--background-light);
+    overflow-x: hidden;
 }
 
 .landing-screen.has-header {
@@ -137,7 +138,7 @@ body {
 .home-job-row {
     width: 100%;
     display: grid;
-    grid-template-columns: 90px 1.2fr 1.6fr;
+    grid-template-columns: minmax(0, 90px) minmax(0, 1.2fr) minmax(0, 1.6fr);
     gap: 12px;
     align-items: center;
     padding: 14px 16px;
@@ -148,6 +149,7 @@ body {
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(15, 31, 58, 0.08);
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-sizing: border-box;
 }
 
 .home-job-row:hover {
@@ -183,6 +185,10 @@ body {
     background: #f6f8fc;
     color: #5b677a;
     font-size: 0.95rem;
+}
+
+.home-jobs-button {
+    margin-top: 8px;
 }
 
 .landing-button {
@@ -232,6 +238,17 @@ body {
     .header-bar .back-btn {
         order: 1;
         margin-right: auto;
+    }
+}
+
+@media (max-width: 520px) {
+    .home-job-row {
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+    }
+
+    .home-job-cell {
+        white-space: normal;
     }
 }
 
