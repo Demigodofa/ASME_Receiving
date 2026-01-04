@@ -1,5 +1,6 @@
 function openJob(jobNumber) {
-    window.location.href = `job.html?job=${encodeURIComponent(jobNumber)}`;
+    const base = window.location.origin;
+    window.location.href = `${base}/job.html?job=${jobNumber}`;
 }
 
 async function deleteJob(jobNumber) {
@@ -20,8 +21,16 @@ async function deleteJob(jobNumber) {
 }
 
 async function loadJobs() {
+    // Try to find the container using both possible IDs (homeJobsList or jobsList)
+    const list = document.getElementById("homeJobsList") || document.getElementById("jobsList");
+    
+    // Safety check: if neither exists, don't crash the app
+    if (!list) {
+        console.warn("Job list container not found on this page.");
+        return;
+    }
+
     const jobs = await db.jobs.toArray();
-    const list = document.getElementById("jobsList");
     list.innerHTML = "";
 
     jobs.forEach(job => {
