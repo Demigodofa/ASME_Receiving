@@ -63,7 +63,7 @@ Visit **Upload Queue** from the home screen to monitor pending, failed, and comp
 
 - The **Save Job** action on `create_job.html` stores the job in IndexedDB and routes to `job.html` for adding receiving reports and materials.
 - Cloud sync is attempted only when cloud mode is enabled; local saves still succeed if cloud initialization fails.
-- The home landing screen (`home.html`) now previews current jobs and links directly to job details, with a **View All Jobs** button for the full list.
+- The home landing screen (`home.html`) previews current jobs and links directly to job details, while the full list remains on `jobs.html`.
 - The **Jobs** screen (`jobs.html`) lists saved jobs and links directly to their job details for editing and reporting.
 - The job details screen shows a compact job summary row; select it to edit job metadata, and use the hydro report action/status under Job Details to open or generate the report.
 
@@ -72,6 +72,7 @@ Visit **Upload Queue** from the home screen to monitor pending, failed, and comp
 - Screens with the fixed header use the `.page-content` wrapper in `style.css` to keep content centered and padded on larger displays.
 - The shared `.page-content`, `.container`, and `.content` wrappers use `box-sizing: border-box` so padded layouts do not overflow on narrow screens.
 - The header logo uses the `.header-logo-centered` class to keep the icon sized consistently across pages.
+- Pages with back buttons use the centered `Material_Guardian.png` header logo for consistent navigation branding.
 
 ## Development checks
 

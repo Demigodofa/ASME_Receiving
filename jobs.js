@@ -50,7 +50,6 @@ async function loadJobs() {
 
 async function loadHomeJobs() {
     const list = document.getElementById("homeJobsList");
-    const link = document.getElementById("homeJobsLink");
     if (!list) return;
 
     const jobs = await db.jobs.orderBy("createdAt").reverse().toArray();
@@ -61,11 +60,8 @@ async function loadHomeJobs() {
         empty.className = "home-job-empty";
         empty.textContent = "No jobs yet. Create one to start tracking materials.";
         list.appendChild(empty);
-        if (link) link.classList.add("is-hidden");
         return;
     }
-
-    if (link) link.classList.remove("is-hidden");
 
     jobs.forEach((job) => {
         const row = document.createElement("button");

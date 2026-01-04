@@ -114,6 +114,7 @@ html, body {
     gap: 16px;
     max-width: 320px;
     margin: 0 auto;
+    box-sizing: border-box;
 }
 
 .home-jobs-section {
@@ -213,6 +214,7 @@ html, body {
     box-shadow: 0 6px 12px rgba(12, 33, 77, 0.2),
                 inset 0 2px 0 rgba(255, 255, 255, 0.45);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
 }
 
 .landing-button:hover {
@@ -268,6 +270,7 @@ html, body {
     align-items: center;
     justify-content: space-between;
     padding: 10px 16px;
+    min-height: 90px;
     background-color: var(--text-light);
     box-shadow: 0 2px 4px var(--shadow-light);
     position: fixed; /* Changed to fixed */
@@ -303,7 +306,10 @@ html, body {
 .header-logo-centered {
     width: 90px;
     height: 90px;
-    margin: 0 auto;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .back-btn {
@@ -321,6 +327,8 @@ html, body {
     box-shadow: 0 4px 6px var(--shadow-light),
                 inset 0 1px 0 rgba(255, 255, 255, 0.7);
     font-weight: 600;
+    position: relative;
+    z-index: 1;
 }
 
 
