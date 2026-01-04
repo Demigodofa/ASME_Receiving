@@ -30,7 +30,7 @@ const cloudSettings = {
     //          { method: 'POST', body: JSON.stringify({ token }) });
     // const data = await response.json();
 
-    console.log(`Simulating redemption for token: ${token}`);
+    console.log(`Activating cloud with token: ${token}`);
 
     let firebaseConfig = window.ASME_RECEIVING_FIREBASE_CONFIG || null;
     let pdfEndpoint = window.ASME_RECEIVING_PDF_ENDPOINT || "";
