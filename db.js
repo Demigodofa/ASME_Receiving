@@ -67,6 +67,49 @@ db.version(5).stores({
                 cloudItemId`
 });
 
+// Version 6: restore full schema (jobs, photos, upload queue, hydro reports) alongside materials.
+db.version(6).stores({
+    jobs: "jobNumber, description, notes, createdAt, cloudJobId",
+    materials: `++id, 
+                jobNumber, 
+                itemDisplayName, 
+                vendor, 
+                poNumber, 
+                date, 
+                quantity, 
+                product, 
+                specification, 
+                specificationNumber, 
+                gradeTypeAlloy, 
+                fittingType, 
+                fittingSpec, 
+                th1, th2, th3, th4, 
+                width, 
+                length, 
+                diameter, 
+                otherDim, 
+                visualInspectionAcceptable, 
+                b16DimensionsAcceptable, 
+                actualMaterialMarking, 
+                markingAcceptableToCode, 
+                mtrCofCAcceptable, 
+                resultAccept, 
+                resultReject, 
+                comments, 
+                qcInitials, 
+                qcDate, 
+                qcManagerInitials, 
+                qcManagerDate, 
+                photoCount, 
+                offloadStatus, 
+                pdfStatus, 
+                pdfStoragePath, 
+                cloudItemId`,
+    photos: `++id, materialId, jobNumber, status, createdAt, category, label, sequence`,
+    uploadQueue: `++id, status, type, createdAt, updatedAt, materialId, photoId`,
+    hydroReports: "++id, jobNumber"
+});
+
 
 // Open the database
 db.open().catch(err => {
