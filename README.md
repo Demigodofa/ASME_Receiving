@@ -52,6 +52,7 @@ Visit **Upload Queue** from the home screen to monitor pending, failed, and comp
 - Vendor (30 chars), quantity (20 chars), and specification numbers (20 chars) are length-limited.
 - Actual material markings are limited to five lines.
 - Dimensions include imperial/metric selectors, defaulting to imperial.
+- Receiving reports warn before leaving the page with unsaved changes.
 
 ## Hydro report defaults
 
