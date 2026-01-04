@@ -7,8 +7,7 @@
   "dependencies": {
     "@capacitor/android": "^8.0.0",
     "@capacitor/cli": "^8.0.0",
-    "@capacitor/ios": "^8.0.0",
-    "@capacitor-mlkit/document-scanner": "^7.0.0"
+    "@capacitor/ios": "^8.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
