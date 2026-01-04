@@ -1,5 +1,5 @@
 {
   "appId": "com.materialguardian.app",
   "appName": "MaterialGuardian",
-  "webDir": "www"
+  "webDir": "."
 }
