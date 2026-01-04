@@ -1,11 +1,15 @@
 // ============================================================================
-//  export_job.js — TOTAL CLEAN REWRITE
-//  Fully Offline ZIP + PDF Export System (iOS + Android Compatible)
+//  export_job.js — ZIP + PDF Export (materials + MTR scans)
 // ============================================================================
 
 async function exportJobData(jobNumber) {
     if (!jobNumber) {
         alert("Error: No job number provided for export.");
+        return;
+    }
+
+    if (typeof JSZip === "undefined" || !window.jspdf || !window.jspdf.jsPDF) {
+        alert("Export libraries are missing. Please check your connection and try again.");
         return;
     }
 
@@ -17,9 +21,8 @@ async function exportJobData(jobNumber) {
         return;
     }
 
-    const zip = new JSZip();
     const { jsPDF } = window.jspdf;
-
+    const zip = new JSZip();
     const rootFolder = zip.folder(`Job_${jobNumber}`);
     const materialsFolder = rootFolder.folder("Materials");
     const photosFolder = rootFolder.folder("Photos");
@@ -56,7 +59,8 @@ async function exportJobData(jobNumber) {
         summary.text("No materials have been added.", 50, y);
     } else {
         materials.forEach((m, i) => {
-            summary.text(`${i + 1}. ${m.description || "(No description)"}`, 50, y);
+            const label = m.itemDisplayName || m.description || "(No description)";
+            summary.text(`${i + 1}. ${label}`, 50, y);
             y += 16;
         });
     }
@@ -87,33 +91,34 @@ async function exportJobData(jobNumber) {
             }
         };
 
-        write("Description", m.description);
+        write("Item", m.itemDisplayName || m.description);
         write("Vendor", m.vendor);
         write("PO Number", m.poNumber);
         write("Date Received", m.date);
         write("Quantity", m.quantity);
-        write("Spec Prefix", m.specPrefix);
-        write("Spec Code", m.specCode);
-        write("Grade", m.grade);
-        write("B16 Dimensions", m.b16dim);
+        write("Product", m.product);
+        write("Specification", formatSpec(m));
+        write("Grade/Type/Alloy", m.gradeTypeAlloy || m.grade);
+        write("Fitting Type", m.fittingType);
+        write("Fitting Spec", m.fittingSpec);
 
-        pdf.text("Thicknesses:", 50, y2);
+        pdf.text("Dimensions:", 50, y2);
         y2 += 16;
-
         write("T1", m.th1);
         write("T2", m.th2);
         write("T3", m.th3);
         write("T4", m.th4);
+        write("Width", m.width);
+        write("Length", m.length);
+        write("Diameter", m.diameter);
+        write("Other", m.otherDim);
 
         y2 += 8;
 
-        write("Visual Inspection", m.visual);
-        write("Marking Acceptable", m.markingAcceptable);
-        write("MTR Acceptable", m.mtrAcceptable);
-
-        y2 += 8;
-
-        write("Actual Marking", m.actualMarking);
+        write("Visual Inspection", m.visualInspectionAcceptable || m.visual);
+        write("B16 Dimensions", m.b16DimensionsAcceptable || m.b16dim);
+        write("MTR/CofC Acceptable", m.mtrCofCAcceptable || m.mtrAcceptable);
+        write("Actual Marking", m.actualMaterialMarking || m.actualMarking);
         write("Comments", m.comments);
 
         y2 += 20;
@@ -125,53 +130,48 @@ async function exportJobData(jobNumber) {
         pdf.setFont("Helvetica", "normal");
         write("QC Initials", m.qcInitials);
         write("QC Date", m.qcDate);
+        write("QC Manager", m.qcManagerInitials);
+        write("QC Manager Date", m.qcManagerDate);
 
         const materialPhotos = await db.photos.where("materialId").equals(m.id).toArray();
-        const utils = window.photoUtils || {};
-        const photoDataUrls = await Promise.all(materialPhotos.map(async (photo) => {
-            if (photo.thumbnailDataUrl) {
-                return photo.thumbnailDataUrl;
-            }
-            if (photo.thumbnailBlob && utils.blobToDataUrl) {
-                return utils.blobToDataUrl(photo.thumbnailBlob);
-            }
-            if (photo.fullBlob && utils.blobToDataUrl) {
-                return utils.blobToDataUrl(photo.fullBlob);
-            }
-            return null;
-        }));
+        const materialImages = materialPhotos.filter((photo) => !photo.category || photo.category === "materials");
+        const mtrImages = materialPhotos.filter((photo) => photo.category === "mtr");
 
-        const filteredPhotos = photoDataUrls.filter(Boolean).slice(0, 5);
+        const materialDataUrls = (await Promise.all(materialImages.map(resolvePhotoDataUrl))).filter(Boolean);
+        const mtrDataUrls = (await Promise.all(mtrImages.map(resolvePhotoDataUrl))).filter(Boolean);
 
-        if (filteredPhotos.length > 0) {
+        if (materialDataUrls.length > 0) {
             y2 += 20;
             pdf.setFont("Helvetica", "bold");
             pdf.text("Photos:", 50, y2);
             y2 += 16;
 
             let x = 50;
-
-            filteredPhotos.forEach((img, pIndex) => {
+            materialDataUrls.slice(0, 5).forEach((img, pIndex) => {
                 try {
                     pdf.addImage(img, "JPEG", x, y2, 150, 120);
                 } catch (e) {
                     console.error("Photo skipped:", e);
                 }
 
-                const base64 = img.split(",")[1];
-                if (base64) {
-                    photosFolder.file(
-                        `material${i + 1}_photo${pIndex + 1}.jpg`,
-                        base64,
-                        { base64: true }
-                    );
-                }
+                addPhotoToZip(photosFolder, `material${i + 1}_photo${pIndex + 1}`, img);
 
                 x += 160;
                 if (x > 450) {
                     x = 50;
                     y2 += 130;
                 }
+            });
+        }
+
+        if (mtrDataUrls.length > 0) {
+            const mtrPdf = await buildPdfFromImages(mtrDataUrls, jsPDF);
+            materialsFolder.file(
+                `Material_${i + 1}_MTR.pdf`,
+                mtrPdf.output("blob")
+            );
+            mtrDataUrls.forEach((img, pIndex) => {
+                addPhotoToZip(photosFolder, `material${i + 1}_mtr${pIndex + 1}`, img);
             });
         }
 
@@ -204,4 +204,79 @@ async function exportJobData(jobNumber) {
     a.download = zipFileName;
     a.click();
     URL.revokeObjectURL(url);
+}
+
+async function resolvePhotoDataUrl(photo) {
+    const utils = window.photoUtils || {};
+    if (photo.thumbnailDataUrl) return photo.thumbnailDataUrl;
+    if (photo.imageData) return photo.imageData;
+    if (photo.thumbnailBlob && utils.blobToDataUrl) {
+        return utils.blobToDataUrl(photo.thumbnailBlob);
+    }
+    if (photo.fullBlob && utils.blobToDataUrl) {
+        return utils.blobToDataUrl(photo.fullBlob);
+    }
+    if (photo.pdfDataUrl && photo.pdfDataUrl.startsWith("data:application/pdf")) {
+        try {
+            const pdfImg = await convertFirstPdfPageToImage(photo.pdfDataUrl);
+            if (pdfImg) return pdfImg;
+        } catch (error) {
+            console.warn("Failed to convert PDF photo", error);
+        }
+    }
+    return null;
+}
+
+function addPhotoToZip(folder, name, dataUrl) {
+    if (!folder || !dataUrl) return;
+    const base64 = dataUrl.split(",")[1];
+    if (base64) {
+        folder.file(`${name}.jpg`, base64, { base64: true });
+    }
+}
+
+async function buildPdfFromImages(dataUrls, jsPDF) {
+    const pdf = new jsPDF({ unit: "pt", format: "letter" });
+    for (let idx = 0; idx < dataUrls.length; idx++) {
+        if (idx > 0) {
+            pdf.addPage();
+        }
+        const image = await loadImage(dataUrls[idx]);
+        placeImageOnPage(pdf, dataUrls[idx], image);
+    }
+    return pdf;
+}
+
+function placeImageOnPage(pdf, dataUrl, image) {
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const maxW = pageW - 60;
+    const maxH = pageH - 80;
+    const scale = Math.min(maxW / image.width, maxH / image.height);
+    const w = image.width * scale;
+    const h = image.height * scale;
+    const x = (pageW - w) / 2;
+    const y = (pageH - h) / 2;
+    pdf.addImage(dataUrl, "JPEG", x, y, w, h);
+}
+
+function loadImage(dataUrl) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = dataUrl;
+    });
+}
+
+async function convertFirstPdfPageToImage(pdfDataUrl) {
+    // Placeholder for future PDF-to-image conversion. For now, skip.
+    return null;
+}
+
+function formatSpec(material) {
+    if (material.specification && material.specificationNumber) {
+        return `${material.specification} ${material.specificationNumber}`;
+    }
+    return material.specification || material.specPrefix || "";
 }
