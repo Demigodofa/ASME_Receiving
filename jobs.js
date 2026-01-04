@@ -21,9 +21,19 @@ async function deleteJob(jobNumber) {
 }
 
 async function loadJobs() {
-    const jobs = await db.jobs.toArray();
     const list = document.getElementById("jobsList");
+    if (!list) return;
+
+    const jobs = await db.jobs.toArray();
     list.innerHTML = "";
+
+    if (jobs.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "home-job-empty";
+        empty.textContent = "No jobs saved yet.";
+        list.appendChild(empty);
+        return;
+    }
 
     jobs.forEach(job => {
         const div = document.createElement("div");
@@ -39,4 +49,45 @@ async function loadJobs() {
     });
 }
 
-window.onload = loadJobs;
+async function loadHomeJobs() {
+    const list = document.getElementById("homeJobsList");
+    const link = document.getElementById("homeJobsLink");
+    if (!list) return;
+
+    const jobs = await db.jobs.orderBy("createdAt").reverse().toArray();
+    list.innerHTML = "";
+
+    if (jobs.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "home-job-empty";
+        empty.textContent = "No jobs yet. Create one to start tracking materials.";
+        list.appendChild(empty);
+        if (link) link.classList.add("is-hidden");
+        return;
+    }
+
+    if (link) link.classList.remove("is-hidden");
+
+    jobs.forEach((job) => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "home-job-row";
+        row.addEventListener("click", () => openJob(job.jobNumber));
+
+        const description = job.description?.trim() || "No description";
+        const notes = job.notes?.trim() || "No notes";
+
+        row.innerHTML = `
+            <span class="home-job-cell home-job-number">Job #${job.jobNumber}</span>
+            <span class="home-job-cell home-job-description">${description}</span>
+            <span class="home-job-cell home-job-notes">${notes}</span>
+        `;
+
+        list.appendChild(row);
+    });
+}
+
+window.addEventListener("load", () => {
+    loadJobs();
+    loadHomeJobs();
+});
