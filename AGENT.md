@@ -8,8 +8,10 @@
 - Job creation UI wiring lives in `create_job.js` (save handler and navigation).
 - Job details UI (compact summary/edit form and hydro report status) is rendered in `job.js` with styling in `style.css`.
 - The landing screen actions live in `home.html` and use `.landing-screen`/`.landing-actions` in `style.css`; job lists are handled on `jobs.html`.
+- The home landing job preview uses `home.html` + `jobs.js` with the `homeJobsList` container and `.home-job-row` styling in `style.css`.
 - Lint and test scripts are defined in `package.json` with config in `eslint.config.js` and smoke tests in `__tests__/`.
 - Receiving report photo buckets live in `receiving_report.js` and save `photos` with `category` and `label` metadata for materials vs. MTR/CofC.
+- Unsaved-change warnings for receiving reports are handled in `receiving_report.js` via `setupUnsavedWarning()`.
 - Job renumbering updates related materials, photos, and hydro reports in `job.js`.
 - Shared page centering/layout for fixed-header screens lives in `style.css` under `.page-content` and uses `box-sizing: border-box` to prevent padded layouts from overflowing.
 - Header logos are sized via `.header-logo-centered` in `style.css` to keep the fixed header compact.

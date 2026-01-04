@@ -52,6 +52,7 @@ Visit **Upload Queue** from the home screen to monitor pending, failed, and comp
 - Vendor (30 chars), quantity (20 chars), and specification numbers (20 chars) are length-limited.
 - Actual material markings are limited to five lines.
 - Dimensions include imperial/metric selectors, defaulting to imperial.
+- Receiving reports warn before leaving the page with unsaved changes.
 
 ## Hydro report defaults
 
@@ -62,6 +63,7 @@ Visit **Upload Queue** from the home screen to monitor pending, failed, and comp
 
 - The **Save Job** action on `create_job.html` stores the job in IndexedDB and routes to `job.html` for adding receiving reports and materials.
 - Cloud sync is attempted only when cloud mode is enabled; local saves still succeed if cloud initialization fails.
+- The home landing screen (`home.html`) now previews current jobs and links directly to job details, with a **View All Jobs** button for the full list.
 - The **Jobs** screen (`jobs.html`) lists saved jobs and links directly to their job details for editing and reporting.
 - The job details screen shows a compact job summary row; select it to edit job metadata, and use the hydro report action/status under Job Details to open or generate the report.
 
