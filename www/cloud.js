@@ -45,7 +45,7 @@ window.cloudApiReady = (async () => {
   // --- guardrails ---
   if (!window.cloudSettings) return { enabled: false, reason: "missing-settings" };
 
-  const config = window.cloudSettings.getFirebaseConfig?.();
+  const config = await window.cloudSettings.getFirebaseConfig?.();
   if (!config) return { enabled: false, reason: "missing-config" };
 
   // --- init ---
@@ -277,7 +277,7 @@ window.cloudApiReady = (async () => {
   };
 
   const requestPdfGeneration = async (material) => {
-    const endpoint = window.cloudSettings.getPdfEndpoint?.();
+    const endpoint = await window.cloudSettings.getPdfEndpoint?.();
     if (!endpoint) throw new Error("PDF endpoint not configured.");
     if (!material?.jobNumber) throw new Error("requestPdfGeneration: material.jobNumber required");
     if (!material?.cloudItemId) throw new Error("requestPdfGeneration: material.cloudItemId required");
