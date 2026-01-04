@@ -51,15 +51,57 @@ window.onload = async () => {
         }
     };
 
+    // Standard photo inputs
     document.querySelectorAll("[data-photo-input]").forEach((input) => {
         input.addEventListener("change", handlePhotoInput);
     });
+
+    // Wire up the Native Document Scanner for MTRs
+    setupMtrScanner();
 
     setupLineLimit("itemDisplayName", 5);
     setupLineLimit("actualMaterialMarking", 5);
     setupDimensionUnits();
     handleFittingChange();
 };
+
+/**
+ * Professional Scanner Wiring:
+ * Replaces the default MTR camera button with the Google ML Kit Document Scanner
+ * if running on a native device. Falls back to standard camera on web.
+ */
+function setupMtrScanner() {
+    const mtrLabel = document.querySelector('label[for="mtrCameraInput"]');
+    if (!mtrLabel) return;
+
+    mtrLabel.addEventListener('click', async (e) => {
+        // Check if we are on a Native device with the DocumentScanner plugin
+        if (window.Capacitor?.isNative && window.Capacitor.Plugins.DocumentScanner) {
+            e.preventDefault(); // Stop the standard file input from opening
+
+            try {
+                const { DocumentScanner } = window.Capacitor.Plugins;
+                const result = await DocumentScanner.scanDocument({
+                    maxNumOfPages: PHOTO_LIMITS.mtr - photoState.mtr.length,
+                    galleryImportAllowed: true,
+                    responseType: 'base64'
+                });
+
+                if (result.images && result.images.length > 0) {
+                    for (const base64 of result.images) {
+                        const dataUrl = `data:image/jpeg;base64,${base64}`;
+                        photoState.mtr.push({ dataUrl });
+                    }
+                    renderPhotoPreview("mtr");
+                }
+            } catch (err) {
+                console.error("Native scanner failed, falling back to camera:", err);
+                // If native scan fails, we let the default file input handle it
+                document.getElementById("mtrCameraInput").click();
+            }
+        }
+    });
+}
 
 async function loadMaterial() {
     const id = Number(materialId);
@@ -188,7 +230,7 @@ async function handlePhotoInput(event) {
             // High-quality resizing for materials photos to ensure markings are readable
             dataUrl = await resizeAndCompressImage(file, 1920, 1920, 0.9);
         } else {
-            // For MTRs, we will use the original image data for now to prepare for scanning
+            // For MTRs on web, we use original quality to preserve text
             dataUrl = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (e) => resolve(e.target.result);
