@@ -36,8 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (saveButton) {
         saveButton.addEventListener("click", () => {
             saveJob().catch((error) => {
-                console.error("Failed to save job", error);
-                alert("Failed to save job. Please try again.");
+                console.error("Save job handler error:", error);
             });
         });
     }
