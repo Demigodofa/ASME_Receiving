@@ -1,4 +1,4 @@
-# ASME Receiving
+# MaterialGuardian_Android
 
 A lightweight, offline-first receiving inspection app with optional cloud mode for offloading photos and PDF generation.
 
