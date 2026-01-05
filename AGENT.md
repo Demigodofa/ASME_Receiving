@@ -1,5 +1,9 @@
 # Agent Notes
 
+## Repository naming
+
+- Repository name target: `MaterialGuardian_Android`.
+
 ## Cloud workflow touchpoints
 
 - Client cloud integration lives in `cloud.js` (Firebase/Firestore/Storage) and `upload_queue.js` (queue processing).
