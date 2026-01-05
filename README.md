@@ -1,6 +1,14 @@
-# ASME Receiving
+# MaterialGuardian_Android
 
 A lightweight, offline-first receiving inspection app with optional cloud mode for offloading photos and PDF generation.
+
+## Repository rename notes
+
+Renaming the repository in your Git hosting provider is safe. GitHub/GitLab will automatically redirect the old URL to the new one, so existing clones keep working. After the rename, update any local remotes if you want the URL to match:
+
+```
+git remote set-url origin <new-repo-url>
+```
 
 ## Cloud Mode + Offload Workflow
 
