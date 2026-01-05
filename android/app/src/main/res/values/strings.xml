@@ -25,6 +25,14 @@
     <string name="material_user_id">User: %1$s</string>
     <string name="material_status_hint">Update status</string>
     <string name="material_update_status">Update Status</string>
+    <string name="material_form_title">New Material</string>
+    <string name="material_form_name">Name</string>
+    <string name="material_form_quantity">Quantity</string>
+    <string name="material_form_status">Status</string>
+    <string name="material_form_save">Save Material</string>
+    <string name="material_form_name_required">Name is required.</string>
+    <string name="material_add">Add Material</string>
+    <string name="materials_empty">No materials yet.</string>
     <string name="upload_queue_empty">Nothing in the upload queue.</string>
     <string name="upload_queue_retry">Retry</string>
     <string name="cloud_firebase_config">Firebase Config (JSON)</string>
