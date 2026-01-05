@@ -36,6 +36,9 @@
             android:name="jobNumber"
             app:argType="string"
             android:defaultValue="" />
+        <action
+            android:id="@+id/action_jobDetailFragment_to_materialFragment"
+            app:destination="@id/materialFragment" />
     </fragment>
 
     <fragment
