@@ -4,7 +4,7 @@ A lightweight, offline-first receiving inspection app with optional cloud mode f
 
 ## Repository rename notes
 
-Renaming the repository in your Git hosting provider is safe. GitHub/GitLab will automatically redirect the old URL to the new one, so existing clones keep working. After the rename, update any local remotes if you want the URL to match:
+Renaming the repository in your Git hosting provider is safe. While services like GitHub and GitLab automatically redirect requests, it is a best practice to update your local remote URL to prevent potential issues with certain Git operations:
 
 ```
 git remote set-url origin <new-repo-url>
