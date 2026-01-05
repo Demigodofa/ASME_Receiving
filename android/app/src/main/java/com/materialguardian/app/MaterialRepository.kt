@@ -43,6 +43,22 @@ class MaterialRepository(
         awaitClose { registration.remove() }
     }
 
+    fun streamMaterialsForJob(jobNumber: String): Flow<List<MaterialItem>> = callbackFlow {
+        val registration: ListenerRegistration = materialsCollection
+            .whereEqualTo("jobNumber", jobNumber)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val items = snapshot?.documents
+                    ?.mapNotNull { it.toObject(MaterialItem::class.java) }
+                    .orEmpty()
+                trySend(items).isSuccess
+            }
+        awaitClose { registration.remove() }
+    }
+
     suspend fun updateMaterialStatus(id: String, status: String) {
         materialsCollection.document(id).update("status", status).await()
     }

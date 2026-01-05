@@ -7,6 +7,7 @@ import com.google.firebase.Timestamp
  */
 data class MaterialItem(
     val id: String = "",
+    val jobNumber: String = "",
     val name: String = "",
     val quantity: Int = 0,
     val status: String = "",
@@ -15,6 +16,7 @@ data class MaterialItem(
 ) {
     fun toHashMap(): Map<String, Any?> = mapOf(
         "id" to id,
+        "jobNumber" to jobNumber,
         "name" to name,
         "quantity" to quantity,
         "status" to status,
@@ -25,6 +27,7 @@ data class MaterialItem(
     companion object {
         fun mock(
             id: String = "mock-material-id",
+            jobNumber: String = "JOB-001",
             name: String = "Mock Material",
             quantity: Int = 1,
             status: String = "received",
@@ -32,6 +35,7 @@ data class MaterialItem(
             userId: String = "mock-user-id"
         ): MaterialItem = MaterialItem(
             id = id,
+            jobNumber = jobNumber,
             name = name,
             quantity = quantity,
             status = status,

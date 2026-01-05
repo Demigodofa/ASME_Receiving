@@ -28,8 +28,33 @@ class JobsFragment : Fragment(R.layout.fragment_jobs) {
         _binding = FragmentJobsBinding.bind(view)
         binding.jobsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.jobsRecyclerView.adapter = adapter
+        binding.jobsAddFab.setOnClickListener { showJobForm() }
 
         collectState()
+    }
+
+    private fun showJobForm() {
+        val dialogView = layoutInflater.inflate(R.layout.bottom_sheet_job_form, null)
+        val jobNumber = dialogView.findViewById<android.widget.EditText>(R.id.jobFormJobNumber)
+        val description = dialogView.findViewById<android.widget.EditText>(R.id.jobFormDescription)
+        val notes = dialogView.findViewById<android.widget.EditText>(R.id.jobFormNotes)
+        val saveButton = dialogView.findViewById<android.widget.Button>(R.id.jobFormSave)
+
+        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(requireContext())
+        dialog.setContentView(dialogView)
+        saveButton.setOnClickListener {
+            val jobNum = jobNumber.text?.toString()?.trim().orEmpty()
+            if (jobNum.isBlank()) {
+                Toast.makeText(requireContext(), R.string.job_form_job_number_required, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            lifecycleScope.launch {
+                viewModel.save(jobNum, description.text?.toString().orEmpty(), notes.text?.toString().orEmpty())
+                Toast.makeText(requireContext(), R.string.job_form_saved, Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+        }
+        dialog.show()
     }
 
     private fun collectState() {
