@@ -16,4 +16,13 @@
     <string name="job_detail_description">Description: %1$s</string>
     <string name="job_detail_notes">Notes: %1$s</string>
     <string name="job_detail_created_at">Created: %1$s</string>
+    <string name="material_empty">Material not found.</string>
+    <string name="material_id">ID: %1$s</string>
+    <string name="material_name">Name: %1$s</string>
+    <string name="material_quantity">Quantity: %1$d</string>
+    <string name="material_status">Status: %1$s</string>
+    <string name="material_received_at">Received: %1$s</string>
+    <string name="material_user_id">User: %1$s</string>
+    <string name="material_status_hint">Update status</string>
+    <string name="material_update_status">Update Status</string>
 </resources>
