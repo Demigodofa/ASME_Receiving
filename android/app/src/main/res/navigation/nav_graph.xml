@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.materialguardian.app.ui.HomeFragment"
+        android:label="Home" />
+
+    <fragment
+        android:id="@+id/jobsFragment"
+        android:name="com.materialguardian.app.ui.JobsFragment"
+        android:label="Jobs" />
+
+    <fragment
+        android:id="@+id/jobDetailFragment"
+        android:name="com.materialguardian.app.ui.JobDetailFragment"
+        android:label="Job Detail" />
+
+    <fragment
+        android:id="@+id/materialFragment"
+        android:name="com.materialguardian.app.ui.MaterialFragment"
+        android:label="Material" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.materialguardian.app.ui.SettingsFragment"
+        android:label="Settings" />
+
+    <fragment
+        android:id="@+id/uploadQueueFragment"
+        android:name="com.materialguardian.app.ui.UploadQueueFragment"
+        android:label="Upload Queue" />
+</navigation>
