@@ -3,25 +3,47 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:padding="16dp">
 
     <TextView
         android:id="@+id/jobsTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Jobs (Placeholder)"
+        android:text="@string/navigation_jobs"
         android:textAppearance="?attr/textAppearanceHeadline5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/jobsSummary"
+    <ProgressBar
+        android:id="@+id/jobsProgress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/jobsTitle"
+        android:layout_marginTop="8dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/jobsRecyclerView"
         android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/jobsProgress"
+        app:layout_constraintBottom_toTopOf="@id/jobsEmpty"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/jobsEmpty"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:text="Native jobs list/detail will mirror the web flow (required job number, description, notes)."
-        app:layout_constraintStart_toStartOf="@id/jobsTitle"
-        app:layout_constraintTop_toBottomOf="@id/jobsTitle"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:text="@string/jobs_empty"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/jobsRecyclerView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

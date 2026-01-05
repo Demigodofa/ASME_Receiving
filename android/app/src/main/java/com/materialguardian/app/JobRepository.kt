@@ -19,6 +19,12 @@ class JobRepository(
         jobsCollection.document(job.jobNumber).set(payload).await()
     }
 
+    suspend fun get(jobNumber: String): JobItem? {
+        if (jobNumber.isBlank()) return null
+        val snapshot = jobsCollection.document(jobNumber).get().await()
+        return snapshot.toObject(JobItem::class.java)
+    }
+
     fun streamJobs(): Flow<List<JobItem>> = callbackFlow {
         val registration: ListenerRegistration = jobsCollection.addSnapshotListener { snapshot, error ->
             if (error != null) {
