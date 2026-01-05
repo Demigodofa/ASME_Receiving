@@ -27,4 +27,14 @@
     <string name="material_update_status">Update Status</string>
     <string name="upload_queue_empty">Nothing in the upload queue.</string>
     <string name="upload_queue_retry">Retry</string>
+    <string name="cloud_firebase_config">Firebase Config (JSON)</string>
+    <string name="cloud_firebase_hint">Paste JSON for Firebase config</string>
+    <string name="cloud_pdf_endpoint">PDF Endpoint</string>
+    <string name="cloud_pdf_hint">https://example.com/pdf-endpoint</string>
+    <string name="cloud_mode_toggle">Enable Cloud Mode</string>
+    <string name="cloud_save">Save Settings</string>
+    <string name="settings_saved_placeholder">Settings saved (placeholder)</string>
+    <string name="home_go_jobs">Jobs</string>
+    <string name="home_go_upload_queue">Upload Queue</string>
+    <string name="home_go_settings">Settings</string>
 </resources>

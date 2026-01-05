@@ -3,25 +3,45 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:padding="16dp">
 
     <TextView
         android:id="@+id/homeTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Home (Native Placeholder)"
+        android:text="@string/navigation_home"
         android:textAppearance="?attr/textAppearanceHeadline5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/homeSummary"
+    <Button
+        android:id="@+id/homeJobsButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/home_go_jobs"
+        app:layout_constraintTop_toBottomOf="@id/homeTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/homeUploadQueueButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:text="Replace this with the native landing tiles for Jobs, Upload Queue, and Cloud access."
-        app:layout_constraintStart_toStartOf="@id/homeTitle"
-        app:layout_constraintTop_toBottomOf="@id/homeTitle"
+        android:text="@string/home_go_upload_queue"
+        app:layout_constraintTop_toBottomOf="@id/homeJobsButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/homeSettingsButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="@string/home_go_settings"
+        app:layout_constraintTop_toBottomOf="@id/homeUploadQueueButton"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
