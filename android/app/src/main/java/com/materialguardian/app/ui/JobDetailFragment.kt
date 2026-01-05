@@ -71,17 +71,21 @@ class JobDetailFragment : Fragment(R.layout.fragment_job_detail) {
 
     private fun showMaterialForm(jobNumber: String) {
         val dialogView = layoutInflater.inflate(R.layout.bottom_sheet_material_form, null)
-        val name = dialogView.findViewById<android.widget.EditText>(R.id.materialFormName)
+        val description = dialogView.findViewById<android.widget.EditText>(R.id.materialFormDescription)
+        val vendor = dialogView.findViewById<android.widget.EditText>(R.id.materialFormVendor)
         val quantity = dialogView.findViewById<android.widget.EditText>(R.id.materialFormQuantity)
-        val status = dialogView.findViewById<android.widget.EditText>(R.id.materialFormStatus)
+        val specNumbers = dialogView.findViewById<android.widget.EditText>(R.id.materialFormSpecNumbers)
+        val markings = dialogView.findViewById<android.widget.EditText>(R.id.materialFormMarkings)
         val saveButton = dialogView.findViewById<android.widget.Button>(R.id.materialFormSave)
         val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(requireContext())
         dialog.setContentView(dialogView)
         saveButton.setOnClickListener {
-            val nameVal = name.text?.toString()?.trim().orEmpty()
-            val qtyVal = quantity.text?.toString()?.trim().orEmpty().toIntOrNull() ?: 0
-            val statusVal = status.text?.toString()?.trim().orEmpty()
-            if (nameVal.isBlank()) {
+            val descriptionVal = description.text?.toString()?.trim().orEmpty()
+            val vendorVal = vendor.text?.toString()?.trim().orEmpty()
+            val qtyVal = quantity.text?.toString()?.trim().orEmpty()
+            val specVal = specNumbers.text?.toString()?.trim().orEmpty()
+            val markingsVal = markings.text?.toString()?.trim().orEmpty()
+            if (descriptionVal.isBlank()) {
                 Toast.makeText(requireContext(), R.string.material_form_name_required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -89,9 +93,13 @@ class JobDetailFragment : Fragment(R.layout.fragment_job_detail) {
                 materialRepository.addMaterial(
                     MaterialItem(
                         jobNumber = jobNumber,
-                        name = nameVal,
+                        description = descriptionVal,
+                        vendor = vendorVal,
                         quantity = qtyVal,
-                        status = statusVal
+                        specificationNumbers = specVal,
+                        markings = markingsVal,
+                        offloadStatus = getString(R.string.material_status_default),
+                        pdfStatus = getString(R.string.material_pdf_status_default)
                     )
                 )
                 dialog.dismiss()

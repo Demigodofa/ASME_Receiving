@@ -33,8 +33,11 @@ class MaterialsAdapter(
         private val binding: ItemMaterialBinding
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: MaterialItem) {
-            binding.materialName.text = item.name
-            binding.materialStatus.text = item.status
+            binding.materialName.text = item.description
+            binding.materialStatus.text = binding.root.context.getString(
+                com.materialguardian.app.R.string.material_offload_status,
+                item.offloadStatus
+            )
             binding.materialQuantity.text = binding.root.context.getString(
                 com.materialguardian.app.R.string.material_quantity,
                 item.quantity

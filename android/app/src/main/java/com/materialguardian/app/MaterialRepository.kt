@@ -59,7 +59,7 @@ class MaterialRepository(
         awaitClose { registration.remove() }
     }
 
-    suspend fun updateMaterialStatus(id: String, status: String) {
-        materialsCollection.document(id).update("status", status).await()
+    suspend fun updateOffloadStatus(id: String, status: String) {
+        materialsCollection.document(id).update("offloadStatus", status).await()
     }
 }

@@ -34,11 +34,11 @@ class MaterialViewModel(
         }
     }
 
-    fun updateStatus(id: String, status: String) {
+    fun updateOffloadStatus(id: String, status: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(updating = true)
             try {
-                repository.updateMaterialStatus(id, status)
+                repository.updateOffloadStatus(id, status)
                 val refreshed = repository.get(id)
                 _uiState.value = MaterialUiState(material = refreshed, loading = false, updating = false)
             } catch (e: Exception) {

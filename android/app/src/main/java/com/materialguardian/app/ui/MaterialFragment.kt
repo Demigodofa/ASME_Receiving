@@ -27,7 +27,7 @@ class MaterialFragment : Fragment(R.layout.fragment_material) {
         binding.materialUpdateStatusButton.setOnClickListener {
             val status = binding.materialStatusInput.text?.toString().orEmpty()
             if (status.isNotBlank()) {
-                viewModel.updateStatus(args.materialId, status)
+                viewModel.updateOffloadStatus(args.materialId, status)
             } else {
                 Toast.makeText(requireContext(), R.string.material_status_hint, Toast.LENGTH_SHORT).show()
             }
@@ -45,9 +45,15 @@ class MaterialFragment : Fragment(R.layout.fragment_material) {
                         if (!state.loading && state.material == null) View.VISIBLE else View.GONE
                     state.material?.let { material ->
                         binding.materialId.text = getString(R.string.material_id, material.id)
-                        binding.materialName.text = getString(R.string.material_name, material.name)
+                        binding.materialDescription.text = getString(R.string.material_description, material.description)
+                        binding.materialVendor.text = getString(R.string.material_vendor, material.vendor)
                         binding.materialQuantity.text = getString(R.string.material_quantity, material.quantity)
-                        binding.materialStatus.text = getString(R.string.material_status, material.status)
+                        binding.materialSpecNumbers.text = getString(R.string.material_spec_numbers, material.specificationNumbers)
+                        binding.materialMarkings.text = getString(R.string.material_markings, material.markings)
+                        binding.materialOffloadStatus.text = getString(R.string.material_offload_status, material.offloadStatus)
+                        binding.materialPdfStatus.text = getString(R.string.material_pdf_status, material.pdfStatus)
+                        binding.materialPdfPath.text = getString(R.string.material_pdf_path, material.pdfStoragePath)
+                        binding.materialPhotoCount.text = getString(R.string.material_photo_count, material.photoCount)
                         val formattedDate = DateFormat.getDateTimeInstance().format(material.receivedAt.toDate())
                         binding.materialReceivedAt.text = getString(R.string.material_received_at, formattedDate)
                         binding.materialUserId.text = getString(R.string.material_user_id, material.userId)

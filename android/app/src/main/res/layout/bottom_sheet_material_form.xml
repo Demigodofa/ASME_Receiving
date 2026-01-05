@@ -16,12 +16,26 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <EditText
-        android:id="@+id/materialFormName"
+        android:id="@+id/materialFormDescription"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:hint="@string/material_form_name"
+        android:hint="@string/material_form_description"
+        android:maxLength="175"
+        android:inputType="textMultiLine"
+        android:maxLines="5"
         app:layout_constraintTop_toBottomOf="@id/materialFormTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <EditText
+        android:id="@+id/materialFormVendor"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="@string/material_form_vendor"
+        android:maxLength="30"
+        app:layout_constraintTop_toBottomOf="@id/materialFormDescription"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -31,18 +45,31 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:hint="@string/material_form_quantity"
-        android:inputType="number"
-        app:layout_constraintTop_toBottomOf="@id/materialFormName"
+        android:maxLength="20"
+        app:layout_constraintTop_toBottomOf="@id/materialFormVendor"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <EditText
-        android:id="@+id/materialFormStatus"
+        android:id="@+id/materialFormSpecNumbers"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:hint="@string/material_form_status"
+        android:hint="@string/material_form_spec_numbers"
+        android:maxLength="20"
         app:layout_constraintTop_toBottomOf="@id/materialFormQuantity"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <EditText
+        android:id="@+id/materialFormMarkings"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="@string/material_form_markings"
+        android:inputType="textMultiLine"
+        android:maxLines="5"
+        app:layout_constraintTop_toBottomOf="@id/materialFormSpecNumbers"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -52,7 +79,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="@string/material_form_save"
-        app:layout_constraintTop_toBottomOf="@id/materialFormStatus"
+        app:layout_constraintTop_toBottomOf="@id/materialFormMarkings"
         app:layout_constraintStart_toStartOf="parent" />
 
 </com.google.android.material.constraintlayout.MotionLayout>
