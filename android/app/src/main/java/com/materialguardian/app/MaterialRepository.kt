@@ -23,6 +23,12 @@ class MaterialRepository(
         docRef.set(itemToSave.toHashMap()).await()
     }
 
+    suspend fun get(id: String): MaterialItem? {
+        if (id.isBlank()) return null
+        val snapshot = materialsCollection.document(id).get().await()
+        return snapshot.toObject(MaterialItem::class.java)
+    }
+
     fun streamMaterials(): Flow<List<MaterialItem>> = callbackFlow {
         val registration: ListenerRegistration = materialsCollection.addSnapshotListener { snapshot, error ->
             if (error != null) {

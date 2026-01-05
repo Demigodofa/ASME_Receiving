@@ -31,7 +31,12 @@
     <fragment
         android:id="@+id/materialFragment"
         android:name="com.materialguardian.app.ui.MaterialFragment"
-        android:label="Material" />
+        android:label="Material">
+        <argument
+            android:name="materialId"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
 
     <fragment
         android:id="@+id/settingsFragment"
