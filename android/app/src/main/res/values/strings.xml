@@ -34,4 +34,7 @@
     <string name="cloud_mode_toggle">Enable Cloud Mode</string>
     <string name="cloud_save">Save Settings</string>
     <string name="settings_saved_placeholder">Settings saved (placeholder)</string>
+    <string name="home_go_jobs">Jobs</string>
+    <string name="home_go_upload_queue">Upload Queue</string>
+    <string name="home_go_settings">Settings</string>
 </resources>
