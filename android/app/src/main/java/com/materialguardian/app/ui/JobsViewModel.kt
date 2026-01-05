@@ -20,6 +20,16 @@ class JobsViewModel(
     private val repository: JobRepository = JobRepository()
 ) : ViewModel() {
 
+    suspend fun save(jobNumber: String, description: String, notes: String) {
+        repository.upsert(
+            JobItem(
+                jobNumber = jobNumber,
+                description = description,
+                notes = notes
+            )
+        )
+    }
+
     val uiState: StateFlow<JobsUiState> = repository
         .streamJobs()
         .map { JobsUiState(items = it, loading = false, error = null) }
