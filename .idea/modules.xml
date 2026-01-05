@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/MaterialGuardian_Android.iml" filepath="$PROJECT_DIR$/.idea/MaterialGuardian_Android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Material_Guardian.iml" filepath="$PROJECT_DIR$/.idea/modules/Material_Guardian.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Material_Guardian.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Material_Guardian.app.androidTest.iml" />
     </modules>
   </component>
 </project>
