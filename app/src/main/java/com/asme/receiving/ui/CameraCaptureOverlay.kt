@@ -29,7 +29,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -119,7 +118,7 @@ fun CameraCaptureOverlay(
                 val file = onCreateFile(targetIndex)
                 pendingFile = file
                 pendingIndex = targetIndex
-                takePicture(context, cameraExecutor, imageCapture, file) { path ->
+                takePicture(cameraExecutor, imageCapture, file) { path ->
                     capturedPath = path
                 }
             },
@@ -264,7 +263,6 @@ private fun CaptureOverlayControls(
 }
 
 private fun takePicture(
-    context: Context,
     executor: Executor,
     imageCapture: ImageCapture,
     file: File,

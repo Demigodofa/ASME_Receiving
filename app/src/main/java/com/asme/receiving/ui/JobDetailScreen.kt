@@ -29,6 +29,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -44,8 +45,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.asme.receiving.R
 import com.asme.receiving.data.MaterialItem
 import com.asme.receiving.data.export.ExportService
 import kotlinx.coroutines.launch
@@ -68,6 +69,20 @@ fun JobDetailScreen(
     var showExportConfirm by remember { mutableStateOf(false) }
     var exportError by remember { mutableStateOf<String?>(null) }
     var exportSuccess by remember { mutableStateOf<String?>(null) }
+    var descriptionDraft by remember { mutableStateOf("") }
+    var jobNumberDraft by remember { mutableStateOf("") }
+
+    LaunchedEffect(showEditDescription, job?.description) {
+        if (showEditDescription && job != null) {
+            descriptionDraft = job.description
+        }
+    }
+
+    LaunchedEffect(showEditJobNumber, job?.jobNumber) {
+        if (showEditJobNumber && job != null) {
+            jobNumberDraft = job.jobNumber
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -194,20 +209,19 @@ fun JobDetailScreen(
     }
 
     if (showEditDescription && job != null) {
-        var draft by remember { mutableStateOf(job.description) }
         AlertDialog(
             onDismissRequest = { showEditDescription = false },
             title = { Text("Edit job description") },
             text = {
                 OutlinedTextField(
-                    value = draft,
-                    onValueChange = { draft = it.take(120) },
+                    value = descriptionDraft,
+                    onValueChange = { descriptionDraft = it.take(120) },
                     modifier = Modifier.fillMaxWidth()
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
-                    scope.launch { viewModel.updateDescription(job.jobNumber, draft) }
+                    scope.launch { viewModel.updateDescription(job.jobNumber, descriptionDraft) }
                     showEditDescription = false
                 }) {
                     Text("Save")
@@ -222,23 +236,22 @@ fun JobDetailScreen(
     }
 
     if (showEditJobNumber && job != null) {
-        var draft by remember { mutableStateOf(job.jobNumber) }
         AlertDialog(
             onDismissRequest = { showEditJobNumber = false },
             title = { Text("Edit job number") },
             text = {
                 OutlinedTextField(
-                    value = draft,
-                    onValueChange = { draft = it.take(30) },
+                    value = jobNumberDraft,
+                    onValueChange = { jobNumberDraft = it.take(30) },
                     modifier = Modifier.fillMaxWidth()
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     scope.launch {
-                        val success = viewModel.renameJob(job.jobNumber, draft)
+                        val success = viewModel.renameJob(job.jobNumber, jobNumberDraft)
                         if (success) {
-                            onJobRenamed(draft)
+                            onJobRenamed(jobNumberDraft)
                         }
                     }
                     showEditJobNumber = false
@@ -317,6 +330,14 @@ fun JobDetailScreen(
 
 @Composable
 private fun JobHeader(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val logoResId = remember(context) {
+        context.resources.getIdentifier(
+            "material_guardian_512",
+            "drawable",
+            context.packageName
+        )
+    }
     Box(modifier = Modifier.fillMaxWidth()) {
         Surface(
             modifier = Modifier
@@ -335,7 +356,9 @@ private fun JobHeader(onBack: () -> Unit) {
         }
 
         androidx.compose.foundation.Image(
-            painter = painterResource(id = R.drawable.material_guardian_512),
+            painter = painterResource(
+                id = if (logoResId != 0) logoResId else android.R.drawable.sym_def_app_icon
+            ),
             contentDescription = "Material Guardian Logo",
             modifier = Modifier
                 .size(72.dp)

@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.os.Environment
 import android.provider.MediaStore
+import android.os.Build
 import com.asme.receiving.AppContextHolder
 import com.asme.receiving.data.JobItem
 import com.asme.receiving.data.MaterialItem
@@ -12,7 +13,6 @@ import com.asme.receiving.data.JobRepository
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
-import com.tom_roush.pdfbox.pdmodel.PDPageContentStream.AppendMode
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
 import com.tom_roush.pdfbox.pdmodel.font.PDType1Font
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
@@ -225,30 +225,6 @@ class ExportService(
         }
     }
 
-    private fun drawFallback(document: PDDocument, job: JobItem, material: MaterialItem) {
-        val page = PDPage(PDRectangle.LETTER)
-        document.addPage(page)
-        PDPageContentStream(document, page, AppendMode.APPEND, true).use { stream ->
-            stream.beginText()
-            stream.setFont(PDType1Font.HELVETICA_BOLD, 16f)
-            stream.newLineAtOffset(50f, 740f)
-            stream.showText("Receiving Inspection Report")
-            stream.endText()
-
-            stream.beginText()
-            stream.setFont(PDType1Font.HELVETICA, 11f)
-            stream.newLineAtOffset(50f, 710f)
-            stream.showText("Job: ${job.jobNumber}")
-            stream.newLineAtOffset(0f, -16f)
-            stream.showText("Material: ${material.description}")
-            stream.newLineAtOffset(0f, -16f)
-            stream.showText("Vendor: ${material.vendor}  Qty: ${material.quantity}")
-            stream.newLineAtOffset(0f, -16f)
-            stream.showText("PO: ${material.poNumber}")
-            stream.endText()
-        }
-    }
-
     private fun drawSectionTitle(
         stream: PDPageContentStream,
         x: Float,
@@ -433,21 +409,32 @@ class ExportService(
 
     private fun copyToDownloads(exportRoot: File, jobNumber: String) {
         val downloadDir = "MaterialGuardian/${sanitize(jobNumber)}"
+        val rootPath = exportRoot.absolutePath
         exportRoot.walkTopDown().forEach { file ->
             if (file.isDirectory) return@forEach
-            val relativePath = exportRoot.toPath().relativize(file.toPath()).toString()
+            val relativePath = file.absolutePath.removePrefix(rootPath).trimStart(File.separatorChar)
             val displayName = relativePath.replace(File.separatorChar, '_')
-            val values = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
-                put(MediaStore.MediaColumns.MIME_TYPE, guessMimeType(file.name))
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/$downloadDir")
-            }
-            val resolver = context.contentResolver
-            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-            if (uri != null) {
-                resolver.openOutputStream(uri)?.use { output ->
-                    file.inputStream().use { it.copyTo(output) }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val values = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
+                    put(MediaStore.MediaColumns.MIME_TYPE, guessMimeType(file.name))
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/$downloadDir")
                 }
+                val resolver = context.contentResolver
+                val uri = resolver.insert(MediaStore.Files.getContentUri("external"), values)
+                if (uri != null) {
+                    resolver.openOutputStream(uri)?.use { output ->
+                        file.inputStream().use { it.copyTo(output) }
+                    }
+                }
+            } else {
+                val legacyDir = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    downloadDir
+                )
+                legacyDir.mkdirs()
+                val target = File(legacyDir, displayName)
+                file.copyTo(target, overwrite = true)
             }
         }
     }
