@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -54,6 +55,9 @@ fun AppNavigation() {
                     onAddMaterial = { targetJob ->
                         navController.navigate("material_form/$targetJob")
                     },
+                    onEditMaterial = { targetJob, materialId ->
+                        navController.navigate("material_form/$targetJob?materialId=$materialId")
+                    },
                     onJobRenamed = { newJob ->
                         navController.navigate("job_detail/$newJob") {
                             popUpTo("job_detail/$jobNumber") { inclusive = true }
@@ -62,10 +66,20 @@ fun AppNavigation() {
                 )
             }
 
-            composable("material_form/{jobNumber}") { backStackEntry ->
+            composable(
+                "material_form/{jobNumber}?materialId={materialId}",
+                arguments = listOf(
+                    navArgument("materialId") {
+                        defaultValue = ""
+                        nullable = true
+                    }
+                )
+            ) { backStackEntry ->
                 val jobNumber = backStackEntry.arguments?.getString("jobNumber") ?: ""
+                val materialId = backStackEntry.arguments?.getString("materialId") ?: ""
                 MaterialFormScreen(
                     jobNumber = jobNumber,
+                    materialId = materialId.ifBlank { null },
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

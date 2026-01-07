@@ -48,6 +48,7 @@ class MaterialViewModel(
     }
 
     suspend fun saveMaterial(
+        materialId: String?,
         jobNumber: String,
         materialDescription: String,
         poNumber: String,
@@ -80,6 +81,10 @@ class MaterialViewModel(
         qcManager: String,
         qcManagerInitials: String,
         qcManagerDate: Long,
+        receivedAt: Long,
+        offloadStatus: String,
+        pdfStatus: String,
+        pdfStoragePath: String,
         photoPaths: List<String>,
         scanPaths: List<String>
     ): Result<Unit> {
@@ -87,6 +92,7 @@ class MaterialViewModel(
         return runCatching {
             repository.addMaterial(
                 MaterialItem(
+                    id = materialId ?: "",
                     jobNumber = jobNumber,
                     description = materialDescription,
                     poNumber = poNumber,
@@ -123,8 +129,10 @@ class MaterialViewModel(
                     photoPaths = encodePaths(photoPaths),
                     scanPaths = encodePaths(scanPaths),
                     photoCount = photoPaths.size,
-                    offloadStatus = "pending",
-                    pdfStatus = "pending"
+                    offloadStatus = offloadStatus,
+                    pdfStatus = pdfStatus,
+                    pdfStoragePath = pdfStoragePath,
+                    receivedAt = receivedAt
                 )
             )
         }.onSuccess {

@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.asme.receiving"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.asme.receiving"

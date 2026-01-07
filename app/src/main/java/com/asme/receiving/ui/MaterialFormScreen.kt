@@ -1,10 +1,15 @@
 package com.asme.receiving.ui
 
+import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,8 +20,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,20 +33,22 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,42 +58,38 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.asme.receiving.R
-import java.io.File
-import android.graphics.BitmapFactory
+import com.asme.receiving.data.MaterialItem
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
+import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import kotlinx.coroutines.launch
+import java.io.File
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import androidx.compose.runtime.mutableStateListOf
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
-import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
-import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MaterialFormScreen(
     jobNumber: String,
+    materialId: String? = null,
     onNavigateBack: () -> Unit,
     viewModel: MaterialViewModel = viewModel()
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
 
     var materialDescription by remember { mutableStateOf("") }
     var poNumber by remember { mutableStateOf("") }
@@ -119,6 +122,10 @@ fun MaterialFormScreen(
     var qcManager by remember { mutableStateOf("") }
     var qcManagerInitials by remember { mutableStateOf("") }
     var qcManagerDate by remember { mutableStateOf(LocalDate.now()) }
+    var receivedAt by remember { mutableStateOf(System.currentTimeMillis()) }
+    var offloadStatus by remember { mutableStateOf("pending") }
+    var pdfStatus by remember { mutableStateOf("pending") }
+    var pdfStoragePath by remember { mutableStateOf("") }
     val photoPaths = remember { mutableStateListOf<String>() }
     val scanCaptures = remember { mutableStateListOf<ScanCapture>() }
     var activeCapture by remember { mutableStateOf<CaptureType?>(null) }
@@ -186,6 +193,59 @@ fun MaterialFormScreen(
         showDiscardDialog = true
     }
 
+    LaunchedEffect(materialId) {
+        if (!materialId.isNullOrBlank()) {
+            viewModel.load(materialId)
+        }
+    }
+
+    LaunchedEffect(uiState.material?.id) {
+        val material = uiState.material ?: return@LaunchedEffect
+        if (material.id != materialId) return@LaunchedEffect
+        applyMaterialToState(
+            material = material,
+            onDescription = { materialDescription = it },
+            onPo = { poNumber = it },
+            onVendor = { vendor = it },
+            onQty = { quantity = it },
+            onProduct = { productType = it },
+            onSpecPrefix = { specificationPrefix = it },
+            onGrade = { gradeType = it },
+            onFittingStandard = { fittingStandard = it },
+            onFittingSuffix = { fittingSuffix = it },
+            onDimensionUnit = { dimensionUnit = it },
+            onThickness1 = { thickness1 = it },
+            onThickness2 = { thickness2 = it },
+            onThickness3 = { thickness3 = it },
+            onThickness4 = { thickness4 = it },
+            onWidth = { width = it },
+            onLength = { length = it },
+            onDiameter = { diameter = it },
+            onDiameterType = { diameterType = it },
+            onVisual = { visualInspectionAcceptable = it },
+            onB16 = { b16DimensionsAcceptable = it },
+            onMarkings = { markings = it },
+            onMarkingAcceptable = { markingAcceptable = it },
+            onMtrAcceptable = { mtrAcceptable = it },
+            onAcceptance = { acceptanceStatus = it },
+            onComments = { comments = it },
+            onQcInitials = { qcInitials = it },
+            onQcDate = { qcDate = it },
+            onMaterialApproval = { materialApproval = it },
+            onQcManager = { qcManager = it },
+            onQcManagerInitials = { qcManagerInitials = it },
+            onQcManagerDate = { qcManagerDate = it },
+            onReceivedAt = { receivedAt = it },
+            onOffloadStatus = { offloadStatus = it },
+            onPdfStatus = { pdfStatus = it },
+            onPdfStoragePath = { pdfStoragePath = it }
+        )
+        photoPaths.clear()
+        photoPaths.addAll(decodePaths(material.photoPaths))
+        scanCaptures.clear()
+        scanCaptures.addAll(decodeScanCaptures(material.scanPaths))
+    }
+
     LaunchedEffect(fittingStandard, fittingSuffix) {
         if ((fittingStandard == "B16" || fittingSuffix.isNotBlank()) && b16DimensionsAcceptable.isBlank()) {
             b16DimensionsAcceptable = "Yes"
@@ -216,11 +276,12 @@ fun MaterialFormScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "RECEIVING INSPECTION REPORT",
+            text = "RECEIVING INSPECTION\nREPORT",
             style = MaterialTheme.typography.titleSmall,
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.sp,
+            lineHeight = 30.sp,
             color = Color(0xFF4B5563),
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
@@ -599,6 +660,7 @@ fun MaterialFormScreen(
                 scope.launch {
                     saveError = null
                     val result = viewModel.saveMaterial(
+                        materialId = materialId,
                         jobNumber = jobNumber,
                         materialDescription = materialDescription,
                         poNumber = poNumber,
@@ -631,6 +693,10 @@ fun MaterialFormScreen(
                         qcManager = qcManager,
                         qcManagerInitials = qcManagerInitials,
                         qcManagerDate = toEpochMillis(qcManagerDate),
+                        receivedAt = receivedAt,
+                        offloadStatus = offloadStatus,
+                        pdfStatus = pdfStatus,
+                        pdfStoragePath = pdfStoragePath,
                         photoPaths = photoPaths,
                         scanPaths = scanCaptures.map { it.pdfPath }
                     )
@@ -780,7 +846,7 @@ fun MaterialFormScreen(
                 replaceIndex = null
                 replaceType = null
             },
-            onCreateFile = { index ->
+            onCreateFile = { index: Int ->
                 buildMediaFile(
                     context = context,
                     jobNumber = jobNumber,
@@ -789,7 +855,7 @@ fun MaterialFormScreen(
                     index = index
                 )
             },
-            onCaptureAccepted = { file, _ ->
+            onCaptureAccepted = { file: File, _: Int ->
                 if (captureType == CaptureType.PHOTO) {
                     if (targetIndex != null && targetIndex < photoPaths.size) {
                         val oldPath = photoPaths[targetIndex]
@@ -903,6 +969,7 @@ private fun LabeledField(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DropdownField(
     value: String,
@@ -912,8 +979,6 @@ private fun DropdownField(
     onValueChange: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var textFieldWidth by remember { mutableStateOf(0) }
-    val density = LocalDensity.current
 
     Box {
         OutlinedTextField(
@@ -921,9 +986,6 @@ private fun DropdownField(
             onValueChange = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .onGloballyPositioned { coordinates ->
-                    textFieldWidth = coordinates.size.width
-                }
                 .clickable(enabled = enabled) { expanded = true },
             readOnly = true,
             enabled = enabled,
@@ -935,15 +997,9 @@ private fun DropdownField(
                 )
             }
         )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(enabled = enabled) { expanded = true }
-        )
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.width(with(density) { textFieldWidth.toDp() })
+            onDismissRequest = { expanded = false }
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
@@ -1108,7 +1164,7 @@ private fun ConfirmDiscardDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = { /* onDismiss() */ }) {
                 Text("Keep editing")
             }
         }
@@ -1217,3 +1273,89 @@ private data class ScanCapture(
     val pdfPath: String,
     val previewPath: String
 )
+
+private fun decodePaths(value: String): List<String> {
+    return value.split("|").filter { it.isNotBlank() }
+}
+
+private fun decodeScanCaptures(value: String): List<ScanCapture> {
+    return decodePaths(value).map { path ->
+        ScanCapture(pdfPath = path, previewPath = "")
+    }
+}
+
+private fun applyMaterialToState(
+    material: MaterialItem,
+    onDescription: (String) -> Unit,
+    onPo: (String) -> Unit,
+    onVendor: (String) -> Unit,
+    onQty: (String) -> Unit,
+    onProduct: (String) -> Unit,
+    onSpecPrefix: (String) -> Unit,
+    onGrade: (String) -> Unit,
+    onFittingStandard: (String) -> Unit,
+    onFittingSuffix: (String) -> Unit,
+    onDimensionUnit: (String) -> Unit,
+    onThickness1: (String) -> Unit,
+    onThickness2: (String) -> Unit,
+    onThickness3: (String) -> Unit,
+    onThickness4: (String) -> Unit,
+    onWidth: (String) -> Unit,
+    onLength: (String) -> Unit,
+    onDiameter: (String) -> Unit,
+    onDiameterType: (String) -> Unit,
+    onVisual: (Boolean) -> Unit,
+    onB16: (String) -> Unit,
+    onMarkings: (String) -> Unit,
+    onMarkingAcceptable: (Boolean) -> Unit,
+    onMtrAcceptable: (Boolean) -> Unit,
+    onAcceptance: (String) -> Unit,
+    onComments: (String) -> Unit,
+    onQcInitials: (String) -> Unit,
+    onQcDate: (LocalDate) -> Unit,
+    onMaterialApproval: (String) -> Unit,
+    onQcManager: (String) -> Unit,
+    onQcManagerInitials: (String) -> Unit,
+    onQcManagerDate: (LocalDate) -> Unit,
+    onReceivedAt: (Long) -> Unit,
+    onOffloadStatus: (String) -> Unit,
+    onPdfStatus: (String) -> Unit,
+    onPdfStoragePath: (String) -> Unit
+) {
+    onDescription(material.description)
+    onPo(material.poNumber)
+    onVendor(material.vendor)
+    onQty(material.quantity)
+    onProduct(material.productType)
+    onSpecPrefix(material.specificationPrefix)
+    onGrade(material.gradeType)
+    onFittingStandard(material.fittingStandard)
+    onFittingSuffix(material.fittingSuffix)
+    onDimensionUnit(material.dimensionUnit)
+    onThickness1(material.thickness1)
+    onThickness2(material.thickness2)
+    onThickness3(material.thickness3)
+    onThickness4(material.thickness4)
+    onWidth(material.width)
+    onLength(material.length)
+    onDiameter(material.diameter)
+    onDiameterType(material.diameterType)
+    onVisual(material.visualInspectionAcceptable)
+    onB16(material.b16DimensionsAcceptable)
+    onMarkings(material.markings)
+    onMarkingAcceptable(material.markingAcceptable)
+    onMtrAcceptable(material.mtrAcceptable)
+    onAcceptance(material.acceptanceStatus)
+    onComments(material.comments)
+    onQcInitials(material.qcInitials)
+    onQcDate(Instant.ofEpochMilli(material.qcDate).atZone(ZoneId.systemDefault()).toLocalDate())
+    onMaterialApproval(material.materialApproval)
+    onQcManager(material.qcManager)
+    onQcManagerInitials(material.qcManagerInitials)
+    onQcManagerDate(Instant.ofEpochMilli(material.qcManagerDate).atZone(ZoneId.systemDefault()).toLocalDate())
+    onReceivedAt(material.receivedAt)
+    onOffloadStatus(material.offloadStatus)
+    onPdfStatus(material.pdfStatus)
+    onPdfStoragePath(material.pdfStoragePath)
+}
+

@@ -56,6 +56,7 @@ fun JobDetailScreen(
     jobNumber: String,
     onNavigateBack: () -> Unit,
     onAddMaterial: (String) -> Unit,
+    onEditMaterial: (String, String) -> Unit,
     onJobRenamed: (String) -> Unit,
     viewModel: JobDetailViewModel = viewModel()
 ) {
@@ -186,7 +187,10 @@ fun JobDetailScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(uiState.materials) { material ->
-                MaterialSummaryRow(material)
+                MaterialSummaryRow(
+                    material = material,
+                    onClick = { onEditMaterial(jobNumber, material.id) }
+                )
             }
         }
 
@@ -369,10 +373,11 @@ private fun JobHeader(onBack: () -> Unit) {
 }
 
 @Composable
-private fun MaterialSummaryRow(material: MaterialItem) {
+private fun MaterialSummaryRow(material: MaterialItem, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .background(Color.White, RoundedCornerShape(10.dp))
             .padding(horizontal = 14.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween
