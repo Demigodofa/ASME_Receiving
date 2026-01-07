@@ -111,7 +111,7 @@ fun MaterialFormScreen(
     var width by remember { mutableStateOf("") }
     var length by remember { mutableStateOf("") }
     var diameter by remember { mutableStateOf("") }
-    var diameterType by remember { mutableStateOf("O.D.") }
+    var diameterType by remember { mutableStateOf("") }
     var visualInspectionAcceptable by remember { mutableStateOf(true) }
     var b16DimensionsAcceptable by remember { mutableStateOf("") }
     var markings by remember { mutableStateOf("") }
@@ -250,11 +250,15 @@ fun MaterialFormScreen(
     }
 
     LaunchedEffect(fittingStandard, fittingSuffix) {
-        if ((fittingStandard == "B16" || fittingSuffix.isNotBlank()) && b16DimensionsAcceptable.isBlank()) {
-            b16DimensionsAcceptable = "Yes"
-        }
         if (fittingStandard != "B16") {
             fittingSuffix = ""
+        }
+        if (fittingStandard == "B16" && fittingSuffix.isNotBlank()) {
+            if (b16DimensionsAcceptable.isBlank()) {
+                b16DimensionsAcceptable = "Yes"
+            }
+        } else {
+            b16DimensionsAcceptable = ""
         }
     }
 
@@ -342,7 +346,7 @@ fun MaterialFormScreen(
                     placeholder = "Select"
                 ) { productType = it }
             }
-            LabeledField("Specification", modifier = Modifier.weight(0.9f)) {
+            LabeledField("A/SA", modifier = Modifier.weight(0.9f)) {
                 DropdownField(
                     value = specificationPrefix,
                     options = listOf("A", "SA"),
@@ -355,7 +359,7 @@ fun MaterialFormScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            LabeledField("Grade/Type", modifier = Modifier.weight(1f)) {
+            LabeledField("Spec/Grade", modifier = Modifier.weight(1f)) {
                 OutlinedTextField(
                     value = gradeType,
                     onValueChange = { gradeType = it.take(12) },
@@ -463,26 +467,33 @@ fun MaterialFormScreen(
             LabeledField("", modifier = Modifier.weight(0.7f)) {
                 DropdownField(
                     value = diameterType,
-                    options = listOf("O.D.", "I.D."),
-                    placeholder = "O.D."
+                    options = listOf("", "O.D.", "I.D."),
+                    optionLabel = { option -> if (option.isBlank()) "Clear" else option },
+                    placeholder = ""
                 ) { diameterType = it }
             }
         }
 
-        LabeledField("Visual inspection acceptable") {
-            YesNoToggle(
-                yesSelected = visualInspectionAcceptable,
-                onYes = { visualInspectionAcceptable = true },
-                onNo = { visualInspectionAcceptable = false }
-            )
-        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            LabeledField("Visual inspection acceptable", modifier = Modifier.weight(1.2f)) {
+                YesNoToggle(
+                    yesSelected = visualInspectionAcceptable,
+                    onYes = { visualInspectionAcceptable = true },
+                    onNo = { visualInspectionAcceptable = false }
+                )
+            }
 
-        LabeledField("B16 Dimensions acceptable") {
-            DropdownField(
-                value = b16DimensionsAcceptable,
-                options = listOf("Yes", "No"),
-                placeholder = ""
-            ) { b16DimensionsAcceptable = it }
+            LabeledField("B16 Dimensions", modifier = Modifier.weight(0.8f)) {
+                DropdownField(
+                    value = b16DimensionsAcceptable,
+                    options = listOf("", "Yes", "No"),
+                    optionLabel = { option -> if (option.isBlank()) "Clear" else option },
+                    placeholder = ""
+                ) { b16DimensionsAcceptable = it }
+            }
         }
 
         LabeledField("Marking actual") {
@@ -966,6 +977,8 @@ private fun LabeledField(
                 style = MaterialTheme.typography.labelLarge,
                 color = Color(0xFF374151)
             )
+        } else {
+            Spacer(modifier = Modifier.height(18.dp))
         }
         content()
         Spacer(modifier = Modifier.height(6.dp))
@@ -979,6 +992,7 @@ private fun DropdownField(
     options: List<String>,
     placeholder: String,
     enabled: Boolean = true,
+    optionLabel: (String) -> String = { it },
     onValueChange: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -1015,7 +1029,7 @@ private fun DropdownField(
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option) },
+                    text = { Text(optionLabel(option)) },
                     onClick = {
                         onValueChange(option)
                         expanded = false
@@ -1080,15 +1094,21 @@ private fun DateField(
         initialSelectedDateMillis = toEpochMillis(date)
     )
 
-    OutlinedTextField(
-        value = date.format(formatter),
-        onValueChange = {},
-        modifier = modifier
-            .clickable { showDialog = true },
-        readOnly = true,
-        singleLine = true,
-        textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Center)
-    )
+    Box {
+        OutlinedTextField(
+            value = date.format(formatter),
+            onValueChange = {},
+            modifier = modifier.fillMaxWidth(),
+            readOnly = true,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Center)
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable { showDialog = true }
+        )
+    }
 
     if (showDialog) {
         DatePickerDialog(
