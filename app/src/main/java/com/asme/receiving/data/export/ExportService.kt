@@ -162,8 +162,9 @@ class ExportService(
                     y,
                     "Marking Acceptable to Code/Standard",
                     listOf(
-                        Toggle("Yes", material.markingAcceptable),
-                        Toggle("No", !material.markingAcceptable)
+                        Toggle("Yes", material.markingAcceptable && !material.markingAcceptableNa),
+                        Toggle("No", !material.markingAcceptable && !material.markingAcceptableNa),
+                        Toggle("N/A", material.markingAcceptableNa)
                     )
                 )
                 y = drawToggleRow(
@@ -172,8 +173,9 @@ class ExportService(
                     y,
                     "MTR/CoC Acceptable to Specification",
                     listOf(
-                        Toggle("Yes", material.mtrAcceptable),
-                        Toggle("No", !material.mtrAcceptable)
+                        Toggle("Yes", material.mtrAcceptable && !material.mtrAcceptableNa),
+                        Toggle("No", !material.mtrAcceptable && !material.mtrAcceptableNa),
+                        Toggle("N/A", material.mtrAcceptableNa)
                     )
                 )
                 y = drawToggleRow(

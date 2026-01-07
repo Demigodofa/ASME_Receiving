@@ -116,7 +116,9 @@ fun MaterialFormScreen(
     var b16DimensionsAcceptable by remember { mutableStateOf("") }
     var markings by remember { mutableStateOf("") }
     var markingAcceptable by remember { mutableStateOf(true) }
+    var markingAcceptableNa by remember { mutableStateOf(false) }
     var mtrAcceptable by remember { mutableStateOf(true) }
+    var mtrAcceptableNa by remember { mutableStateOf(false) }
     var acceptanceStatus by remember { mutableStateOf("accept") }
     var comments by remember { mutableStateOf("") }
     var qcInitials by remember { mutableStateOf("") }
@@ -189,8 +191,9 @@ fun MaterialFormScreen(
         qcInitials.isNotBlank() || qcManager.isNotBlank() || qcManagerInitials.isNotBlank() ||
         !visualInspectionAcceptable || !markingAcceptable || !mtrAcceptable ||
         acceptanceStatus != "accept" || materialApproval != "approved" ||
-        dimensionUnit != "imperial" || diameterType != "O.D." ||
-        b16DimensionsAcceptable.isNotBlank() || photoPaths.isNotEmpty() || scanCaptures.isNotEmpty()
+        dimensionUnit != "imperial" || diameterType.isNotBlank() ||
+        b16DimensionsAcceptable.isNotBlank() || photoPaths.isNotEmpty() || scanCaptures.isNotEmpty() ||
+        markingAcceptableNa || mtrAcceptableNa
 
     BackHandler(enabled = isDirty) {
         showDiscardDialog = true
@@ -229,7 +232,9 @@ fun MaterialFormScreen(
             onB16 = { b16DimensionsAcceptable = it },
             onMarkings = { markings = it },
             onMarkingAcceptable = { markingAcceptable = it },
+            onMarkingAcceptableNa = { markingAcceptableNa = it },
             onMtrAcceptable = { mtrAcceptable = it },
+            onMtrAcceptableNa = { mtrAcceptableNa = it },
             onAcceptance = { acceptanceStatus = it },
             onComments = { comments = it },
             onQcInitials = { qcInitials = it },
@@ -464,7 +469,7 @@ fun MaterialFormScreen(
                     textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.End)
                 )
             }
-            LabeledField("", modifier = Modifier.weight(0.7f)) {
+            LabeledField("ID/OD", modifier = Modifier.weight(0.7f)) {
                 DropdownField(
                     value = diameterType,
                     options = listOf("", "O.D.", "I.D."),
@@ -496,7 +501,7 @@ fun MaterialFormScreen(
             }
         }
 
-        LabeledField("Marking actual") {
+        LabeledField("Actual Markings") {
             OutlinedTextField(
                 value = markings,
                 onValueChange = { markings = it },
@@ -508,18 +513,42 @@ fun MaterialFormScreen(
         }
 
         LabeledField("Marking acceptable to Code/Standard") {
-            YesNoToggle(
-                yesSelected = markingAcceptable,
-                onYes = { markingAcceptable = true },
-                onNo = { markingAcceptable = false }
+            YesNoNaToggle(
+                yesSelected = markingAcceptable && !markingAcceptableNa,
+                noSelected = !markingAcceptable && !markingAcceptableNa,
+                naSelected = markingAcceptableNa,
+                onYes = {
+                    markingAcceptable = true
+                    markingAcceptableNa = false
+                },
+                onNo = {
+                    markingAcceptable = false
+                    markingAcceptableNa = false
+                },
+                onNa = {
+                    markingAcceptable = false
+                    markingAcceptableNa = true
+                }
             )
         }
 
         LabeledField("MTR/CoC acceptable to specification") {
-            YesNoToggle(
-                yesSelected = mtrAcceptable,
-                onYes = { mtrAcceptable = true },
-                onNo = { mtrAcceptable = false }
+            YesNoNaToggle(
+                yesSelected = mtrAcceptable && !mtrAcceptableNa,
+                noSelected = !mtrAcceptable && !mtrAcceptableNa,
+                naSelected = mtrAcceptableNa,
+                onYes = {
+                    mtrAcceptable = true
+                    mtrAcceptableNa = false
+                },
+                onNo = {
+                    mtrAcceptable = false
+                    mtrAcceptableNa = false
+                },
+                onNa = {
+                    mtrAcceptable = false
+                    mtrAcceptableNa = true
+                }
             )
         }
 
@@ -547,15 +576,15 @@ fun MaterialFormScreen(
             )
         }
 
-        LabeledField("Quality Control / Initials / Date") {
+        LabeledField("Quality Control") {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = qcInitials,
-                    onValueChange = { qcInitials = it.take(4) },
-                    modifier = Modifier.weight(0.6f),
+                    onValueChange = { qcInitials = it.take(20) },
+                    modifier = Modifier.weight(1f),
                     singleLine = true
                 )
-                DateField(qcDate, modifier = Modifier.weight(1f)) { qcDate = it }
+                DateField(qcDate, modifier = Modifier.weight(0.7f)) { qcDate = it }
             }
         }
 
@@ -572,23 +601,15 @@ fun MaterialFormScreen(
             }
         }
 
-        LabeledField("QC Manager / Initials / Date") {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        LabeledField("QC Manager") {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = qcManager,
                     onValueChange = { qcManager = it.take(20) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.weight(1f),
                     singleLine = true
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = qcManagerInitials,
-                        onValueChange = { qcManagerInitials = it.take(4) },
-                        modifier = Modifier.weight(0.6f),
-                        singleLine = true
-                    )
-                    DateField(qcManagerDate, modifier = Modifier.weight(1f)) { qcManagerDate = it }
-                }
+                DateField(qcManagerDate, modifier = Modifier.weight(0.7f)) { qcManagerDate = it }
             }
         }
 
@@ -698,7 +719,9 @@ fun MaterialFormScreen(
                         b16DimensionsAcceptable = b16DimensionsAcceptable,
                         markings = markings,
                         markingAcceptable = markingAcceptable,
+                        markingAcceptableNa = markingAcceptableNa,
                         mtrAcceptable = mtrAcceptable,
+                        mtrAcceptableNa = mtrAcceptableNa,
                         acceptanceStatus = acceptanceStatus,
                         comments = comments,
                         qcInitials = qcInitials,
@@ -968,6 +991,7 @@ private fun HeaderBar(onBack: () -> Unit) {
 private fun LabeledField(
     label: String,
     modifier: Modifier = Modifier,
+    reserveLabelSpace: Boolean = true,
     content: @Composable () -> Unit
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -977,8 +1001,8 @@ private fun LabeledField(
                 style = MaterialTheme.typography.labelLarge,
                 color = Color(0xFF374151)
             )
-        } else {
-            Spacer(modifier = Modifier.height(18.dp))
+        } else if (reserveLabelSpace) {
+            Spacer(modifier = Modifier.height(20.dp))
         }
         content()
         Spacer(modifier = Modifier.height(6.dp))
@@ -1082,6 +1106,22 @@ private fun YesNoToggle(
 }
 
 @Composable
+private fun YesNoNaToggle(
+    yesSelected: Boolean,
+    noSelected: Boolean,
+    naSelected: Boolean,
+    onYes: () -> Unit,
+    onNo: () -> Unit,
+    onNa: () -> Unit
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        XToggle(label = "Yes", selected = yesSelected, onToggle = onYes)
+        XToggle(label = "No", selected = noSelected, onToggle = onNo)
+        XToggle(label = "N/A", selected = naSelected, onToggle = onNa)
+    }
+}
+
+@Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun DateField(
     date: LocalDate,
@@ -1090,15 +1130,16 @@ private fun DateField(
 ) {
     val formatter = remember { DateTimeFormatter.ofPattern("MM/dd/yyyy") }
     var showDialog by remember { mutableStateOf(false) }
+    val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = toEpochMillis(date)
     )
 
-    Box {
+    Box(modifier = modifier) {
         OutlinedTextField(
             value = date.format(formatter),
             onValueChange = {},
-            modifier = modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             readOnly = true,
             singleLine = true,
             textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Center)
@@ -1106,7 +1147,10 @@ private fun DateField(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable { showDialog = true }
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null
+                ) { showDialog = true }
         )
     }
 
@@ -1340,7 +1384,9 @@ private fun applyMaterialToState(
     onB16: (String) -> Unit,
     onMarkings: (String) -> Unit,
     onMarkingAcceptable: (Boolean) -> Unit,
+    onMarkingAcceptableNa: (Boolean) -> Unit,
     onMtrAcceptable: (Boolean) -> Unit,
+    onMtrAcceptableNa: (Boolean) -> Unit,
     onAcceptance: (String) -> Unit,
     onComments: (String) -> Unit,
     onQcInitials: (String) -> Unit,
@@ -1376,7 +1422,9 @@ private fun applyMaterialToState(
     onB16(material.b16DimensionsAcceptable)
     onMarkings(material.markings)
     onMarkingAcceptable(material.markingAcceptable)
+    onMarkingAcceptableNa(material.markingAcceptableNa)
     onMtrAcceptable(material.mtrAcceptable)
+    onMtrAcceptableNa(material.mtrAcceptableNa)
     onAcceptance(material.acceptanceStatus)
     onComments(material.comments)
     onQcInitials(material.qcInitials)
