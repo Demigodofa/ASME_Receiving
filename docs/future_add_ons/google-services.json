@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "293518443128",
+    "project_id": "asme-receiving",
+    "storage_bucket": "asme-receiving.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:293518443128:android:e05dcb994d5304220fe38d",
+        "android_client_info": {
+          "package_name": "com.asme.receiving"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuHp1gaA1ez8KDwH3Rdla2JlIXnSgdDKk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
