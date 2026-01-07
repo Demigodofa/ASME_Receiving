@@ -59,6 +59,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -66,6 +67,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.asme.receiving.R
 import com.asme.receiving.data.MaterialItem
@@ -979,27 +982,36 @@ private fun DropdownField(
     onValueChange: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var anchorWidth by remember { mutableStateOf(0) }
 
     Box {
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(enabled = enabled) { expanded = true },
-            readOnly = true,
-            enabled = enabled,
-            placeholder = { Text(placeholder) },
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Filled.ArrowDropDown,
-                    contentDescription = null
-                )
-            }
-        )
+                .onGloballyPositioned { coordinates ->
+                    anchorWidth = coordinates.size.width
+                }
+                .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(10.dp))
+                .background(Color.White, RoundedCornerShape(10.dp))
+                .clickable(enabled = enabled) { expanded = true }
+                .padding(horizontal = 12.dp, vertical = 14.dp)
+        ) {
+            val displayText = if (value.isBlank()) placeholder else value
+            Text(
+                text = displayText,
+                color = if (value.isBlank()) Color(0xFF9CA3AF) else Color(0xFF1F2937)
+            )
+            Icon(
+                imageVector = Icons.Filled.ArrowDropDown,
+                contentDescription = null,
+                modifier = Modifier.align(Alignment.CenterEnd)
+            )
+        }
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            properties = PopupProperties(focusable = true),
+            modifier = Modifier.width(with(LocalDensity.current) { anchorWidth.toDp() })
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
