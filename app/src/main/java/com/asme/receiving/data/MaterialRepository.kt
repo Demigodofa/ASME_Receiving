@@ -1,65 +1,42 @@
 package com.asme.receiving.data
 
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
-import kotlinx.coroutines.channels.awaitClose
+import com.asme.receiving.AppContextHolder
+import com.asme.receiving.data.local.AppDatabaseProvider
+import com.asme.receiving.data.local.MaterialDao
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
+import java.util.UUID
 
 class MaterialRepository(
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val materialDao: MaterialDao = AppDatabaseProvider.get(AppContextHolder.appContext).materialDao()
 ) {
 
-    private val materialsCollection get() = firestore.collection("materials")
-
     suspend fun addMaterial(item: MaterialItem) {
-        val docRef = if (item.id.isBlank()) {
-            materialsCollection.document()
+        val itemToSave = if (item.id.isBlank()) {
+            item.copy(id = UUID.randomUUID().toString())
         } else {
-            materialsCollection.document(item.id)
+            item
         }
-        val itemToSave = item.copy(id = docRef.id)
-        docRef.set(itemToSave.toHashMap()).await()
+        materialDao.upsert(itemToSave)
     }
 
     suspend fun get(id: String): MaterialItem? {
         if (id.isBlank()) return null
-        val snapshot = materialsCollection.document(id).get().await()
-        return snapshot.toObject(MaterialItem::class.java)
+        return materialDao.get(id)
     }
 
-    fun streamMaterials(): Flow<List<MaterialItem>> = callbackFlow {
-        val registration: ListenerRegistration = materialsCollection.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                close(error)
-                return@addSnapshotListener
-            }
-            val items = snapshot?.documents
-                ?.mapNotNull { it.toObject(MaterialItem::class.java) }
-                .orEmpty()
-            trySend(items).isSuccess
-        }
-        awaitClose { registration.remove() }
+    fun streamMaterialsForJob(jobNumber: String): Flow<List<MaterialItem>> {
+        return materialDao.observeForJob(jobNumber)
     }
 
-    fun streamMaterialsForJob(jobNumber: String): Flow<List<MaterialItem>> = callbackFlow {
-        val registration: ListenerRegistration = materialsCollection
-            .whereEqualTo("jobNumber", jobNumber)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                val items = snapshot?.documents
-                    ?.mapNotNull { it.toObject(MaterialItem::class.java) }
-                    .orEmpty()
-                trySend(items).isSuccess
-            }
-        awaitClose { registration.remove() }
+    suspend fun updateJobNumber(oldJobNumber: String, newJobNumber: String) {
+        materialDao.updateJobNumber(oldJobNumber, newJobNumber)
+    }
+
+    suspend fun deleteForJob(jobNumber: String) {
+        materialDao.deleteForJob(jobNumber)
     }
 
     suspend fun updateOffloadStatus(id: String, status: String) {
-        materialsCollection.document(id).update("offloadStatus", status).await()
+        materialDao.updateOffloadStatus(id, status)
     }
 }

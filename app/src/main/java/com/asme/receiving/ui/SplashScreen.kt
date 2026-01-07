@@ -32,6 +32,11 @@ fun SplashScreen(onTimeout: () -> Unit) {
             animationSpec = tween(1500)
         )
         delay(1500)
+        alpha.animateTo(
+            targetValue = 0f,
+            animationSpec = tween(1500)
+        )
+        delay(300)
         onTimeout()
     }
 
@@ -51,18 +56,24 @@ fun SplashScreen(onTimeout: () -> Unit) {
                 contentDescription = "Welders Helper Logo",
                 modifier = Modifier
                     .size(200.dp)
-                    .alpha(alpha.value)
+                     .alpha(alpha.value)
             )
             
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = stringResource(id = R.string.welders_helper_slogan).uppercase(),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.Black,
-                letterSpacing = 1.sp,
-                modifier = Modifier.alpha(alpha.value)
+                text = stringResource(id = R.string.welders_helper_slogan),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 32.sp,
+                    lineHeight = 36.sp
+                ),
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1C2430),
+                letterSpacing = 0.5.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier
+                    .alpha(alpha.value)
+                    .padding(horizontal = 24.dp)
             )
         }
     }

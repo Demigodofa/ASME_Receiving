@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.asme.receiving.ui.JobDetailScreen
 import com.asme.receiving.ui.JobsScreen
 import com.asme.receiving.ui.MaterialFormScreen
 import com.asme.receiving.ui.SplashScreen
@@ -40,7 +41,23 @@ fun AppNavigation() {
             composable("jobs") {
                 JobsScreen(
                     onJobClick = { jobNumber ->
-                        navController.navigate("material_form/$jobNumber")
+                        navController.navigate("job_detail/$jobNumber")
+                    }
+                )
+            }
+
+            composable("job_detail/{jobNumber}") { backStackEntry ->
+                val jobNumber = backStackEntry.arguments?.getString("jobNumber") ?: ""
+                JobDetailScreen(
+                    jobNumber = jobNumber,
+                    onNavigateBack = { navController.popBackStack() },
+                    onAddMaterial = { targetJob ->
+                        navController.navigate("material_form/$targetJob")
+                    },
+                    onJobRenamed = { newJob ->
+                        navController.navigate("job_detail/$newJob") {
+                            popUpTo("job_detail/$jobNumber") { inclusive = true }
+                        }
                     }
                 )
             }

@@ -30,6 +30,10 @@ class JobsViewModel(
         )
     }
 
+    suspend fun delete(jobNumber: String) {
+        repository.deleteJob(jobNumber)
+    }
+
     val uiState: StateFlow<JobsUiState> = repository
         .streamJobs()
         .map { JobsUiState(items = it, loading = false, error = null) }

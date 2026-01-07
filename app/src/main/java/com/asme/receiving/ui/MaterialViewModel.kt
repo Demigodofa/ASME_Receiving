@@ -46,4 +46,97 @@ class MaterialViewModel(
             }
         }
     }
+
+    suspend fun saveMaterial(
+        jobNumber: String,
+        materialDescription: String,
+        poNumber: String,
+        vendor: String,
+        quantity: String,
+        productType: String,
+        specificationPrefix: String,
+        gradeType: String,
+        fittingStandard: String,
+        fittingSuffix: String,
+        dimensionUnit: String,
+        thickness1: String,
+        thickness2: String,
+        thickness3: String,
+        thickness4: String,
+        width: String,
+        length: String,
+        diameter: String,
+        diameterType: String,
+        visualInspectionAcceptable: Boolean,
+        b16DimensionsAcceptable: String,
+        markings: String,
+        markingAcceptable: Boolean,
+        mtrAcceptable: Boolean,
+        acceptanceStatus: String,
+        comments: String,
+        qcInitials: String,
+        qcDate: Long,
+        materialApproval: String,
+        qcManager: String,
+        qcManagerInitials: String,
+        qcManagerDate: Long,
+        photoPaths: List<String>,
+        scanPaths: List<String>
+    ): Result<Unit> {
+        _uiState.value = _uiState.value.copy(updating = true, error = null)
+        return runCatching {
+            repository.addMaterial(
+                MaterialItem(
+                    jobNumber = jobNumber,
+                    description = materialDescription,
+                    poNumber = poNumber,
+                    vendor = vendor,
+                    quantity = quantity,
+                    productType = productType,
+                    specificationPrefix = specificationPrefix,
+                    gradeType = gradeType,
+                    fittingStandard = fittingStandard,
+                    fittingSuffix = fittingSuffix,
+                    dimensionUnit = dimensionUnit,
+                    thickness1 = thickness1,
+                    thickness2 = thickness2,
+                    thickness3 = thickness3,
+                    thickness4 = thickness4,
+                    width = width,
+                    length = length,
+                    diameter = diameter,
+                    diameterType = diameterType,
+                    visualInspectionAcceptable = visualInspectionAcceptable,
+                    b16DimensionsAcceptable = b16DimensionsAcceptable,
+                    specificationNumbers = specificationPrefix,
+                    markings = markings,
+                    markingAcceptable = markingAcceptable,
+                    mtrAcceptable = mtrAcceptable,
+                    acceptanceStatus = acceptanceStatus,
+                    comments = comments,
+                    qcInitials = qcInitials,
+                    qcDate = qcDate,
+                    materialApproval = materialApproval,
+                    qcManager = qcManager,
+                    qcManagerInitials = qcManagerInitials,
+                    qcManagerDate = qcManagerDate,
+                    photoPaths = encodePaths(photoPaths),
+                    scanPaths = encodePaths(scanPaths),
+                    photoCount = photoPaths.size,
+                    offloadStatus = "pending",
+                    pdfStatus = "pending"
+                )
+            )
+        }.onSuccess {
+            _uiState.value = _uiState.value.copy(updating = false)
+        }.onFailure { error ->
+            _uiState.value = _uiState.value.copy(updating = false, error = error.message)
+        }
+    }
+
+    fun observeMaterialsForJob(jobNumber: String) = repository.streamMaterialsForJob(jobNumber)
+}
+
+private fun encodePaths(paths: List<String>): String {
+    return paths.joinToString("|")
 }

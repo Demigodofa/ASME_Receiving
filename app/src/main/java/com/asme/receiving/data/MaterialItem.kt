@@ -1,41 +1,57 @@
 package com.asme.receiving.data
 
-import com.google.firebase.Timestamp
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.PrimaryKey
 
-/**
- * Material item representation for Firestore-backed persistence.
- */
+@Entity(
+    tableName = "materials",
+    indices = [Index(value = ["jobNumber"])]
+)
 data class MaterialItem(
+    @PrimaryKey
     val id: String = "",
     val jobNumber: String = "",
     val description: String = "",
     val vendor: String = "",
     val quantity: String = "",
+    val poNumber: String = "",
+    val productType: String = "",
+    val specificationPrefix: String = "",
+    val gradeType: String = "",
+    val fittingStandard: String = "",
+    val fittingSuffix: String = "",
+    val dimensionUnit: String = "",
+    val thickness1: String = "",
+    val thickness2: String = "",
+    val thickness3: String = "",
+    val thickness4: String = "",
+    val width: String = "",
+    val length: String = "",
+    val diameter: String = "",
+    val diameterType: String = "",
+    val visualInspectionAcceptable: Boolean = true,
+    val b16DimensionsAcceptable: String = "",
     val specificationNumbers: String = "",
     val markings: String = "",
+    val markingAcceptable: Boolean = true,
+    val mtrAcceptable: Boolean = true,
+    val acceptanceStatus: String = "accept",
+    val comments: String = "",
+    val qcInitials: String = "",
+    val qcDate: Long = System.currentTimeMillis(),
+    val materialApproval: String = "approved",
+    val qcManager: String = "",
+    val qcManagerInitials: String = "",
+    val qcManagerDate: Long = System.currentTimeMillis(),
     val offloadStatus: String = "",
     val pdfStatus: String = "",
     val pdfStoragePath: String = "",
+    val photoPaths: String = "",
+    val scanPaths: String = "",
     val photoCount: Int = 0,
-    val receivedAt: Timestamp = Timestamp.now(),
-    val userId: String = ""
+    val receivedAt: Long = System.currentTimeMillis()
 ) {
-    fun toHashMap(): Map<String, Any?> = mapOf(
-        "id" to id,
-        "jobNumber" to jobNumber,
-        "description" to description,
-        "vendor" to vendor,
-        "quantity" to quantity,
-        "specificationNumbers" to specificationNumbers,
-        "markings" to markings,
-        "offloadStatus" to offloadStatus,
-        "pdfStatus" to pdfStatus,
-        "pdfStoragePath" to pdfStoragePath,
-        "photoCount" to photoCount,
-        "receivedAt" to receivedAt,
-        "userId" to userId
-    )
-
     companion object {
         fun mock(
             id: String = "mock-material-id",
@@ -43,28 +59,84 @@ data class MaterialItem(
             description: String = "Mock Material",
             vendor: String = "Vendor",
             quantity: String = "1",
+            poNumber: String = "PO-123",
+            productType: String = "Tube",
+            specificationPrefix: String = "A",
+            gradeType: String = "Grade",
+            fittingStandard: String = "N/A",
+            fittingSuffix: String = "",
+            dimensionUnit: String = "imperial",
+            thickness1: String = "0.5",
+            thickness2: String = "",
+            thickness3: String = "",
+            thickness4: String = "",
+            width: String = "12",
+            length: String = "24",
+            diameter: String = "6",
+            diameterType: String = "O.D.",
+            visualInspectionAcceptable: Boolean = true,
+            b16DimensionsAcceptable: String = "Yes",
             specificationNumbers: String = "Spec-123",
             markings: String = "Markings",
+            markingAcceptable: Boolean = true,
+            mtrAcceptable: Boolean = true,
+            acceptanceStatus: String = "accept",
+            comments: String = "Comments",
+            qcInitials: String = "ABCD",
+            qcDate: Long = System.currentTimeMillis(),
+            materialApproval: String = "approved",
+            qcManager: String = "Manager",
+            qcManagerInitials: String = "EFGH",
+            qcManagerDate: Long = System.currentTimeMillis(),
             offloadStatus: String = "pending",
             pdfStatus: String = "pending",
             pdfStoragePath: String = "",
+            photoPaths: String = "",
+            scanPaths: String = "",
             photoCount: Int = 0,
-            receivedAt: Timestamp = Timestamp.now(),
-            userId: String = "mock-user-id"
+            receivedAt: Long = System.currentTimeMillis()
         ): MaterialItem = MaterialItem(
             id = id,
             jobNumber = jobNumber,
             description = description,
             vendor = vendor,
             quantity = quantity,
+            poNumber = poNumber,
+            productType = productType,
+            specificationPrefix = specificationPrefix,
+            gradeType = gradeType,
+            fittingStandard = fittingStandard,
+            fittingSuffix = fittingSuffix,
+            dimensionUnit = dimensionUnit,
+            thickness1 = thickness1,
+            thickness2 = thickness2,
+            thickness3 = thickness3,
+            thickness4 = thickness4,
+            width = width,
+            length = length,
+            diameter = diameter,
+            diameterType = diameterType,
+            visualInspectionAcceptable = visualInspectionAcceptable,
+            b16DimensionsAcceptable = b16DimensionsAcceptable,
             specificationNumbers = specificationNumbers,
             markings = markings,
+            markingAcceptable = markingAcceptable,
+            mtrAcceptable = mtrAcceptable,
+            acceptanceStatus = acceptanceStatus,
+            comments = comments,
+            qcInitials = qcInitials,
+            qcDate = qcDate,
+            materialApproval = materialApproval,
+            qcManager = qcManager,
+            qcManagerInitials = qcManagerInitials,
+            qcManagerDate = qcManagerDate,
             offloadStatus = offloadStatus,
             pdfStatus = pdfStatus,
             pdfStoragePath = pdfStoragePath,
+            photoPaths = photoPaths,
+            scanPaths = scanPaths,
             photoCount = photoCount,
-            receivedAt = receivedAt,
-            userId = userId
+            receivedAt = receivedAt
         )
     }
 }
