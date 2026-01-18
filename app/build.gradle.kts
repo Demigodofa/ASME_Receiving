@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.asme.receiving"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.asme.receiving"
@@ -36,8 +36,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
-    kotlinOptions {
-        jvmTarget = "17"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
     buildFeatures {
         compose = true

@@ -37,6 +37,7 @@ class JobDetailScreenTest {
                 jobNumber = "JOB-88",
                 onNavigateBack = {},
                 onAddMaterial = {},
+                onEditMaterial = { _, _ -> },
                 onJobRenamed = {}
             )
         }
