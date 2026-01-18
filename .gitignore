@@ -1,5 +1,7 @@
 node_modules/
 .gradle/
+.idea/
+**/build/
+*.iml
 android/app/google-services.json
 ios/App/App/GoogleService-Info.plist
-node_modules
